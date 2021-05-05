@@ -1,0 +1,51 @@
+COMMON: &common #标识
+  DEBUG: False
+  SECRET_KEY: insecure
+  # 页码设置
+  DEFAULT_PAGE_INDEX: 1
+  DEFAULT_PAGE_SIZE: 10
+
+  # 数据库连接
+  SQLALCHEMY_DATABASE_URI: 'mysql+pymysql://root:Kc123456!@localhost:3306/route_plan_schema?charset=utf8'
+  SQLALCHEMY_TRACK_MODIFICATIONS: False
+  # 日志配置文件路径
+  LOGGING_CONFIG_PATH: ./config/logging.yaml
+  # 日志文件存放位置
+  LOGGING_PATH: ./logs
+
+  # word报表模板文件目录
+  REPORT_TEMPLATES: ./word_templates
+
+  # 报表文件目录
+  REPORT_PATH: ./report
+
+  # 响应消息
+  RESPONSE_MESSAGE: ./config/msg.yaml
+
+  # redis配置
+  REDIS_EXPIRE: 60*60
+  REDIS_HOST: 127.0.0.1
+  REDIS_PORT: 6379
+  REDIS_DB: 1
+
+  # 自定义字体路径
+  SIM_SUN: ./font
+
+
+
+DEVELOPMENT: &development
+  <<: *common # 继承common，没有重新定义的变量，使用common变量值
+  DEBUG: True
+  SSH_ADDRESS: 218.104.232.61
+  SSH_PORT: 33254
+  SSH_USERNAME: root
+  SSH_PASSWORD: I84Kcb*ldxlgh*20210223
+
+STAGING: &staging
+  <<: *common
+  SECRET_KEY: sortasecure
+
+PRODUCTION: &production
+  <<: *common
+  SECRET_KEY: mdd1##$$%^!DSA#FDSF
+  REDIS_HOST: flask_redis
