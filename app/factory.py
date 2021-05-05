@@ -30,10 +30,12 @@ def create_app(config_name, config_path=None):
                 ssh_address_or_host=(app.config["SSH_ADDRESS"], app.config["SSH_PORT"]),
                 ssh_username=app.config["SSH_USERNAME"], 
                 ssh_password=app.config["SSH_PASSWORD"], # 跳转机的密码
-                remote_bind_address=('127.0.0.1', 3306)) 
+                remote_bind_address=("localhost", 3306)) 
         server.start()
     
-
+    print("mysql local bind port:",server.local_bind_port)
+    app.config["SQLALCHEMY_DATABASE_URI"]=app.config["SQLALCHEMY_DATABASE_URI"].format(server.local_bind_port)
+    print(app.config["SQLALCHEMY_DATABASE_URI"])
     # 注册接口
     register_api(app=app, routers=router)
 
