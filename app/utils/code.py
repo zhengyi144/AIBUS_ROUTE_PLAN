@@ -6,8 +6,6 @@ class ResponseCode(object):
     AccountOrPassWordErr = 40003  # 账户或密码错误
     PleaseSignIn = 40004  # 请登陆
 
-
-
 class ResponseMessage(object):
     Success = "成功"
     Fail = "失败"

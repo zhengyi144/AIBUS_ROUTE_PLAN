@@ -61,7 +61,7 @@ def login():
         res.update(code=ResponseCode.InvalidParameter)
         return res.data
     auth = Auth()
-    auth.authenticate(userName,password,citycode,role)
+    return auth.authenticate(userName,password,citycode,role)
 
 @route(common, '/testGetData', methods=["GET"])
 @login_required

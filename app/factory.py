@@ -7,7 +7,7 @@ import os
 from flask import Flask, Blueprint
 from sshtunnel import SSHTunnelForwarder
 
-from app.utils.core import JSONEncoder, db
+from app.utils.core import JSONEncoder
 from app.api.router import router
 
 
@@ -32,19 +32,13 @@ def create_app(config_name, config_path=None):
                 ssh_password=app.config["SSH_PASSWORD"], # 跳转机的密码
                 remote_bind_address=("localhost", 3306)) 
         server.start()
+        app.config["MYSQL_PORT"]=server.local_bind_port
     
-    print("mysql local bind port:",server.local_bind_port)
-    app.config["SQLALCHEMY_DATABASE_URI"]=app.config["SQLALCHEMY_DATABASE_URI"].format(server.local_bind_port)
-    print(app.config["SQLALCHEMY_DATABASE_URI"])
     # 注册接口
     register_api(app=app, routers=router)
 
     # 返回json格式转换
     app.json_encoder = JSONEncoder
-
-    # 注册数据库连接
-    db.app = app
-    db.init_app(app)
 
     # 日志文件目录
     if not os.path.exists(app.config['LOGGING_PATH']):

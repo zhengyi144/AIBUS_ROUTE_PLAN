@@ -4,7 +4,7 @@ from flask import current_app, request, session
 from functools import wraps
 from app.utils.code import ResponseCode
 from app.utils.response import ResMsg
-from app.models.model import User
+from app.models.aibusModel import AiBusModel
 
 
 class Auth(object):
@@ -65,14 +65,14 @@ class Auth(object):
         用户登录认证，登录成功返回token,登录失败返回失败原因
         """
         res = ResMsg()
-        user=User(userName,password,citycode,role)
-        user.getByUserName(userName,password)
-        if not user:
+        aiBusModel=AiBusModel()
+        matchUser=aiBusModel.selectUserByUserInfo(userName,password)
+        if not matchUser:
             res.update(code=ResponseCode.AccountOrPassWordErr)
             return res.data
         else:
             token=self.encode_auth_token(userName,citycode,role)
-            res.update(data={"token":token})
+            res.update(code=ResponseCode.Success,data={"token":token})
             return res.data
     
     def identify(self, auth_header):

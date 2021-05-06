@@ -6,6 +6,11 @@ COMMON: &common #标识
   DEFAULT_PAGE_SIZE: 10
 
   # 数据库连接
+  MYSQL_ADDRESS: 127.0.0.1
+  MYSQL_PORT: 3306
+  MYSQL_USERNAME: root
+  MYSQL_PASSWORD: Kc123456!
+  MYSQL_DB: route_plan_schema
   SQLALCHEMY_DATABASE_URI: 'mysql+pymysql://root:Kc123456!@127.0.0.1:{}/route_plan_schema?charset=utf8'
   SQLALCHEMY_TRACK_MODIFICATIONS: False
   # 日志配置文件路径
@@ -44,9 +49,13 @@ DEVELOPMENT: &development
 STAGING: &staging
   <<: *common
   SECRET_KEY: sortasecure
+  MYSQL_USERNAME: root
+  MYSQL_PASSWORD: Kc123456!
   
 
 PRODUCTION: &production
   <<: *common
   SECRET_KEY: mdd1##$$%^!DSA#FDSF
   REDIS_HOST: flask_redis
+  MYSQL_USERNAME: root
+  MYSQL_PASSWORD: Kc123456!
