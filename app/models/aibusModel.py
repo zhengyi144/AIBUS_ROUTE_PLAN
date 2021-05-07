@@ -16,7 +16,7 @@ class AiBusModel:
         """
         查询tbl_user表中是否存在username
         """
-        queryStr="select username from tbl_user where username=%s and password=%s"
+        queryStr="select userName from tbl_user where userName=%s and password=%s"
         row=self.mysqlPool.fetchOne(queryStr,(userName,password))
         return row
     

@@ -11,8 +11,7 @@ COMMON: &common #标识
   MYSQL_USERNAME: root
   MYSQL_PASSWORD: Kc123456!
   MYSQL_DB: route_plan_schema
-  SQLALCHEMY_DATABASE_URI: 'mysql+pymysql://root:Kc123456!@127.0.0.1:{}/route_plan_schema?charset=utf8'
-  SQLALCHEMY_TRACK_MODIFICATIONS: False
+
   # 日志配置文件路径
   LOGGING_CONFIG_PATH: ./config/logging.yaml
   # 日志文件存放位置

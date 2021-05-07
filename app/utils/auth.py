@@ -8,14 +8,13 @@ from app.models.aibusModel import AiBusModel
 
 
 class Auth(object):
-    key = 'super-man$&123das%qzq'
-
+    key="auth##"
     @classmethod
     def encode_auth_token(cls, userName: str,
                           citycode:str,
                           role: int,
                           exp: float = 24,
-                          algorithm: str = 'HS256') -> [str, str]:
+                          algorithm: str = 'HS256'):
         """
         userName: 用户名称
         password: 用户密码，现在暂未加密
@@ -36,25 +35,26 @@ class Auth(object):
             'data':{
                 'userName':userName,
                 'citycode':citycode,
-                'role': role
+                'role': role,
+                'time':now
             }
         }
         access_token = jwt.encode(access_payload, key, algorithm=algorithm)
         return access_token
 
     @classmethod
-    def decode_auth_token(cls, token: str):
+    def decode_auth_token(cls, token: str,algorithm: str = 'HS256'):
         """
         验证token
         :param token:
         :return:
         """
         key = current_app.config.get('SECRET_KEY', cls.key)
-
         try:
             # 取消过期时间验证
-            payload = jwt.decode(auth_token, config.SECRET_KEY, options={'verify_exp': False})
-            # payload = jwt.decode(token, key=key, )
+            payload = jwt.decode(token, key=key, options={'verify_exp': False},algorithms=algorithm)
+            #payload = jwt.decode(token, key=key,algorithms=algorithm )
+            print(payload)
         except (jwt.ExpiredSignatureError, jwt.InvalidTokenError, jwt.InvalidSignatureError):
             return None
         else:
@@ -78,7 +78,6 @@ class Auth(object):
     def identify(self, auth_header):
         """
         用户鉴权
-        #TODO:暂时只起用户验证的功能,权限未完善
         :return: list
         """
         if auth_header:
