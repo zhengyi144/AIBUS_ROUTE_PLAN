@@ -20,3 +20,11 @@ class AiBusModel:
         row=self.mysqlPool.fetchOne(queryStr,(userName,password))
         return row
     
+    def insertStation(self,rows):
+        """
+        插入tbl_station
+        """
+        insertStr="insert into tbl_station(province,city,region,siteName,siteProperty,location,longitude,latitude,road,userCitycode)  \
+                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        row=self.mysqlPool.insert(insertStr,rows)
+        return row

@@ -54,7 +54,6 @@ class Auth(object):
             # 取消过期时间验证
             payload = jwt.decode(token, key=key, options={'verify_exp': False},algorithms=algorithm)
             #payload = jwt.decode(token, key=key,algorithms=algorithm )
-            print(payload)
         except (jwt.ExpiredSignatureError, jwt.InvalidTokenError, jwt.InvalidSignatureError):
             return None
         else:

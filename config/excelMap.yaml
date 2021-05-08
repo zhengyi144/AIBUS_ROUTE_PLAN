@@ -1,0 +1,11 @@
+station:
+  省份: province
+  城市: city
+  站点类型: siteProperty
+  站点名称: siteName
+  所属区域: region
+  经度: longitude
+  纬度: latitude
+  地理方位: location
+  所在道路: road
+
