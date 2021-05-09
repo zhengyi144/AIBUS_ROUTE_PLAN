@@ -83,4 +83,23 @@ class MysqlPool():
         finally:
             self.closeConn(conn, cursor)
             return row
-        
+    
+    def batch(self,sqlStr,args):
+        """
+        插入数据
+        """
+        logger.info("%s,args:%s",sqlStr,args)
+        row=0
+        try:
+            conn, cursor = self.connect()
+            row = cursor.executemany(sqlStr, args)
+            logger.info("batch %s records!",row)
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            logger.error("batch error",exc_info=True)
+        finally:
+            self.closeConn(conn, cursor)
+            return row
+    
+    

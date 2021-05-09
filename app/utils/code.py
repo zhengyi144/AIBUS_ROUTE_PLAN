@@ -6,6 +6,7 @@ class ResponseCode(object):
     AccountOrPassWordErr = 40003  # 账户或密码错误
     PleaseSignIn = 40004  # 请登陆
     InsertValueIsNull=40005 
+    QueryError=40006
 
 class ResponseMessage(object):
     Success = "成功"
@@ -15,3 +16,4 @@ class ResponseMessage(object):
     AccountOrPassWordErr = "账户或密码错误"
     PleaseSignIn = "请登陆"
     InsertValueIsNull="必需字段不允许为空"
+    QueryError="查询报错"

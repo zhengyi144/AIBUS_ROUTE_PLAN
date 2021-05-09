@@ -4,8 +4,8 @@ station:
   站点类型: siteProperty
   站点名称: siteName
   所属区域: region
-  经度: longitude
-  纬度: latitude
+  经度: latitude
+  纬度: longitude
   地理方位: location
   所在道路: road
 

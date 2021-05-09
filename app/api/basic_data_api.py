@@ -17,12 +17,15 @@ logger = logging.getLogger(__name__)
 @route(basicdata, '/uploadStationExcel', methods=["POST"])
 @login_required
 def uploadStationExcel():
+    """
+    批量上传站点excel
+    """
     res = ResMsg()
+    aiBusModel=AiBusModel()
     userInfo = session.get("userInfo")
     #获取excel文件
     excelFile = request.files['file']
     dataset=readExcel(excelFile,0,"station")
-    print(dataset)
     #循环判断数据类型
     insertVals = []
     for item in dataset:
@@ -33,11 +36,10 @@ def uploadStationExcel():
            res.update(code=ResponseCode.InsertValueIsNull)
            return res.data
         else:
-            insertVals.append((item["province"],item["city"],item["region"],item["siteName"],item["siteProperty"],item["location"],\
+            siteProperty=1 if item["siteProperty"]=="固定" else 0
+            insertVals.append((item["province"],item["city"],item["region"],item["siteName"],siteProperty,item["location"],\
                 float(item["longitude"]),float(item["latitude"]),item["road"],userInfo["citycode"]))
-
-    aiBusModel=AiBusModel()
-    row=aiBusModel.insertStation(tuple(insertVals))
+    row=aiBusModel.batchStation(tuple(insertVals))
     if row>0:
         res.update(code=ResponseCode.Success, data="成功插入{}条记录！".format(row))
         return res.data
@@ -45,4 +47,41 @@ def uploadStationExcel():
         res.update(code=ResponseCode.Fail, data="插入失败！")
         return res.data
 
-        
+@route(basicdata,'/fuzzyQueryStationName',methods=["POST"])
+@login_required
+def fuzzyQueryStationName():
+    """
+    根据站点名称模糊查询站点
+    """
+    res = ResMsg()
+    try:
+        aiBusModel=AiBusModel()
+        userInfo = session.get("userInfo")
+        queryText=request.form.get('queryText')
+        row=aiBusModel.selectStationNameByText(queryText,userInfo["citycode"])
+        res.update(code=ResponseCode.Success, data=row)
+        return res.data
+    except Exception as e:
+        res.update(code=ResponseCode.QueryError)
+        return res.data
+
+@route(basicdata,'/queryStationList',methods=["POST"])
+@login_required
+def queryStationList():
+    res = ResMsg()
+    try:
+        aiBusModel=AiBusModel()
+        userInfo = session.get("userInfo")
+        province=request.form.get('province')
+        city=request.form.get('city')
+        siteName=request.form.get('siteName')
+        road=request.form.get('road')
+        siteStatus=request.form.get('siteStatus')
+        pageSize=int(request.form.get('pageSize'))
+        pageNum=int(request.form.get('pageNum'))
+        row=aiBusModel.selectStationList(province,city,siteName,road,siteStatus,userInfo["citycode"],pageSize,pageNum)
+        res.update(code=ResponseCode.Success, data=row)
+        return res.data
+    except Exception as e:
+        res.update(code=ResponseCode.QueryError)
+        return res.data

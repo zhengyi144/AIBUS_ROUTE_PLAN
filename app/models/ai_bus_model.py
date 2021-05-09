@@ -28,3 +28,56 @@ class AiBusModel:
                    values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
         row=self.mysqlPool.insert(insertStr,rows)
         return row
+    
+    def batchStation(self,rows):
+        """
+        插入tbl_station
+        """
+        batchStr="insert into tbl_station(province,city,region,siteName,siteProperty,location,longitude,latitude,road,userCitycode)  \
+                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        row=self.mysqlPool.batch(batchStr,rows)
+        return row
+    
+    def selectStationNameByText(self,queryText,citycode):
+        """
+        模糊查询stationName
+        """
+        selectStr="select id,siteName,siteProperty,province,city,region,road from tbl_station where siteName like %s and userCitycode=%s"
+        row=self.mysqlPool.fetchAll(selectStr,(('%'+queryText+'%'),citycode))
+        return row
+    
+    def selectStationList(self,province,city,siteName,road,siteStatus,citycode,pageSize,pageNum):
+        """
+        查询站点列表
+        """
+        args=[]
+        selectStr="select id,siteName,siteProperty,province,city,region,road,location,longitude,latitude,siteStatus from tbl_station where userCitycode=%s"
+        args.append(citycode)
+        if province is not None and province !="":
+            selectStr+=" and province=%s"
+            args.append(province)
+        if city is not None and city !="":
+            selectStr+=" and city=%s"
+            args.append(city)
+        if siteName is not None and siteName !="":
+            selectStr+=" and siteName=%s"
+            args.append(siteName)
+        if road is not None and road !="":
+            selectStr+=" and road=%s"
+            args.append(road)
+        if siteStatus is not None and siteStatus !="":
+            if siteStatus=="有效":
+                siteStatus=1
+            elif siteStatus=="无效":
+                siteStatus=2
+            else:
+                siteStatus=3
+            selectStr+=" and siteStatus=%s"
+            args.append(siteStatus)
+        selectStr+=" order by id limit %s ,%s"
+        args.append(pageNum*pageSize)
+        args.append(pageSize)
+        return self.mysqlPool.fetchAll(selectStr,args)
+
+
+        
