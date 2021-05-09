@@ -4,7 +4,7 @@ from flask import current_app, request, session
 from functools import wraps
 from app.utils.code import ResponseCode
 from app.utils.response import ResMsg
-from app.models.aibusModel import AiBusModel
+from app.models.ai_bus_model import AiBusModel
 
 
 class Auth(object):

@@ -5,7 +5,7 @@ class ResponseCode(object):
     InvalidParameter = 40002  # 参数无效
     AccountOrPassWordErr = 40003  # 账户或密码错误
     PleaseSignIn = 40004  # 请登陆
-    InsertValIsNull=40005 
+    InsertValueIsNull=40005 
 
 class ResponseMessage(object):
     Success = "成功"
@@ -14,4 +14,4 @@ class ResponseMessage(object):
     InvalidParameter = "参数无效"
     AccountOrPassWordErr = "账户或密码错误"
     PleaseSignIn = "请登陆"
-    InsertValIsNull="必需字段不允许为空"
+    InsertValueIsNull="必需字段不允许为空"

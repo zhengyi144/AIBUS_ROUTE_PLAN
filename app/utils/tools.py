@@ -9,7 +9,7 @@ def readExcel(file,sheetIndex,mapType):
     """
     #打开文件file
     f=file.read()
-    wb=xlrd.open_workbook(file_contens=f)
+    wb=xlrd.open_workbook(file_contents=f)
     #wb=xlrd.open_workbook(filename=r"C:\Users\ZY\Desktop\test.xlsx")
     sheet=wb.sheet_by_index(sheetIndex)
     with open("config/excelMap.yaml", 'r', encoding='utf-8') as f:
