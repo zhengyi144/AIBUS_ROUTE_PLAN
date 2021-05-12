@@ -1,7 +1,5 @@
-import atexit
 import logging
 import logging.config
-import platform
 import yaml
 import os
 from flask import Flask, Blueprint

@@ -1,4 +1,6 @@
 import logging
+import re
+from typing import NoReturn
 from flask import Blueprint, jsonify, session, request, current_app
 from app.utils.code import ResponseCode
 from app.utils.response import ResMsg
@@ -37,8 +39,10 @@ def uploadStationExcel():
            return res.data
         else:
             siteProperty=1 if item["siteProperty"]=="固定" else 0
-            insertVals.append((item["province"],item["city"],item["region"],item["siteName"],siteProperty,item["location"],\
-                float(item["longitude"]),float(item["latitude"]),item["road"],userInfo["citycode"]))
+            #geojson = { "type": "Point", "coordinates": [float(item["longitude"]),float(item["latitude"])]}
+            geojson = '{ "type": "Point", "coordinates": [%s, %s]}'%(float(item["longitude"]),float(item["latitude"]))
+            insertVals.append((item["province"],item["city"],item["region"],item["siteName"],siteProperty,item["direction"],\
+                float(item["longitude"]),float(item["latitude"]),item["road"],userInfo["citycode"],userInfo["userName"],userInfo["userName"],geojson))
     row=aiBusModel.batchStation(tuple(insertVals))
     if row>0:
         res.update(code=ResponseCode.Success, data="成功插入{}条记录！".format(row))
@@ -84,4 +88,55 @@ def queryStationList():
         return res.data
     except Exception as e:
         res.update(code=ResponseCode.QueryError)
+        return res.data
+
+@route(basicdata,'/upInsertStation',methods=["POST"])
+@login_required
+def upInsertStation():
+    """
+    新增或者更新站点
+    """
+    res = ResMsg()
+    try:
+        aiBusModel=AiBusModel()
+        userInfo = session.get("userInfo")
+        province=request.form.get('province')
+        city=request.form.get('city')
+        region=request.form.get("region")
+        siteName=request.form.get('siteName')
+        siteProperty=request.form.get('siteProperty')
+        if siteProperty=="固定":
+            siteProperty=1
+        else:
+            siteProperty=0
+        road=request.form.get('road')
+        siteStatus=request.form.get('siteStatus')
+        if siteStatus=="有效":
+            siteStatus=1
+        elif siteStatus=="无效":
+            siteStatus=2
+        else:
+            siteStatus=3
+        latitude=float(request.form.get("latitude"))
+        longitude=float(request.form.get("longitude"))
+        direction=request.form.get("direction")
+        unilateral=request.form.get("unilateral")
+        if unilateral=="是":
+            unilateral=1
+        else:
+            unilateral=0
+        upInsertType=request.form.get("upInsertType")
+        geojson = '{ "type": "Point", "coordinates": [%s, %s]}'% (longitude,latitude)
+        if upInsertType=="I":
+            row=aiBusModel.insertStation((province,city,region,siteName,siteProperty,siteStatus,direction,longitude,latitude,road,unilateral,userInfo["citycode"],userInfo["userName"],userInfo["userName"]),geojson)
+        else:
+            id=request.form.get('id')
+            if id is None or id=="":
+                res.update(code=ResponseCode.InvalidParameter,data="更新站点id不能为null")
+                return res.data
+            row=aiBusModel.updateStation((province,city,region,siteName,siteProperty,siteStatus,direction,longitude,latitude,road,unilateral,userInfo["citycode"],userInfo["userName"],id),geojson)
+        res.update(code=ResponseCode.Success, data=row)
+        return res.data
+    except Exception as e:
+        res.update(code=ResponseCode.Fail)
         return res.data

@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from flask import current_app, request, session
 from functools import wraps
 from app.utils.code import ResponseCode
+from app.utils.core import JSONEncoder
 from app.utils.response import ResMsg
 from app.models.ai_bus_model import AiBusModel
 
@@ -28,9 +29,9 @@ class Auth(object):
         now = datetime.utcnow()
         exp_datetime = now + timedelta(hours=exp)
         access_payload = {
-            'exp': exp_datetime,
+            'exp': str(exp_datetime),
             'flag': 0,  # 标识是否为一次性token，0是，1不是
-            'iat': now,  # 开始时间
+            'iat': str(now),  # 开始时间
             'iss': 'qin',  # 签名
             'data':{
                 'userName':userName,
@@ -39,7 +40,7 @@ class Auth(object):
                 'time':now
             }
         }
-        access_token = jwt.encode(access_payload, key, algorithm=algorithm)
+        access_token = jwt.encode(access_payload, key, algorithm=algorithm,json_encoder=JSONEncoder)
         return access_token
 
     @classmethod
@@ -66,6 +67,7 @@ class Auth(object):
         res = ResMsg()
         aiBusModel=AiBusModel()
         matchUser=aiBusModel.selectUserByUserInfo(userName,password)
+        #print(matchUser)
         if not matchUser:
             res.update(code=ResponseCode.AccountOrPassWordErr)
             return res.data
