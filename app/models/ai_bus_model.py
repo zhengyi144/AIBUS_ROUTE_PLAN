@@ -92,6 +92,38 @@ class AiBusModel:
         args.append(pageNum*pageSize)
         args.append(pageSize)
         return self.mysqlPool.fetchAll(selectStr,args)
-
-
+    
+    def insertSiteFile(self,row):
+        """
+        插入网点文件信息
+        """
+        insertStr="insert into tbl_site_files(fileName,fileProperty,fileStatus,destination,mapType,longitude,latitude,userCitycode,createUser,updateUser)  \
+                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        row=self.mysqlPool.insert(insertStr,row)
+    
+    def selectSiteFileIdByFileName(self,row):
+        """
+        根据文件名查找
+        """
+        selectStr="select max(id) as id from tbl_site_files where fileName=%s"
+        row=self.mysqlPool.fetchOne(selectStr,row)
+        return row
+    
+    def batchSites(self,rows):
+        """
+        插入tbl_site
+        """
+        batchStr="insert into tbl_site(fileId,region,siteName,siteProperty,siteStatus,longitude,latitude,clientName,\
+                 clientProperty,clientAddress,age,grade,number,location)  \
+                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,ST_GeomFromGeoJSON(%s,2,0))"
+        row=self.mysqlPool.batch(batchStr,rows)
+        return row
+    
+    def updateSiteFileStatus(self,row):
+        """
+        更新tbl_site_files.fileStatus=1
+        """
+        updateStr="update tbl_site_files set fileStatus=%s where id=%s"
+        row=self.mysqlPool.update(updateStr,row)
+        return row
         

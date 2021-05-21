@@ -9,3 +9,19 @@ station:
   地理方位: direction
   所在道路: road
 
+site:
+  区域: region
+  经度: longitude
+  纬度: latitude
+  公交站属性: siteProperty
+  公交站: siteName
+  客户姓名: clientName
+  客户对象: clientProperty
+  年龄: age
+  客户住址: clientAddress
+  乘车人数: number
+  年级: grade
+  目的地: destination
+
+
+

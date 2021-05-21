@@ -1,6 +1,4 @@
 import logging
-import re
-from typing import NoReturn
 from flask import Blueprint, jsonify, session, request, current_app
 from app.utils.code import ResponseCode
 from app.utils.response import ResMsg

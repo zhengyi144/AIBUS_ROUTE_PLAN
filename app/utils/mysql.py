@@ -102,4 +102,20 @@ class MysqlPool():
             self.closeConn(conn, cursor)
             return row
     
-    
+    def update(self,sqlStr,args):
+        """
+        更新数据
+        """
+        logger.info("%s,args:%s",sqlStr,args)
+        row=0
+        try:
+            conn, cursor = self.connect()
+            row = cursor.execute(sqlStr, args)
+            logger.info("update %s records!",row)
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            logger.error("update error",exc_info=True)
+        finally:
+            self.closeConn(conn, cursor)
+            return row
