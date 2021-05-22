@@ -60,7 +60,7 @@ def fuzzyQueryStationName():
         aiBusModel=AiBusModel()
         userInfo = session.get("userInfo")
         queryText=request.form.get('queryText')
-        row=aiBusModel.selectStationNameByText(queryText,userInfo["citycode"])
+        row=aiBusModel.selectStationNameByText(queryText,userInfo["citycode"],userInfo["userNames"])
         res.update(code=ResponseCode.Success, data=row)
         return res.data
     except Exception as e:
@@ -81,7 +81,7 @@ def queryStationList():
         siteStatus=request.form.get('siteStatus')
         pageSize=int(request.form.get('pageSize'))
         pageNum=int(request.form.get('pageNum'))
-        row=aiBusModel.selectStationList(province,city,siteName,road,siteStatus,userInfo["citycode"],pageSize,pageNum)
+        row=aiBusModel.selectStationList(province,city,siteName,road,siteStatus,userInfo["citycode"],pageSize,pageNum,userInfo["userNames"])
         res.update(code=ResponseCode.Success, data=row)
         return res.data
     except Exception as e:

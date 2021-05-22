@@ -1,3 +1,4 @@
+from re import sub
 import jwt
 from datetime import datetime, timedelta
 from flask import current_app, request, session
@@ -81,13 +82,21 @@ class Auth(object):
         用户鉴权
         :return: list
         """
+        aiBusModel=AiBusModel()
         if auth_header:
             payload = self.decode_auth_token(auth_header)
             if payload is None:
                 return False
             if "data" in payload and "flag" in payload:
                 if payload["flag"] == 0:
-                    return payload["data"]
+                    #获取用户所有下级
+                    userInfo=payload["data"]
+                    subUsers=aiBusModel.selectSubUserByUserName(userInfo["userName"],userInfo["citycode"])
+                    userNames=[]
+                    for user in subUsers:
+                        userNames.append(user["userName"])
+                    userNames.append(userInfo["userName"])
+                    return {"userName":userInfo["userName"],"userNames":userNames,"citycode":userInfo["citycode"]}
                 else:
                     # 其他状态暂不允许
                     return False
@@ -95,7 +104,6 @@ class Auth(object):
                 return False
         else:
             return False
-
 
 def login_required(f):
     """
@@ -115,7 +123,7 @@ def login_required(f):
         if not userInfo:
             res.update(code=ResponseCode.PleaseSignIn)
             return res.data
-        # 获取到用户信息( 'userName','citycode','role')并写入到session中,方便后续使用
+        # 获取到用户信息('userName', 'userNames','citycode')并写入到session中,方便后续使用
         session["userInfo"] = userInfo
         return f(*args, **kwargs)
     return wrapper
