@@ -11,4 +11,11 @@ def test():
 """
 
 if __name__ == "__main__":
+<<<<<<< Updated upstream
     app.run(host="0.0.0.0", port=8081, debug=True)
+=======
+    app.run(host="0.0.0.0", port=8483, debug=True)
+
+
+
+>>>>>>> Stashed changes
