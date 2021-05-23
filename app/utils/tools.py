@@ -131,11 +131,16 @@ def writeExcel(filename,fields,resultdata):
     workbook.save(filePath)
     return filePath
 
-"""
+'''
 if __name__ == '__main__':
-    data=readExcel("",0,"site")
-    print(data)
-"""
+    # data=readExcel("",0,"site")
+    # print(data)
+    fields =["省份","城市","区域"]
+    resultdata =[["福建省","福州市","鼓楼区"],["福建省","福州市","仓山区"]]
+    filename = "福州"
+    writeExcel(filename,fields,resultdata)
+'''
+
 
 
 
