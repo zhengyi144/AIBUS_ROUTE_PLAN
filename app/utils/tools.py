@@ -1,6 +1,7 @@
 import xlrd
 import yaml
 import xlwt
+import json
 
 def readExcel(file,sheetIndex,mappingItem):
     """
@@ -16,19 +17,27 @@ def readExcel(file,sheetIndex,mappingItem):
     with open("config/excelMap.yaml", 'r', encoding='utf-8') as f:
         excelMap = yaml.safe_load(f.read())
     mapItems=excelMap[mappingItem]
-    
     #读取表头
     nrows=sheet.nrows
     header=[]
     data=[]
     for head in  sheet.row_values(0):
         head=head.strip("*").strip(" ")
-        header.append(mapItems[head])
+        if head in mapItems.keys():
+            header.append(mapItems[head])
+        else:
+            header.append(head)
+    #读取数据
     for i in range(1, nrows):
         rowValues=sheet.row_values(i)
         rowDict={}
+        others={}
         for n,head in enumerate(header):
-            rowDict[head]=rowValues[n]
+            if head in mapItems.values():
+                rowDict[head]=rowValues[n]
+            else:
+                others[head]=rowValues[n]
+        rowDict["others"]=json.dumps(others)
         data.append(rowDict)
     return data
 
@@ -131,15 +140,16 @@ def writeExcel(filename,fields,resultdata):
     workbook.save(filePath)
     return filePath
 
-'''
+"""
 if __name__ == '__main__':
     # data=readExcel("",0,"site")
     # print(data)
-    fields =["省份","城市","区域"]
-    resultdata =[["福建省","福州市","鼓楼区"],["福建省","福州市","仓山区"]]
-    filename = "福州"
-    writeExcel(filename,fields,resultdata)
-'''
+    #fields =["省份","城市","区域"]
+    #resultdata =[["福建省","福州市","鼓楼区"],["福建省","福州市","仓山区"]]
+    #filename = "福州"
+    #writeExcel(filename,fields,resultdata)
+"""
+
 
 
 

@@ -127,16 +127,24 @@ class AiBusModel:
         插入tbl_site
         """
         batchStr="insert into tbl_site(fileId,region,siteName,siteProperty,siteStatus,longitude,latitude,clientName,\
-                 clientProperty,clientAddress,age,grade,number,location)  \
-                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,ST_GeomFromGeoJSON(%s,2,0))"
+                 clientProperty,clientAddress,age,grade,number,others,location)  \
+                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,ST_GeomFromGeoJSON(%s,2,0))"
         row=self.mysqlPool.batch(batchStr,rows)
         return row
     
-    def updateSiteFileStatus(self,row):
+    def updateSiteFile(self,row):
         """
         更新tbl_site_files.fileStatus=1
         """
-        updateStr="update tbl_site_files set fileStatus=%s where id=%s"
+        updateStr="update tbl_site_files set fileStatus=%s,siteCount=%s where id=%s"
         row=self.mysqlPool.update(updateStr,row)
         return row
+    
+    def updateSiteStatusByfieldId(self,row):
+        """
+        更新tbl_site.siteStatus
+        """
+        updateStr="update tbl_site set siteStatus=%s where fileId=%s"
+        return self.mysqlPool.update(updateStr,row)
+        
         
