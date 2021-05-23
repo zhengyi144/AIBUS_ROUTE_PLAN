@@ -21,6 +21,14 @@ class AiBusModel:
         row=self.mysqlPool.fetchOne(queryStr,(userName,password))
         return row
     
+    def selectSubUserByUserName(self,userName,citycode):
+        """
+        根据userName查找下级userName
+        """
+        queryStr="SELECT r.userName FROM tbl_user t LEFT JOIN tbl_user r ON r.pid=t.id WHERE t.userName =%s and t.cityCode=%s"
+        return self.mysqlPool.fetchAll(queryStr,(userName,citycode))
+        
+    
     def insertStation(self,row,geojson):
         """
         插入tbl_station
@@ -52,20 +60,25 @@ class AiBusModel:
         row=self.mysqlPool.batch(batchStr,rows)
         return row
     
-    def selectStationNameByText(self,queryText,citycode):
+    def selectStationNameByText(self,queryText,citycode,userNames):
         """
         模糊查询stationName
         """
-        selectStr="select id,siteName,siteProperty,province,city,region,road from tbl_station where siteName like %s and userCitycode=%s"
-        row=self.mysqlPool.fetchAll(selectStr,(('%'+queryText+'%'),citycode))
+        selectStr="select id,siteName,siteProperty,province,city,region,road \
+                   from tbl_station where siteName like %s and userCitycode=%s "
+        authStr="and createUser in (%s)"% ','.join("'%s'" % item for item in userNames) 
+        row=self.mysqlPool.fetchAll(selectStr+authStr,(('%'+queryText+'%'),citycode))
         return row
     
-    def selectStationList(self,province,city,siteName,road,siteStatus,citycode,pageSize,pageNum):
+    def selectStationList(self,province,city,siteName,road,siteStatus,citycode,pageSize,pageNum,userNames):
         """
         查询站点列表
         """
         args=[]
-        selectStr="select id,siteName,siteProperty,province,city,region,road,direction,longitude,latitude,siteStatus,updateTime,updateUser from tbl_station where userCitycode=%s"
+        selectStr="select id,siteName,siteProperty,province,city,region,road,direction,longitude,latitude,\
+                   siteStatus,updateTime,updateUser from tbl_station where userCitycode=%s"
+        authStr=" and createUser in (%s)"% ','.join("'%s'" % item for item in userNames) 
+        selectStr=selectStr+authStr
         args.append(citycode)
         if province is not None and province !="":
             selectStr+=" and province=%s"
@@ -92,6 +105,38 @@ class AiBusModel:
         args.append(pageNum*pageSize)
         args.append(pageSize)
         return self.mysqlPool.fetchAll(selectStr,args)
-
-
+    
+    def insertSiteFile(self,row):
+        """
+        插入网点文件信息
+        """
+        insertStr="insert into tbl_site_files(fileName,fileProperty,fileStatus,destination,mapType,longitude,latitude,userCitycode,createUser,updateUser)  \
+                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        row=self.mysqlPool.insert(insertStr,row)
+    
+    def selectSiteFileIdByFileName(self,row):
+        """
+        根据文件名查找
+        """
+        selectStr="select max(id) as id from tbl_site_files where fileName=%s"
+        row=self.mysqlPool.fetchOne(selectStr,row)
+        return row
+    
+    def batchSites(self,rows):
+        """
+        插入tbl_site
+        """
+        batchStr="insert into tbl_site(fileId,region,siteName,siteProperty,siteStatus,longitude,latitude,clientName,\
+                 clientProperty,clientAddress,age,grade,number,location)  \
+                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,ST_GeomFromGeoJSON(%s,2,0))"
+        row=self.mysqlPool.batch(batchStr,rows)
+        return row
+    
+    def updateSiteFileStatus(self,row):
+        """
+        更新tbl_site_files.fileStatus=1
+        """
+        updateStr="update tbl_site_files set fileStatus=%s where id=%s"
+        row=self.mysqlPool.update(updateStr,row)
+        return row
         
