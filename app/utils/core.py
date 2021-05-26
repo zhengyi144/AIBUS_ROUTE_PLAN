@@ -30,4 +30,6 @@ class JSONEncoder(BaseJSONEncoder):
         if isinstance(o, bytes):
             # 格式化字节数据
             return o.decode("utf-8")
+        # if isinstance(o, bytes):
+        #     return str(o, encoding='utf-8')
         return super(JSONEncoder, self).default(o)
