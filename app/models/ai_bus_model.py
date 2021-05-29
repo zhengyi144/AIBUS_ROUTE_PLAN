@@ -121,7 +121,16 @@ class AiBusModel:
         selectStr="select max(id) as id from tbl_site_files where fileName=%s"
         row=self.mysqlPool.fetchOne(selectStr,row)
         return row
-    
+
+    def selectSiteFileList(self,citycode,userNames):
+        """
+        查询网点文件列表
+        """
+        selectStr="select id as fileId, fileName,siteCount from tbl_site_files t where t.userCitycode=%s and t.fileStatus=1 "
+        authStr=" and createUser in (%s)"% ','.join("'%s'" % item for item in userNames) 
+        selectStr=selectStr+authStr
+        return self.mysqlPool.fetchAll(selectStr,(citycode))
+
     def batchSites(self,rows):
         """
         插入tbl_site
@@ -142,9 +151,19 @@ class AiBusModel:
     
     def updateSiteStatusByfieldId(self,row):
         """
-        更新tbl_site.siteStatus
+        更新tbl_site.siteStatus，失效临时网点
         """
-        updateStr="update tbl_site set siteStatus=%s where fileId=%s"
+        updateStr="update tbl_site set siteStatus=%s where fileId=%s and siteStatus=2"
         return self.mysqlPool.update(updateStr,row)
+    
+    def selectSiteInfoByFileId(self,row):
+        """
+        根据文件id查找siteInfo
+        """
+        selectStr="SELECT siteName, latitude,longitude,SUM(number) AS clientNumber \
+                   FROM tbl_site WHERE fileId = %s AND siteStatus = 1 GROUP BY siteName, latitude,longitude"
         
+        return self.mysqlPool.fetchAll(selectStr,row)
+    
+    def selectTempSiteInfo(self,)
         
