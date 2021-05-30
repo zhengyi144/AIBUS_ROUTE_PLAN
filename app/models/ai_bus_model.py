@@ -131,13 +131,22 @@ class AiBusModel:
         selectStr=selectStr+authStr
         return self.mysqlPool.fetchAll(selectStr,(citycode))
 
+    def fuzzyQuerySiteFileList(self,queryText,citycode,userNames):
+        """
+        查询网点文件列表
+        """
+        selectStr="select id as fileId, fileName,siteCount from tbl_site_files t where t.userCitycode=%s and t.fileStatus=1 and fileName like %s"
+        authStr=" and createUser in (%s)"% ','.join("'%s'" % item for item in userNames) 
+        selectStr=selectStr+authStr
+        return self.mysqlPool.fetchAll(selectStr,(('%'+queryText+'%'),citycode))
+
     def batchSites(self,rows):
         """
         插入tbl_site
         """
         batchStr="insert into tbl_site(fileId,region,siteName,siteProperty,siteStatus,longitude,latitude,clientName,\
-                 clientProperty,clientAddress,age,grade,number,others,location)  \
-                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,ST_GeomFromGeoJSON(%s,2,0))"
+                 clientProperty,clientAddress,age,grade,number,others,createUser,updateUser,location)  \
+                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,ST_GeomFromGeoJSON(%s,2,0))"
         row=self.mysqlPool.batch(batchStr,rows)
         return row
     
@@ -153,8 +162,16 @@ class AiBusModel:
         """
         更新tbl_site.siteStatus，失效临时网点
         """
-        updateStr="update tbl_site set siteStatus=%s where fileId=%s and siteStatus=2"
+        updateStr="update tbl_site set siteStatus=%s,updateUser=%s where fileId=%s and siteStatus=%s"
         return self.mysqlPool.update(updateStr,row)
+
+    def updateSiteStatusByIds(self,fileId,siteStatus,siteIds,userName):
+        """
+        将临时网点更新为有效网点
+        """
+        updateStr="update tbl_site set siteStatus=%s,updateUser=%s where fileId=%s"
+        condition=" and id in (%s)"% ','.join("'%s'" % item for item in siteIds)
+        return self.mysqlPool.fetchAll(updateStr+condition,(siteStatus,userName,fileId))
     
     def selectSiteInfoByFileId(self,row):
         """
@@ -165,5 +182,20 @@ class AiBusModel:
         
         return self.mysqlPool.fetchAll(selectStr,row)
     
-    def selectTempSiteInfo(self,)
+    def selectTempSiteInfo(self,fileId,kwargs,pageSize,pageNum):
+        """
+        根据文件id查找临时siteInfo
+        """
+        args=[]
+        selectStr="select id,siteName,if(siteProperty=1,'固定','临时') as siteProperty,longitude,latitude,\
+                  clientName,clientProperty,age,clientAddress,number,grade  \
+                  from tbl_site where fileId=%s AND siteStatus = 2"
+        args.append(fileId)
+        for key,value in kwargs.items():
+            selectStr=selectStr+" and "+key+"=%s"
+            args.append(value)
+        selectStr+=" order by id limit %s ,%s"
+        args.append(pageNum*pageSize)
+        args.append(pageSize)
+        return self.mysqlPool.fetchAll(selectStr,args)
         

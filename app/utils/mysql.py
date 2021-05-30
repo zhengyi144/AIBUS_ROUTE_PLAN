@@ -119,3 +119,22 @@ class MysqlPool():
         finally:
             self.closeConn(conn, cursor)
             return row
+    
+    def delete(self,sqlStr,args):
+        """
+        删除数据
+        """
+        logger.info("%s,args:%s",sqlStr,args)
+        row=0
+        try:
+            conn, cursor = self.connect()
+            row = cursor.execute(sqlStr, args)
+            logger.info("delete %s records!",row)
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            logger.error("delete error",exc_info=True)
+        finally:
+            self.closeConn(conn, cursor)
+            return row
+

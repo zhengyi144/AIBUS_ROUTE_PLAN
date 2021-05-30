@@ -47,7 +47,7 @@ def uploadSiteExcel():
            siteFile=aiBusModel.selectSiteFileIdByFileName((destination))
         else:
             #失效该文件对应所有临时site，后面重新插入
-            aiBusModel.updateSiteStatusByfieldId((3,siteFile["id"]))
+            aiBusModel.updateSiteStatusByfieldId((3,userInfo["userName"],siteFile["id"],2))
         #循环判断数据类型
         insertVals = []
         for item in dataset:
@@ -95,7 +95,7 @@ def uploadSiteExcel():
                     others=NULL
 
                 insertVals.append((siteFile["id"],region,item["siteName"],siteProperty,2,\
-                    float(item["longitude"]),float(item["latitude"]),clientName,clientProperty,clientAddress,age,grade,number,others,geojson))
+                    float(item["longitude"]),float(item["latitude"]),clientName,clientProperty,clientAddress,age,grade,number,others,userInfo["userName"],userInfo["userName"],geojson))
         if len(insertVals)>0:
             #现将批量导入文件信息插入tbl_site_files,并更新tbl_site_files.fileStatus为有效文件
             aiBusModel.updateSiteFile((1,len(insertVals),siteFile["id"]))
@@ -130,10 +130,26 @@ def querySiteFileList():
     except Exception as e:
         res.update(code=ResponseCode.Fail, data="查询报错！")
         return res.data
-    
+
+@route(sitedata, '/fuzzyQuerySiteFileList', methods=["POST"])
+@login_required
+def fuzzyQuerySiteFileList():
+    """
+    根据用户权限+文件名称文本模糊查询文件列表
+    """
+    res = ResMsg()
+    try:
+        aiBusModel=AiBusModel()
+        userInfo = session.get("userInfo")
+        queryText=request.form.get("queryText")
+        siteFileList=aiBusModel.selectSiteFileListByFileName(queryText,userInfo["citycode"],userInfo["userNames"])
+        res.update(code=ResponseCode.Success, data=siteFileList)
+        return res.data
+    except Exception as e:
+        res.update(code=ResponseCode.Fail, data="查询报错！")
+        return res.data
 
 @route(sitedata, '/queryConfirmedSiteInfo', methods=["POST"])
-@login_required
 def queryConfirmedSiteInfo():
     """
     根据网点文件id查询网点数据(返回已经确认导入的数据)
@@ -141,7 +157,6 @@ def queryConfirmedSiteInfo():
     res = ResMsg()
     try:
         aiBusModel=AiBusModel()
-        #userInfo = session.get("userInfo")
         fileId=request.form.get("fileId")
         siteInfo=aiBusModel.selectSiteInfoByFileId((fileId))
         res.update(code=ResponseCode.Success, data=siteInfo)
@@ -151,7 +166,6 @@ def queryConfirmedSiteInfo():
         return res.data
 
 @route(sitedata, '/queryTempSiteInfo', methods=["POST"])
-@login_required
 def queryTempSiteInfo():
     """
     根据网点文件id查询网点数据(返回未确认的数据)
@@ -159,7 +173,6 @@ def queryTempSiteInfo():
     res = ResMsg()
     try:
         aiBusModel=AiBusModel()
-        userInfo = session.get("userInfo")
         fileId=request.form.get("fileId")
         pageSize=int(request.form.get('pageSize'))
         pageNum=int(request.form.get('pageNum'))
@@ -180,9 +193,52 @@ def queryTempSiteInfo():
         if "number" in request.form:
             kwargs["number"]=request.form.get('number')  #客户年级
         
-
+        siteInfo=aiBusModel.selectTempSiteInfo(fileId,kwargs,pageSize,pageNum)
+        res.update(code=ResponseCode.Success, data=siteInfo)
+        return res.data
     except Exception as e:
         res.update(code=ResponseCode.Fail, data="查询报错！")
         return res.data
     
-    
+@route(sitedata, '/queryTempSiteInfo', methods=["POST"])
+@login_required
+def saveSiteList():
+    """
+    根据网点id保存网点信息：
+    1)先失效原先文件对应的网点
+    2)再更新新的网点
+    """
+    res = ResMsg()
+    try:
+        aiBusModel=AiBusModel()
+        userInfo = session.get("userInfo")
+        fileId=request.form.get("fileId")
+        siteIdList=request.form.get("siteIdList")
+        aiBusModel.updateSiteStatusByfieldId((3,userInfo["userName"],fileId,1))
+        row=aiBusModel.updateSiteStatusByIds(fileId,1,siteIdList,userInfo["userName"])
+        res.update(code=ResponseCode.Success, data="保存网点{}条".format(row))
+        return res.data
+    except Exception as e:
+        res.update(code=ResponseCode.Fail, data="保存报错！")
+        return res.data
+
+@route(sitedata, '/deleteSite', methods=["POST"])
+@login_required
+def deleteSite():
+    """
+    删除单个网点接口
+    """
+    res = ResMsg()
+    try:
+        aiBusModel=AiBusModel()
+        userInfo = session.get("userInfo")
+        fileId=request.form.get("fileId")
+        siteName=request.form.get("siteName")
+        latitude=request.form.get("latitude")
+        longitude=request.form.get("longitude")
+        #row=aiBusModel.updateSiteStatusByIds(fileId,1,siteIdList,userInfo["userName"])
+        res.update(code=ResponseCode.Success, data="删除网点{}条".format(0))
+        return res.data
+    except Exception as e:
+        res.update(code=ResponseCode.Fail, data="删除出错！")
+        return res.data
