@@ -138,7 +138,7 @@ class AiBusModel:
         selectStr="select id as fileId, fileName,siteCount from tbl_site_files t where t.userCitycode=%s and t.fileStatus=1 and fileName like %s"
         authStr=" and createUser in (%s)"% ','.join("'%s'" % item for item in userNames) 
         selectStr=selectStr+authStr
-        return self.mysqlPool.fetchAll(selectStr,(('%'+queryText+'%'),citycode))
+        return self.mysqlPool.fetchAll(selectStr,(citycode,('%'+queryText+'%')))
 
     def batchSites(self,rows):
         """
@@ -170,8 +170,8 @@ class AiBusModel:
         将临时网点更新为有效网点
         """
         updateStr="update tbl_site set siteStatus=%s,updateUser=%s where fileId=%s"
-        condition=" and id in (%s)"% ','.join("'%s'" % item for item in siteIds)
-        return self.mysqlPool.fetchAll(updateStr+condition,(siteStatus,userName,fileId))
+        condition=" and id in (%s)"% ','.join("%s" % item for item in siteIds)
+        return self.mysqlPool.update(updateStr+condition,(siteStatus,userName,fileId))
     
     def selectSiteInfoByFileId(self,row):
         """
@@ -198,4 +198,10 @@ class AiBusModel:
         args.append(pageNum*pageSize)
         args.append(pageSize)
         return self.mysqlPool.fetchAll(selectStr,args)
-        
+    
+    def invalidSiteBySiteName(self,row):
+        """
+        根据siteName、经纬度、fileId失效对应网点
+        """
+        updateStr="update tbl_site set siteStatus=%s,updateUser=%s WHERE siteName =%s and fileId=%s and longitude=%s and latitude=%s "
+        return self.mysqlPool.update(updateStr,row)

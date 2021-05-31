@@ -86,9 +86,9 @@ def uploadSiteExcel():
                 else:
                     grade=""
                 if "number" in item:
-                    number=item["number"]
+                    number=int(item["number"])
                 else:
-                    number=NULL
+                    number=0
                 if "others" in item:
                     others=item["others"]
                 else:
@@ -142,7 +142,7 @@ def fuzzyQuerySiteFileList():
         aiBusModel=AiBusModel()
         userInfo = session.get("userInfo")
         queryText=request.form.get("queryText")
-        siteFileList=aiBusModel.selectSiteFileListByFileName(queryText,userInfo["citycode"],userInfo["userNames"])
+        siteFileList=aiBusModel.fuzzyQuerySiteFileList(queryText,userInfo["citycode"],userInfo["userNames"])
         res.update(code=ResponseCode.Success, data=siteFileList)
         return res.data
     except Exception as e:
@@ -157,7 +157,7 @@ def queryConfirmedSiteInfo():
     res = ResMsg()
     try:
         aiBusModel=AiBusModel()
-        fileId=request.form.get("fileId")
+        fileId=int(request.form.get("fileId"))
         siteInfo=aiBusModel.selectSiteInfoByFileId((fileId))
         res.update(code=ResponseCode.Success, data=siteInfo)
         return res.data
@@ -173,7 +173,7 @@ def queryTempSiteInfo():
     res = ResMsg()
     try:
         aiBusModel=AiBusModel()
-        fileId=request.form.get("fileId")
+        fileId=int(request.form.get("fileId"))
         pageSize=int(request.form.get('pageSize'))
         pageNum=int(request.form.get('pageNum'))
         kwargs={}
@@ -200,7 +200,7 @@ def queryTempSiteInfo():
         res.update(code=ResponseCode.Fail, data="查询报错！")
         return res.data
     
-@route(sitedata, '/queryTempSiteInfo', methods=["POST"])
+@route(sitedata, '/saveSiteList', methods=["POST"])
 @login_required
 def saveSiteList():
     """
@@ -212,8 +212,9 @@ def saveSiteList():
     try:
         aiBusModel=AiBusModel()
         userInfo = session.get("userInfo")
-        fileId=request.form.get("fileId")
-        siteIdList=request.form.get("siteIdList")
+        fileId=int(request.form.get("fileId"))
+        siteIdList=list(map(int, request.form.get("siteIdList").split(",")))
+        print(siteIdList)
         aiBusModel.updateSiteStatusByfieldId((3,userInfo["userName"],fileId,1))
         row=aiBusModel.updateSiteStatusByIds(fileId,1,siteIdList,userInfo["userName"])
         res.update(code=ResponseCode.Success, data="保存网点{}条".format(row))
@@ -232,12 +233,12 @@ def deleteSite():
     try:
         aiBusModel=AiBusModel()
         userInfo = session.get("userInfo")
-        fileId=request.form.get("fileId")
+        fileId=int(request.form.get("fileId"))
         siteName=request.form.get("siteName")
-        latitude=request.form.get("latitude")
-        longitude=request.form.get("longitude")
-        #row=aiBusModel.updateSiteStatusByIds(fileId,1,siteIdList,userInfo["userName"])
-        res.update(code=ResponseCode.Success, data="删除网点{}条".format(0))
+        latitude=float(request.form.get("latitude"))
+        longitude=float(request.form.get("longitude"))
+        row=aiBusModel.invalidSiteBySiteName((3,userInfo["userName"],siteName,fileId,longitude,latitude))
+        res.update(code=ResponseCode.Success, data="删除网点{}条".format(row))
         return res.data
     except Exception as e:
         res.update(code=ResponseCode.Fail, data="删除出错！")
