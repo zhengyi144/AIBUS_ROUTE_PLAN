@@ -1,5 +1,6 @@
 from re import sub
 import jwt
+import logging
 from datetime import datetime, timedelta
 from flask import current_app, request, session
 from functools import wraps
@@ -8,6 +9,7 @@ from app.utils.core import JSONEncoder
 from app.utils.response import ResMsg
 from app.models.ai_bus_model import AiBusModel
 
+logger = logging.getLogger(__name__)
 
 class Auth(object):
     key="auth##"
@@ -30,18 +32,19 @@ class Auth(object):
         now = datetime.utcnow()
         exp_datetime = now + timedelta(hours=exp)
         access_payload = {
-            'exp': str(exp_datetime),
+            'exp': int(datetime.timestamp(exp_datetime)),
             'flag': 0,  # 标识是否为一次性token，0是，1不是
-            'iat': str(now),  # 开始时间
+            'iat': int(datetime.timestamp(now)),  # 开始时间
             'iss': 'qin',  # 签名
             'data':{
                 'userName':userName,
                 'citycode':citycode,
-                'role': role,
-                'time':now
+                'role': role
             }
         }
-        access_token = jwt.encode(access_payload, key, algorithm=algorithm,json_encoder=JSONEncoder)
+        access_token = jwt.encode(access_payload, key, algorithm=algorithm,json_encoder=JSONEncoder)#
+        #payload = jwt.decode(access_token, key=key, options={'verify_exp': False},algorithms='HS256')
+        #print(access_token,payload)
         return access_token
 
     @classmethod
@@ -54,9 +57,16 @@ class Auth(object):
         key = current_app.config.get('SECRET_KEY', cls.key)
         try:
             # 取消过期时间验证
-            payload = jwt.decode(token, key=key, options={'verify_exp': False},algorithms=algorithm)
-            #payload = jwt.decode(token, key=key,algorithms=algorithm )
-        except (jwt.ExpiredSignatureError, jwt.InvalidTokenError, jwt.InvalidSignatureError):
+            payload = jwt.decode(token, key=key, options={'verify_exp': False},algorithms='HS256')
+            #payload = jwt.decode(token, key=key ,algorithms=algorithm)
+        except jwt.ExpiredSignatureError:
+            logger.error("token验证超时！")
+            return None
+        except jwt.InvalidTokenError:
+            logger.error("无效token！")
+            return None
+        except jwt.InvalidSignatureError:
+            logger.error("token签名错误！")
             return None
         else:
             return payload
