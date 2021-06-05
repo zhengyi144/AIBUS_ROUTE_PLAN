@@ -214,7 +214,6 @@ def saveSiteList():
         userInfo = session.get("userInfo")
         fileId=int(request.form.get("fileId"))
         siteIdList=list(map(int, request.form.get("siteIdList").split(",")))
-        print(siteIdList)
         aiBusModel.updateSiteStatusByfieldId((3,userInfo["userName"],fileId,1))
         row=aiBusModel.updateSiteStatusByIds(fileId,1,siteIdList,userInfo["userName"])
         res.update(code=ResponseCode.Success, data="保存网点{}条".format(row))

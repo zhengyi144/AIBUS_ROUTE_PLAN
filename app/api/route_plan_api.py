@@ -1,4 +1,5 @@
 import logging
+import numpy as np
 from flask import Blueprint, jsonify, session, request, current_app
 from app.utils.code import ResponseCode
 from app.utils.response import ResMsg
@@ -15,10 +16,17 @@ routeplan = Blueprint("routeplan", __name__, url_prefix='/routeplan')
 logger = logging.getLogger(__name__)
 
 @route(routeplan, '/sortWayPoints', methods=["POST"])
-@login_required
 def sortWayPoints():
     """
     利用模拟退火算法对途经点进行排序
     """
     res = ResMsg()
-    
+    try:
+        data=request.get_json()
+        sortPoints,minDist=tspSolution(data["destination"],data["waypoints"])
+        sortPoints
+        res.update(code=ResponseCode.Success,data={"sortPoints":np.array(sortPoints)[:-1].tolist(),"minDist":minDist})
+        return res.data
+    except Exception as e:
+        res.update(code=ResponseCode.Fail, data="排序报错！")
+        return res.data
