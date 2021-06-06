@@ -54,6 +54,7 @@ def clusteringByDbscan(latList,lngList,epsRadius,minSamples):
         clusterLabels = db.labels_
         uniqueClusterLabels = set(clusterLabels)
         nClusters = len(uniqueClusterLabels) - (-1 in clusterLabels)
+        print(nClusters)
         # X['cluster'] = y_db
         # print(X['lat'], X['lng'], X['cluster'])
         # print(X)
@@ -61,24 +62,34 @@ def clusteringByDbscan(latList,lngList,epsRadius,minSamples):
         # 异常点
         offset_mask = (clusterLabels == -1)
         
-        noiseSamples=X[offset_mask]
-        #聚类点
-        coreSamples= X[coreSamplesMask]
-        #边界点
-        p_mask = ~(coreSamplesMask | offset_mask)
-        aroundSamples= X[p_mask]#X['lat'], X['lng'], X['cluster']
+        noiseSamples=X[offset_mask].values
+        # #聚类点
+        # coreSamples= X[coreSamplesMask].values
+        # #边界点
+        # p_mask = ~(coreSamplesMask | offset_mask)
+        # aroundSamples= X[p_mask].values#X['lat'], X['lng'], X['cluster']
 
-        # for i,cluster in enumerate(uniqueClusterLabels):
-        #     #clusterIndex是个True/Fasle数组，其中True表示对应样本为聚类点
-        #     clusterIndex =(clusterLabels==cluster)
-        #     #聚类点
-        #     coreSamples= X[clusterIndex&coreSamplesMask]
-        #     #异常点
-        #     aroundSamples= X[clusterIndex&~coreSamplesMask]
-        #     # noiseSamples= X[cluster== -1]
+        clusterSet =[]
+        # aroundSet ={}
+        for i,cluster in enumerate(uniqueClusterLabels):
+            # offset_mask = (cluster == -1)
+            # noiseSamples1= X[offset_mask]
+            #clusterIndex是个True/Fasle数组，其中True表示对应样本为聚类点
+            if cluster!=-1:
+                clusterIndex =(clusterLabels==cluster)
+                #聚类点
+                coreSamples= X[clusterIndex&coreSamplesMask].values
+                #聚类网点id
+                clusterInfo ={}
+                clusterInfo['siteSet'] = i
+                clusterInfo['locationset'] = coreSamples
+                clusterSet.append(clusterInfo)
+                #边界点
+                aroundSamples= X[(clusterIndex&~coreSamplesMask)].values
+            # noiseSamples= X[cluster== -1]
 
 
-    return coreSamples,noiseSamples,aroundSamples
+    return clusterSet,noiseSamples,aroundSamples
 
 
 if __name__=="__main__":
@@ -94,8 +105,10 @@ if __name__=="__main__":
     # 反之min_samples过小的话，则会产生大量的核心对象，可能会导致类别数过少。
     min_samples=2#聚合所需指定的min_samples数目为3个（一个聚合点至少是三个人）
 
-    latList = [119.27469246249998,119.32690238333333,118.27469246249998,118.32690238333333,117.927469246249998,116.32690238333333]#假设有两个候选点
-    lngList = [26.026210115,26.140896100000003,25.026210115,25.140896100000003,24.026210115,20.140896100000003]
+    latList = [119.27469246249998,119.274748,119.274848,119.32690238333333,119.32710,118.27469246249998,118.32690238333333,117.927469246249998,116.32690238333333]#假设有两个候选点
+    lngList = [26.026210115,26.02631,26.02731,26.140896100000003,26.140906,25.026210115,25.140896100000003,24.026210115,20.140896100000003]
     # canCent=[]#默认为空
     coreSamples,nosieSamples,aroundSamples =clusteringByDbscan(latList,lngList,eps,min_samples)
-    print(coreSamples,nosieSamples,aroundSamples)
+    print(coreSamples)
+    print(nosieSamples)
+    print(aroundSamples)
