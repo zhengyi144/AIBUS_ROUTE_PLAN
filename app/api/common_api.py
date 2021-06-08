@@ -23,10 +23,11 @@ def login():
     :return:
     """
     res = ResMsg()
-    userName = request.form.get('userName')
-    password = request.form.get("password")
-    citycode = request.form.get("citycode")
-    role= int(request.form.get("role"))
+    data=request.get_json()
+    userName = data['userName']
+    password = data["password"]
+    citycode = data["citycode"]
+    role= int(data["role"])
     # 未获取到参数或参数不存在
     if  not userName or not password or not citycode or role is None:
         res.update(code=ResponseCode.InvalidParameter)

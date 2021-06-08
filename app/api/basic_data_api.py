@@ -59,7 +59,8 @@ def fuzzyQueryStationName():
     try:
         aiBusModel=AiBusModel()
         userInfo = session.get("userInfo")
-        queryText=request.form.get('queryText')
+        data=request.get_json()
+        queryText=data['queryText']
         row=aiBusModel.selectStationNameByText(queryText,userInfo["citycode"],userInfo["userNames"])
         res.update(code=ResponseCode.Success, data=row)
         return res.data
@@ -74,13 +75,14 @@ def queryStationList():
     try:
         aiBusModel=AiBusModel()
         userInfo = session.get("userInfo")
-        province=request.form.get('province')
-        city=request.form.get('city')
-        siteName=request.form.get('siteName')
-        road=request.form.get('road')
-        siteStatus=request.form.get('siteStatus')
-        pageSize=int(request.form.get('pageSize'))
-        pageNum=int(request.form.get('pageNum'))
+        data=request.get_json()
+        province=data['province']
+        city=data['city']
+        siteName=data['siteName']
+        road=data['road']
+        siteStatus=data['siteStatus']
+        pageSize=int(data['pageSize'])
+        pageNum=int(data['pageNum'])
         row=aiBusModel.selectStationList(province,city,siteName,road,siteStatus,userInfo["citycode"],pageSize,pageNum,userInfo["userNames"])
         res.update(code=ResponseCode.Success, data=row)
         return res.data
@@ -98,37 +100,38 @@ def upInsertStation():
     try:
         aiBusModel=AiBusModel()
         userInfo = session.get("userInfo")
-        province=request.form.get('province')
-        city=request.form.get('city')
-        region=request.form.get("region")
-        siteName=request.form.get('siteName')
-        siteProperty=request.form.get('siteProperty')
+        data=request.get_json()
+        province=data['province']
+        city=data['city']
+        region=data["region"]
+        siteName=data['siteName']
+        siteProperty=data['siteProperty']
         if siteProperty=="固定":
             siteProperty=1
         else:
             siteProperty=0
-        road=request.form.get('road')
-        siteStatus=request.form.get('siteStatus')
+        road=data['road']
+        siteStatus=data['siteStatus']
         if siteStatus=="有效":
             siteStatus=1
         elif siteStatus=="无效":
             siteStatus=2
         else:
             siteStatus=3
-        latitude=float(request.form.get("latitude"))
-        longitude=float(request.form.get("longitude"))
-        direction=request.form.get("direction")
-        unilateral=request.form.get("unilateral")
+        latitude=float(data["latitude"])
+        longitude=float(data["longitude"])
+        direction=data["direction"]
+        unilateral=data["unilateral"]
         if unilateral=="是":
             unilateral=1
         else:
             unilateral=0
-        upInsertType=request.form.get("upInsertType")
+        upInsertType=data["upInsertType"]
         geojson = '{ "type": "Point", "coordinates": [%s, %s]}'% (longitude,latitude)
         if upInsertType=="I":
             row=aiBusModel.insertStation((province,city,region,siteName,siteProperty,siteStatus,direction,longitude,latitude,road,unilateral,userInfo["citycode"],userInfo["userName"],userInfo["userName"]),geojson)
         else:
-            id=request.form.get('id')
+            id=data['id']
             if id is None or id=="":
                 res.update(code=ResponseCode.InvalidParameter,data="更新站点id不能为null")
                 return res.data
