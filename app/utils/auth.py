@@ -38,8 +38,8 @@ class Auth(object):
             'iss': 'qin',  # 签名
             'data':{
                 'userName':userName,
-                'citycode':citycode,
-                'role': role
+                'citycode':citycode
+                #'role': role
             }
         }
         access_token = jwt.encode(access_payload, key, algorithm=algorithm,json_encoder=JSONEncoder)#

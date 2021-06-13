@@ -24,11 +24,10 @@ def uploadStationExcel():
     aiBusModel=AiBusModel()
     userInfo = session.get("userInfo")
     #获取excel文件
-    excelFile = request.files['file']
-    dataset=readExcel(excelFile,0,"station")
+    data=request.get_json()
     #循环判断数据类型
     insertVals = []
-    for item in dataset:
+    for item in data["items"]:
         if item["siteName"] =="" or item["siteName"] is None or\
            item["siteProperty"] =="" or item["siteProperty"] is None or\
            item["longitude"] =="" or item["longitude"] is None or \
