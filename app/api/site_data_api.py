@@ -26,13 +26,14 @@ def uploadSiteExcel():
         aiBusModel=AiBusModel()
         userInfo = session.get("userInfo")
         #获取excel文件
-        excelFile = request.files['file']
-        dataset=readExcel(excelFile,0,"site")
+        #excelFile = request.files['file']
+        #dataset=readExcel(excelFile,0,"site")
         #获取目的信息
-        destination=request.form.get("destination")
-        longitude=request.form.get("longitude")
-        latitude=request.form.get("latitude")
-        mapType=request.form.get("mapType")
+        data=request.get_json()
+        destination=data["destination"]
+        longitude=data["longitude"]
+        latitude=data["latitude"]
+        mapType=data["mapType"]
         if destination is None or destination=="" or\
            longitude is None or longitude=="" or \
            latitude is None or latitude=="" or \
@@ -50,7 +51,7 @@ def uploadSiteExcel():
             aiBusModel.updateSiteStatusByfieldId((3,userInfo["userName"],siteFile["id"],2))
         #循环判断数据类型
         insertVals = []
-        for item in dataset:
+        for item in data["items"]:
             if item["siteName"] is None or item["siteName"] =="" or \
                item["longitude"] is None or item["longitude"] =="" or  \
                item["latitude"] is None or item["latitude"] =="" :
@@ -141,7 +142,7 @@ def fuzzyQuerySiteFileList():
     try:
         aiBusModel=AiBusModel()
         userInfo = session.get("userInfo")
-        queryText=request.form.get("queryText")
+        queryText=request.get_json()["queryText"]
         siteFileList=aiBusModel.fuzzyQuerySiteFileList(queryText,userInfo["citycode"],userInfo["userNames"])
         res.update(code=ResponseCode.Success, data=siteFileList)
         return res.data
@@ -157,7 +158,7 @@ def queryConfirmedSiteInfo():
     res = ResMsg()
     try:
         aiBusModel=AiBusModel()
-        fileId=int(request.form.get("fileId"))
+        fileId=int(request.get_json["fileId"])
         siteInfo=aiBusModel.selectSiteInfoByFileId((fileId))
         res.update(code=ResponseCode.Success, data=siteInfo)
         return res.data
@@ -173,25 +174,26 @@ def queryTempSiteInfo():
     res = ResMsg()
     try:
         aiBusModel=AiBusModel()
-        fileId=int(request.form.get("fileId"))
-        pageSize=int(request.form.get('pageSize'))
-        pageNum=int(request.form.get('pageNum'))
+        data=request.get_json()
+        fileId=int(data["fileId"])
+        pageSize=int(data['pageSize'])
+        pageNum=int(data['pageNum'])
         kwargs={}
-        if "region" in request.form:
-            region=request.form.get('region')  #区域
+        if "region" in data:
+            region=data['region'] #区域
             kwargs["region"]=region
-        if "siteProperty" in request.form:
-            kwargs["siteProperty"]=request.form.get('siteProperty')  #公交站点属性
-        if "clientName" in request.form:
-            kwargs["clientName"]=request.form.get('cliantName')  #客户姓名
-        if "clientProperty" in request.form:
-            kwargs["clientProperty"]=request.form.get('clientProperty')  #客户属性
-        if "age" in request.form:
-            kwargs["age"]=request.form.get('age')  #客户年龄
-        if "grade" in request.form:
-            kwargs["grade"]=request.form.get('grade')  #客户年级
-        if "number" in request.form:
-            kwargs["number"]=request.form.get('number')  #客户年级
+        if "siteProperty" in data:
+            kwargs["siteProperty"]=1 if data["siteProperty"]=="固定" else 0  #公交站点属性
+        if "clientName" in data:
+            kwargs["clientName"]=data['cliantName']  #客户姓名
+        if "clientProperty" in data:
+            kwargs["clientProperty"]=data['clientProperty']  #客户属性
+        if "age" in data:
+            kwargs["age"]=data['age']  #客户年龄
+        if "grade" in data:
+            kwargs["grade"]=data['grade']  #客户年级
+        if "number" in data:
+            kwargs["number"]=data['number']  #客户年级
         
         siteInfo=aiBusModel.selectTempSiteInfo(fileId,kwargs,pageSize,pageNum)
         res.update(code=ResponseCode.Success, data=siteInfo)
@@ -212,8 +214,10 @@ def saveSiteList():
     try:
         aiBusModel=AiBusModel()
         userInfo = session.get("userInfo")
-        fileId=int(request.form.get("fileId"))
-        siteIdList=list(map(int, request.form.get("siteIdList").split(",")))
+        data=request.get_json()
+        fileId=int(data["fileId"])
+        siteIdList=data["siteIdList"]
+        #siteIdList=list(map(int, request.form.get("siteIdList").split(",")))
         aiBusModel.updateSiteStatusByfieldId((3,userInfo["userName"],fileId,1))
         row=aiBusModel.updateSiteStatusByIds(fileId,1,siteIdList,userInfo["userName"])
         res.update(code=ResponseCode.Success, data="保存网点{}条".format(row))
@@ -232,10 +236,11 @@ def deleteSite():
     try:
         aiBusModel=AiBusModel()
         userInfo = session.get("userInfo")
-        fileId=int(request.form.get("fileId"))
-        siteName=request.form.get("siteName")
-        latitude=float(request.form.get("latitude"))
-        longitude=float(request.form.get("longitude"))
+        data=request.get_json()
+        fileId=data["fileId"]
+        siteName=data["siteName"]
+        latitude=float(data["latitude"])
+        longitude=float(data["longitude"])
         row=aiBusModel.invalidSiteBySiteName((3,userInfo["userName"],siteName,fileId,longitude,latitude))
         res.update(code=ResponseCode.Success, data="删除网点{}条".format(row))
         return res.data
