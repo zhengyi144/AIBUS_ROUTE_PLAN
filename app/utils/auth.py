@@ -16,7 +16,6 @@ class Auth(object):
     @classmethod
     def encode_auth_token(cls, userName: str,
                           citycode:str,
-                          role: int,
                           exp: float = 24,
                           algorithm: str = 'HS256'):
         """
@@ -71,7 +70,7 @@ class Auth(object):
         else:
             return payload
     
-    def authenticate(self,userName,password,citycode,role):
+    def authenticate(self,userName,password,citycode):
         """
         用户登录认证，登录成功返回token,登录失败返回失败原因
         """
@@ -83,7 +82,7 @@ class Auth(object):
             res.update(code=ResponseCode.AccountOrPassWordErr)
             return res.data
         else:
-            token=self.encode_auth_token(userName,citycode,role)
+            token=self.encode_auth_token(userName,citycode)
             res.update(code=ResponseCode.Success,data={"token":token})
             return res.data
     

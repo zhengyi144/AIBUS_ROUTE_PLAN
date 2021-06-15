@@ -158,7 +158,8 @@ def queryConfirmedSiteInfo():
     res = ResMsg()
     try:
         aiBusModel=AiBusModel()
-        fileId=int(request.get_json["fileId"])
+        data=request.get_json()
+        fileId=int(data["fileId"])
         siteInfo=aiBusModel.selectSiteInfoByFileId((fileId))
         res.update(code=ResponseCode.Success, data=siteInfo)
         return res.data
@@ -185,7 +186,7 @@ def queryTempSiteInfo():
         if "siteProperty" in data:
             kwargs["siteProperty"]=1 if data["siteProperty"]=="固定" else 0  #公交站点属性
         if "clientName" in data:
-            kwargs["clientName"]=data['cliantName']  #客户姓名
+            kwargs["clientName"]=data['clientName']  #客户姓名
         if "clientProperty" in data:
             kwargs["clientProperty"]=data['clientProperty']  #客户属性
         if "age" in data:

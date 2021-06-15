@@ -27,13 +27,13 @@ def login():
     userName = data['userName']
     password = data["password"]
     citycode = data["citycode"]
-    role= int(data["role"])
+    #role= int(data["role"])
     # 未获取到参数或参数不存在
-    if  not userName or not password or not citycode or role is None:
+    if  not userName or not password or not citycode:
         res.update(code=ResponseCode.InvalidParameter)
         return res.data
     auth = Auth()
-    return auth.authenticate(userName,password,citycode,role)
+    return auth.authenticate(userName,password,citycode)
 
 
 ####################--------前端网页下载excel表格--------###########################
