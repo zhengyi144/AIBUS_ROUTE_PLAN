@@ -64,7 +64,7 @@ class AiBusModel:
         """
         模糊查询stationName
         """
-        selectStr="select id,siteName,siteProperty,province,city,region,road \
+        selectStr="select id,siteName,siteProperty,province,city,region,road,longitude,latitude \
                    from tbl_station where siteName like %s and userCitycode=%s "
         authStr="and createUser in (%s)"% ','.join("'%s'" % item for item in userNames) 
         row=self.mysqlPool.fetchAll(selectStr+authStr,(('%'+queryText+'%'),citycode))
@@ -205,3 +205,10 @@ class AiBusModel:
         """
         updateStr="update tbl_site set siteStatus=%s,updateUser=%s WHERE siteName =%s and fileId=%s and longitude=%s and latitude=%s "
         return self.mysqlPool.update(updateStr,row)
+    
+    def selectSiteFileStatus(self,fileId):
+        """
+        查询网点文件状态
+        """
+        selectStr="SELECT fileProperty,fileStatus from tbl_site_files where id=%s"
+        return self.mysqlPool.fetchOne(selectStr,(fileId))
