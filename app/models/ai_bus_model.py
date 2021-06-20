@@ -175,7 +175,7 @@ class AiBusModel:
     
     def selectSiteInfoByFileId(self,row):
         """
-        根据文件id查找siteInfo
+        根据文件id查找siteInfo,GROUP BY siteName, latitude,longitude
         """
         selectStr="SELECT siteName, latitude,longitude,SUM(number) AS clientNumber \
                    FROM tbl_site WHERE fileId = %s AND siteStatus = 1 GROUP BY siteName, latitude,longitude"
@@ -212,3 +212,21 @@ class AiBusModel:
         """
         selectStr="SELECT fileProperty,fileStatus from tbl_site_files where id=%s"
         return self.mysqlPool.fetchOne(selectStr,(fileId))
+    
+    def selectSiteGeoListByFileId(self,fileId):
+        """
+        根据文件id查询SiteGeoList
+        """
+        selectStr="SELECT id, latitude,longitude,clusterName,number \
+                   FROM tbl_site WHERE fileId = %s AND siteStatus = 1"
+        return self.mysqlPool.fetchAll(selectStr,(fileId))
+
+    def batchClusterSites(self,rows):
+        """
+        tbl_cluster_result
+        """
+        batchStr="insert into tbl_cluster_result(fileId,siteId,clusterName,clusterProperty,clusterStatus,\
+                                                 longitude,latitude,number,siteSet)  \
+                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        row=self.mysqlPool.batch(batchStr,rows)
+        return row

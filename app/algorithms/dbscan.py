@@ -54,6 +54,8 @@ def clusterByDbscan(dataList,epsRadius,minSamples):
     dataList:[{"id","lat","lng",""},{"id","lat","lng",""}],必需包括id,lat,lng字段
     epsRadius: 聚内直线距离(km)
     minSamples：最少点数目
+    return：
+    {'noiseIds': [24, 25], 'clusterSet': [{'clusterCoreIds': [20, 21, 26], 'clusterCenterId': 26.0, 'clusterAroundIds': []}, {'clusterCoreIds': [22, 23], 'clusterCenterId': 22.0, 'clusterAroundIds': []}]}
     """
     if epsRadius and dataList:
         df = pd.DataFrame(dataList)
