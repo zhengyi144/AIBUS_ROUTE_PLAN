@@ -37,8 +37,6 @@ def calcClusterCenter(clusterDataFrame):
     clusterDataFrame=clusterDataFrame.reset_index()
     meanLat=clusterDataFrame["lat"].mean()
     meanLng=clusterDataFrame["lng"].mean()
-    #clusterDataFrame["meanLng"]=meanLng
-    #clusterDataFrame["meanLat"]=meanLat
     clusterDataFrame["dist"]=clusterDataFrame.apply(lambda x:getGPSDistance(x["lng"],x["lat"],meanLng,meanLat),axis=1)
     minIndex=clusterDataFrame["dist"].idxmin()
     return clusterDataFrame.loc[minIndex,["id"]].values
@@ -59,6 +57,8 @@ def clusterByDbscan(dataList,epsRadius,minSamples):
     """
     if epsRadius and dataList:
         df = pd.DataFrame(dataList)
+        df["lat"]=df["lat"].astype(float)
+        df["lng"]=df["lng"].astype(float)
         X=df[["lat","lng"]]
         distance_matrix = squareform(pdist(X, (lambda u, v: haversine(u, v))))
         #选取0.5公里（500m）作为密度聚合半径参数，在此使用球面距离来衡量地理位置的距离，来作为聚合的半径参数。

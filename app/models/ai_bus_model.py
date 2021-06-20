@@ -217,16 +217,36 @@ class AiBusModel:
         """
         根据文件id查询SiteGeoList
         """
-        selectStr="SELECT id, latitude,longitude,clusterName,number \
-                   FROM tbl_site WHERE fileId = %s AND siteStatus = 1"
+        selectStr="SELECT id, latitude as lat,longitude as lng,siteName,number \
+                   FROM tbl_site WHERE fileId = %s AND siteStatus = 1 and siteProperty=1"
         return self.mysqlPool.fetchAll(selectStr,(fileId))
 
     def batchClusterSites(self,rows):
         """
         tbl_cluster_result
         """
-        batchStr="insert into tbl_cluster_result(fileId,siteId,clusterName,clusterProperty,clusterStatus,\
-                                                 longitude,latitude,number,siteSet)  \
-                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        batchStr="insert into tbl_cluster_result(fileId,relativeId,clusterName,clusterProperty,clusterStatus,\
+                                                 longitude,latitude,number,siteSet,createUser,updateUser)  \
+                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
         row=self.mysqlPool.batch(batchStr,rows)
+        return row
+    
+    def invalidClusterSitesByFileId(self,row):
+        """
+        更新tbl_cluster_result
+        """
+        updateStr="update tbl_cluster_result set clusterStatus=0,updateUser=%s where fileId=%s and clusterStatus=1"
+        row=self.mysqlPool.update(updateStr,row)
+        return row
+    
+    def invalidClusterSitesBySiteId(self,row):
+        updateStr="update tbl_cluster_result set clusterStatus=0,updateUser=%s where fileId=%s and relativeId=%s  and clusterStatus=1"
+        row=self.mysqlPool.update(updateStr,row)
+        return row
+    
+    def insertClusterPoint(self,row):
+        batchStr="insert into tbl_cluster_result(fileId,relativeId,clusterName,clusterProperty,clusterStatus,\
+                                                 longitude,latitude,number,createUser,updateUser)  \
+                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        row=self.mysqlPool.insert(batchStr,row)
         return row
