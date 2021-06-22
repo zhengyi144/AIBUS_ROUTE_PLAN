@@ -58,7 +58,12 @@ def uploadSiteExcel():
                res.update(code=ResponseCode.InsertValueIsNull)
                return res.data
             else:
-                siteProperty=1 if item["siteProperty"]=="固定" else 0
+                if item["siteProperty"]=="固定":
+                    siteProperty=1 
+                elif item["siteProperty"]=="临时":
+                    siteProperty=0
+                else:
+                    siteProperty=2
                 #geojson = { "type": "Point", "coordinates": [float(item["longitude"]),float(item["latitude"])]}
                 geojson = '{ "type": "Point", "coordinates": [%s, %s]}'%(float(item["longitude"]),float(item["latitude"]))
 

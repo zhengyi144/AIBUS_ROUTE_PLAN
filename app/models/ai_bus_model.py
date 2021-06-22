@@ -217,17 +217,17 @@ class AiBusModel:
         """
         根据文件id查询SiteGeoList
         """
-        selectStr="SELECT id, latitude as lat,longitude as lng,siteName,number \
-                   FROM tbl_site WHERE fileId = %s AND siteStatus = 1 and siteProperty=1"
+        selectStr="SELECT id,siteProperty, latitude as lat,longitude as lng,siteName,number \
+                   FROM tbl_site WHERE fileId = %s AND siteStatus = 1"
         return self.mysqlPool.fetchAll(selectStr,(fileId))
 
     def batchClusterSites(self,rows):
         """
         tbl_cluster_result
         """
-        batchStr="insert into tbl_cluster_result(fileId,relativeId,clusterName,clusterProperty,clusterStatus,\
+        batchStr="insert into tbl_cluster_result(fileId,relativeId,clusterName,relativeProperty,clusterProperty,clusterStatus,\
                                                  longitude,latitude,number,siteSet,createUser,updateUser)  \
-                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
         row=self.mysqlPool.batch(batchStr,rows)
         return row
     
@@ -249,4 +249,10 @@ class AiBusModel:
                                                  longitude,latitude,number,createUser,updateUser)  \
                    values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
         row=self.mysqlPool.insert(batchStr,row)
+        return row
+    
+    def selectClusterResult(self,row):
+        selectStr="select relativeId,clusterName,relativeProperty,clusterProperty,longitude,\
+                  latitude,number,siteSet from tbl_cluster_result where clusterStatus=1 and fileId=%s"
+        row=self.mysqlPool.fetchAll(selectStr,row)
         return row

@@ -56,8 +56,8 @@ def generateClusterPoints():
         for id in clusterInfo["noiseIds"]:
             relativeId="site_"+str(id)
             site=siteGeoDict[str(id)]
-            insertVals.append((fileId,relativeId,site["siteName"],0,1,site["lng"],site["lat"],site["number"],"",userInfo["userName"],userInfo["userName"]))
-            clusterOutPoints.append({"id":relativeId,"siteName":site["siteName"],"number":site["number"],"longitude":site["lng"],"latitude":site["lat"]})
+            insertVals.append((fileId,relativeId,site["siteName"],site["siteProperty"],0,1,site["lng"],site["lat"],site["number"],"",userInfo["userName"],userInfo["userName"]))
+            clusterOutPoints.append({"id":relativeId,"siteName":site["siteName"],"siteProperty":site["siteProperty"],"number":site["number"],"longitude":site["lng"],"latitude":site["lat"]})
 
         #2)处理聚类点
         for cluster in clusterInfo["clusterSet"]:
@@ -67,14 +67,14 @@ def generateClusterPoints():
             site=siteGeoDict[str(clusterId)]
             for id in cluster["clusterCoreIds"]:
                 clusterNumber+=siteGeoDict[str(id)]["number"]
-            insertVals.append((fileId,"site_"+str(clusterId),site["siteName"],1,1,site["lng"],site["lat"],clusterNumber,",".join(map(str, cluster["clusterCoreIds"])),userInfo["userName"],userInfo["userName"]))
-            clusterCorePoints.append({"id":"site_"+str(clusterId),"siteName":site["siteName"],"number":clusterNumber,"longitude":site["lng"],"latitude":site["lat"]})
+            insertVals.append((fileId,"site_"+str(clusterId),site["siteName"],site["siteProperty"],1,1,site["lng"],site["lat"],clusterNumber,",".join(map(str, cluster["clusterCoreIds"])),userInfo["userName"],userInfo["userName"]))
+            clusterCorePoints.append({"id":"site_"+str(clusterId),"siteName":site["siteName"],"siteProperty":site["siteProperty"],"number":clusterNumber,"longitude":site["lng"],"latitude":site["lat"]})
             #处理边界点
             for id in cluster["clusterAroundIds"]:
                 relativeId="site_"+str(id)
                 aroundSite=siteGeoDict[str(id)]
-                insertVals.append((fileId,relativeId,aroundSite["siteName"],2,1,aroundSite["lng"],aroundSite["lat"],aroundSite["number"],"",userInfo["userName"],userInfo["userName"]))
-                clusterAroundPoints.append({"id":relativeId,"siteName":aroundSite["siteName"],"number":aroundSite["number"],"longitude":aroundSite["lng"],"latitude":aroundSite["lat"]})
+                insertVals.append((fileId,relativeId,aroundSite["siteName"],aroundSite["siteProperty"],2,1,aroundSite["lng"],aroundSite["lat"],aroundSite["number"],"",userInfo["userName"],userInfo["userName"]))
+                clusterAroundPoints.append({"id":relativeId,"siteName":aroundSite["siteName"],"siteProperty":site["siteProperty"],"number":aroundSite["number"],"longitude":aroundSite["lng"],"latitude":aroundSite["lat"]})
         #3)插入聚类点并返回
         aiBusModel.batchClusterSites(insertVals)
         res.update(code=ResponseCode.Success, data={"clusterCorePoints":clusterCorePoints,"clusterAroundPoints":clusterAroundPoints,"clusterOutPoints":clusterOutPoints})
@@ -126,3 +126,52 @@ def addNewClusterPoint():
     except Exception as e:
         res.update(code=ResponseCode.Fail)
         return res.data
+
+@route(cluster,'/queryClusterResult',methods=["POST"])
+@login_required
+def queryClusterResult():
+    res = ResMsg()
+    try:
+        aiBusModel=AiBusModel()
+        userInfo = session.get("userInfo")
+        data=request.get_json()
+        fileId=data["fileId"]
+        clusterOutPoints=[]
+        clusterCorePoints=[]
+        clusterAroundPoints=[]
+        #查询聚类结果
+        clusterResut=aiBusModel.selectClusterResult((fileId))
+        for item in clusterResut:
+            row={"id":item["relativeId"],"siteName":item["clusterName"],"siteProperty":item["relativeProperty"],\
+                    "longitude":item["longitude"],"latitude":item["latitude"],"number":item["number"]}
+            if item["clusterProperty"]==1:
+                clusterCorePoints.append(row)
+            elif item["clusterProperty"]==2:
+                clusterAroundPoints.append(row)
+            else:
+                clusterAroundPoints.append(row)
+        res.update(code=ResponseCode.Success, data={"clusterCorePoints":clusterCorePoints,"clusterAroundPoints":clusterAroundPoints,"clusterOutPoints":clusterOutPoints})
+        return res.data
+    except Exception as e:
+        res.update(code=ResponseCode.Fail)
+        return res.data
+
+@route(cluster,'/removeClusterResult',methods=["POST"])
+@login_required
+def removeClusterResult():
+    """
+    失效聚类结果
+    """
+
+@route(cluster,'/mergeClusterPoints',methods=["POST"])
+@login_required
+def mergeClusterPoints():
+    """
+    合并聚类点
+    """
+    return
+
+@route(cluster,'/mergeClusterPoints',methods=["POST"])
+@login_required
+def mergeClusterPoints():
+    return
