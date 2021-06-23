@@ -261,8 +261,8 @@ class AiBusModel:
     def selectClusterNumberById(self,fileId,siteIds):
         selectStr="SELECT sum(t.number) AS number,GROUP_CONCAT(t.siteSet) AS siteSet FROM tbl_cluster_result t \
                          WHERE t.fileId = %s"
-        condition=" and relativeId in (%s)"% ','.join("%s" % item for item in siteIds)
-        row=self.mysqlPool.fetchOne(selectStr,(fileId))
+        condition=" and relativeId in (%s)"% ','.join("'%s'" % item for item in siteIds)
+        row=self.mysqlPool.fetchOne(selectStr+condition,(fileId))
         return row
     
     def updateClusterPointBySiteId(self,row):
