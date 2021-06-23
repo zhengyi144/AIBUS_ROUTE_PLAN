@@ -38,7 +38,7 @@ def generateClusterPoints():
             res.update(code=ResponseCode.Fail,data="该网点文件已经失效!")
             return res.data
         #判断该网点文件是否已经聚类过,聚类过则对结果进行失效
-        aiBusModel.invalidClusterSitesByFileId((userInfo["userName"],fileId))
+        aiBusModel.invalidClusterResultByFileId((userInfo["userName"],fileId))
 
         #根据网点文件查询网点list
         siteGeoList=aiBusModel.selectSiteGeoListByFileId(fileId)
@@ -160,8 +160,20 @@ def queryClusterResult():
 @login_required
 def removeClusterResult():
     """
-    失效聚类结果
+    根据网点文件，失效聚类结果
     """
+    res = ResMsg()
+    try:
+        aiBusModel=AiBusModel()
+        userInfo = session.get("userInfo")
+        data=request.get_json()
+        fileId=data["fileId"]
+        aiBusModel.invalidClusterResultByFileId((userInfo["userName"],fileId))
+        res.update(code=ResponseCode.Success, data="成功删除聚类结果!")
+        return res.data
+    except Exception as e:
+        res.update(code=ResponseCode.Fail)
+        return res.data
 
 @route(cluster,'/mergeClusterPoints',methods=["POST"])
 @login_required
@@ -169,9 +181,21 @@ def mergeClusterPoints():
     """
     合并聚类点
     """
-    return
-
-@route(cluster,'/mergeClusterPoints',methods=["POST"])
-@login_required
-def mergeClusterPoints():
-    return
+    res = ResMsg()
+    try:
+        aiBusModel=AiBusModel()
+        userInfo = session.get("userInfo")
+        data=request.get_json()
+        fileId=data["fileId"]
+        originId=data["originId"]
+        destId=data["destId"]
+        #将聚类点的originId合并至destId
+        row=aiBusModel.selectClusterNumberById(fileId,[destId,originId])
+        #更新destId并失效originId
+        aiBusModel.updateClusterPointBySiteId((row["number"],row["siteSet"].strip(","),userInfo["userName"],fileId,destId))
+        aiBusModel.invalidClusterSitesBySiteId((userInfo["userName"],fileId,originId))
+        res.update(code=ResponseCode.Success, data="成功合并聚类点!")
+        return res.data
+    except Exception as e:
+        res.update(code=ResponseCode.Fail)
+        return res.data

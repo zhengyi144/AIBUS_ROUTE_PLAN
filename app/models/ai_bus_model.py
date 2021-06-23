@@ -1,6 +1,7 @@
 import logging
 from re import S
 from flask import current_app
+from numpy import insert
 from app.utils.mysql import MysqlPool
 
 
@@ -231,7 +232,7 @@ class AiBusModel:
         row=self.mysqlPool.batch(batchStr,rows)
         return row
     
-    def invalidClusterSitesByFileId(self,row):
+    def invalidClusterResultByFileId(self,row):
         """
         更新tbl_cluster_result
         """
@@ -245,14 +246,26 @@ class AiBusModel:
         return row
     
     def insertClusterPoint(self,row):
-        batchStr="insert into tbl_cluster_result(fileId,relativeId,clusterName,clusterProperty,clusterStatus,\
+        insertStr="insert into tbl_cluster_result(fileId,relativeId,clusterName,clusterProperty,clusterStatus,\
                                                  longitude,latitude,number,createUser,updateUser)  \
                    values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
-        row=self.mysqlPool.insert(batchStr,row)
+        row=self.mysqlPool.insert(insertStr,row)
         return row
     
     def selectClusterResult(self,row):
         selectStr="select relativeId,clusterName,relativeProperty,clusterProperty,longitude,\
                   latitude,number,siteSet from tbl_cluster_result where clusterStatus=1 and fileId=%s"
         row=self.mysqlPool.fetchAll(selectStr,row)
+        return row
+    
+    def selectClusterNumberById(self,fileId,siteIds):
+        selectStr="SELECT sum(t.number) AS number,GROUP_CONCAT(t.siteSet) AS siteSet FROM tbl_cluster_result t \
+                         WHERE t.fileId = %s"
+        condition=" and relativeId in (%s)"% ','.join("%s" % item for item in siteIds)
+        row=self.mysqlPool.fetchOne(selectStr,(fileId))
+        return row
+    
+    def updateClusterPointBySiteId(self,row):
+        updateStr="update tbl_cluster_result set number=%s,siteSet=%s,updateUser=%s where fileId=%s and relativeId=%s"
+        row=self.mysqlPool.update(updateStr,row)
         return row
