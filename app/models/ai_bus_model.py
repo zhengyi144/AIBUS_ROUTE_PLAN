@@ -2,6 +2,7 @@ import logging
 from re import S
 from flask import current_app
 from numpy import insert
+from werkzeug.wrappers import CommonRequestDescriptorsMixin
 from app.utils.mysql import MysqlPool
 
 
@@ -76,10 +77,12 @@ class AiBusModel:
         查询站点列表
         """
         args=[]
-        selectStr="select id,siteName,siteProperty,province,city,region,road,direction,longitude,latitude,\
+        
+        selectStr="select id,siteName,if(siteProperty=1,'固定','临时') as siteProperty,province,city,region,road,direction,longitude,latitude,\
                    siteStatus,updateTime,updateUser from tbl_station where userCitycode=%s"
         authStr=" and createUser in (%s)"% ','.join("'%s'" % item for item in userNames) 
         selectStr=selectStr+authStr
+        
         args.append(citycode)
         if province is not None and province !="":
             selectStr+=" and province=%s"
@@ -102,10 +105,13 @@ class AiBusModel:
                 siteStatus=3
             selectStr+=" and siteStatus=%s"
             args.append(siteStatus)
+        #计算总数
+        countStr="select count(1) as num from ( " +selectStr+") a"
+        res=self.mysqlPool.fetchOne(countStr,args)
         selectStr+=" order by id limit %s ,%s"
         args.append(pageNum*pageSize)
         args.append(pageSize)
-        return self.mysqlPool.fetchAll(selectStr,args)
+        return res["num"],self.mysqlPool.fetchAll(selectStr,args)
     
     def insertSiteFile(self,row):
         """
@@ -262,12 +268,12 @@ class AiBusModel:
     def selectClusterNumberById(self,fileId,siteIds):
         selectStr="SELECT sum(t.number) AS number,GROUP_CONCAT(t.siteSet) AS siteSet FROM tbl_cluster_result t \
                          WHERE t.fileId = %s"
-        condition=" and relativeId in (%s)"% ','.join("'%s'" % item for item in siteIds)
+        condition=" and id in (%s)"% ','.join("'%s'" % item for item in siteIds)
         row=self.mysqlPool.fetchOne(selectStr+condition,(fileId))
         return row
     
-    def updateClusterPointBySiteId(self,row):
-        updateStr="update tbl_cluster_result set number=%s,siteSet=%s,updateUser=%s where fileId=%s and relativeId=%s"
+    def updateClusterPointById(self,row):
+        updateStr="update tbl_cluster_result set number=%s,siteSet=%s,updateUser=%s where fileId=%s and id=%s"
         row=self.mysqlPool.update(updateStr,row)
         return row
 
@@ -277,6 +283,6 @@ class AiBusModel:
         return row
     
     def saveClusterParams(self,row):
-        updateStr="update tbl_site_files set clusterStatus=%s,clusterRadius=%s,clusterMinSamples=%s,updateUser=%s where fileId=%s"
+        updateStr="update tbl_site_files set clusterStatus=%s,clusterRadius=%s,clusterMinSamples=%s,updateUser=%s where id=%s"
         row=self.mysqlPool.update(updateStr,row)
         return row

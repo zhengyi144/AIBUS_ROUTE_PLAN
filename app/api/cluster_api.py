@@ -246,8 +246,8 @@ def mergeClusterPoints():
         #将聚类点的originId合并至destId
         row=aiBusModel.selectClusterNumberById(fileId,[destId,originId])
         #更新destId并失效originId
-        aiBusModel.updateClusterPointBySiteId((row["number"],row["siteSet"].strip(","),userInfo["userName"],fileId,destId))
-        aiBusModel.invalidClusterSitesById((userInfo["userName"],fileId,originId))
+        aiBusModel.updateClusterPointById((row["number"],row["siteSet"].strip(","),userInfo["userName"],fileId,destId))
+        aiBusModel.invalidClusterSitesById((userInfo["userName"],originId))
         res.update(code=ResponseCode.Success, data="成功合并聚类点!")
         return res.data
     except Exception as e:
