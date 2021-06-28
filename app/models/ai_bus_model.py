@@ -66,7 +66,7 @@ class AiBusModel:
         """
         模糊查询stationName
         """
-        selectStr="select id,siteName,siteProperty,province,city,region,road,longitude,latitude \
+        selectStr="select id,siteName,if(siteProperty=1,'固定','临时') as siteProperty,province,city,region,road,longitude,latitude \
                    from tbl_station where siteName like %s and userCitycode=%s "
         authStr="and createUser in (%s)"% ','.join("'%s'" % item for item in userNames) 
         row=self.mysqlPool.fetchAll(selectStr+authStr,(('%'+queryText+'%'),citycode))
@@ -79,7 +79,8 @@ class AiBusModel:
         args=[]
         
         selectStr="select id,siteName,if(siteProperty=1,'固定','临时') as siteProperty,province,city,region,road,direction,longitude,latitude,\
-                   siteStatus,updateTime,updateUser from tbl_station where userCitycode=%s"
+                   (case when siteStatus=1 then '有效' when siteStatus=2 then '无效' when siteStatus=3 then '停用' end) as siteStatus,\
+                   updateTime,updateUser from tbl_station where userCitycode=%s"
         authStr=" and createUser in (%s)"% ','.join("'%s'" % item for item in userNames) 
         selectStr=selectStr+authStr
         

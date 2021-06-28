@@ -222,7 +222,7 @@ def removeClusterResult():
         userInfo = session.get("userInfo")
         data=request.get_json()
         fileId=data["fileId"]
-        aiBusModel.invalidClusterResultByFileId((userInfo["userName"],fileId),[1,2])
+        aiBusModel.updateClusterResultByFileId((0,userInfo["userName"],fileId),[1,2])
         res.update(code=ResponseCode.Success, data="成功删除聚类结果!")
         return res.data
     except Exception as e:
