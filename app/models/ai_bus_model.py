@@ -262,7 +262,7 @@ class AiBusModel:
     
     def selectClusterResult(self,row):
         selectStr="select id,relativeId,clusterName,relativeProperty,clusterProperty,longitude,\
-                  latitude,number,siteSet from tbl_cluster_result where clusterStatus=%s and fileId=%s"
+                  latitude,numbe  r,siteSet from tbl_cluster_result where clusterStatus=%s and fileId=%s"
         row=self.mysqlPool.fetchAll(selectStr,row)
         return row
     

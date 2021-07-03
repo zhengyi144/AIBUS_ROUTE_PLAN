@@ -253,3 +253,32 @@ def mergeClusterPoints():
     except Exception as e:
         res.update(code=ResponseCode.Fail)
         return res.data
+
+@route(cluster,'/exportClusterPoints',methods=["POST"])
+@login_required
+def exportClusterPoints():
+    """
+    根据网点文件id导出网点和聚类信息
+    """
+    res = ResMsg()
+    try:
+        aiBusModel=AiBusModel()
+        userInfo = session.get("userInfo")
+        data=request.get_json()
+        fileId=data["fileId"]
+        clusterStatus = 1#确认后的聚类点
+        
+        #根据网点文件查找网点list
+        siteGeoList=aiBusModel.selectSiteGeoListByFileId(fileId)
+        # 导入json,将列表转为json字符串
+        # json.dumps序列化时候对中文默认使用的ascii编码，想要输出真正的中文需要指定ensure_ascii=False
+        jsonData_site = json.dumps(siteGeoList, ensure_ascii=False)
+        # jsonData_site=json.loads(siteGeoList)
+    
+        #根据网点文件聚类信息
+        clusterInfo =aiBusModel.selectClusterResult(fileId,clusterStatus)
+        jsonData_cluster=json.dumps(clusterInfo, ensure_ascii=False)
+        return jsonData_site,jsonData_cluster
+    except Exception as e:
+        res.update(code=ResponseCode.Fail)
+        return res.data
