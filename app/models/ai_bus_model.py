@@ -287,3 +287,10 @@ class AiBusModel:
         updateStr="update tbl_site_files set clusterStatus=%s,clusterRadius=%s,clusterMinSamples=%s,updateUser=%s where id=%s"
         row=self.mysqlPool.update(updateStr,row)
         return row
+
+    def inserRouteParams(self,row):
+        insertStr="insert into tbl_route_node(startLng,startLat,startNode,endLng,endLat,\
+                                                endNode,minDist,minTime)  \
+                values(%s,%s,%s,%s,%s,%s,%s,%s)"
+        row=self.mysqlPool.insert(insertStr,row)
+        return row
