@@ -10,9 +10,12 @@ def get_route(origin,destination,key,city):
 
 def get_route_distance_time(origin,destination,key,city): 
     """
-    # 该函数是调用高德API获取起始点到终点两个经纬度之间的距离（以米为单位）
+    # 该函数是调用高德API获取起始点到终点两个经纬度之间的距离以及时间（以米为单位）
     origin: 起始点经纬度
     destination: 终点经纬度
+    #输出
+    distance：距离，单位为米
+    duration：时长，单位为秒
     """ 
     distance = 0
     duration = 0  
