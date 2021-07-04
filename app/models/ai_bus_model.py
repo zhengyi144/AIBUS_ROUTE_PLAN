@@ -221,7 +221,15 @@ class AiBusModel:
         selectStr="SELECT fileProperty,fileStatus from tbl_site_files where id=%s"
         return self.mysqlPool.fetchOne(selectStr,(fileId))
     
-    def selectSiteGeoListByFileId(self,fileId):
+    def searchSiteListByFileId(self,fileId):
+        """
+        根据文件id导出网点文件
+        """
+        selectStr="SELECT region,siteProperty, latitude,longitude,siteName,clientName,clientProperty,clientAddress,age,grade,number \
+                   FROM tbl_site WHERE fileId = %s AND siteStatus = 1"
+        return self.mysqlPool.fetchAll(selectStr,(fileId))
+
+    def selectSiteFileStatus(self,fileId):
         """
         根据文件id查询SiteGeoList
         """
@@ -262,9 +270,14 @@ class AiBusModel:
     
     def selectClusterResult(self,row):
         selectStr="select id,relativeId,clusterName,relativeProperty,clusterProperty,longitude,\
-                  latitude,numbe  r,siteSet from tbl_cluster_result where clusterStatus=%s and fileId=%s"
+                  latitude,number,siteSet from tbl_cluster_result where clusterStatus=%s and fileId=%s"
         row=self.mysqlPool.fetchAll(selectStr,row)
         return row
+
+    def searchClusterResult(self,fileId):
+        selectStr="select region,clusterName,longitude,clusterProperty,\
+                  latitude,number from tbl_cluster_result where  fileId=%s and clusterStatus = 1"
+        return self.mysqlPool.fetchAll(selectStr,(fileId))
     
     def selectClusterNumberById(self,fileId,siteIds):
         selectStr="SELECT sum(t.number) AS number,GROUP_CONCAT(t.siteSet) AS siteSet FROM tbl_cluster_result t \
