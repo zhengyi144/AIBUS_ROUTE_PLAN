@@ -283,7 +283,7 @@ class AiBusModel:
         row=self.mysqlPool.fetchOne(selectStr,row)
         return row
     
-    def saveClusterParams(self,row):
+    def updateClusterParams(self,row):
         updateStr="update tbl_site_files set clusterStatus=%s,clusterRadius=%s,clusterMinSamples=%s,updateUser=%s where id=%s"
         row=self.mysqlPool.update(updateStr,row)
         return row
@@ -291,6 +291,25 @@ class AiBusModel:
     def inserRouteParams(self,row):
         insertStr="insert into tbl_route_node(startLng,startLat,startNode,endLng,endLat,\
                                                 endNode,minDist,minTime)  \
-                values(%s,%s,%s,%s,%s,%s,%s,%s)"
+                values(%s,%s,ST_GeomFromGeoJSON(%s,2,0),%s,%s,ST_GeomFromGeoJSON(%s,2,0),%s,%s)"
         row=self.mysqlPool.insert(insertStr,row)
         return row
+    
+    def selectRouteParams(self,row):
+        selectStr="select minDist as dist,minTime as time from tbl_route_node where ABS(startlng-%s)<=0.000001 and ABS(startlat-%s)<=0.000001 \
+                   and ABS(endLng-%s)<=0.000001 and ABS(endLat-%s)<=0.000001"
+        row=self.mysqlPool.fetchOne(selectStr,row)
+        return row
+    
+    def insertRouteInfo(self,row):
+        insertStr="insert into tbl_route_info(routeUuid,destLng,destLat,passengers,occupancyRate,odometerFactor,roundTrip,routeFactor)\
+            values(%s,%s,%s,%s,%s,%s,%s,%s)"
+        row=self.mysqlPool.insert(insertStr,row)
+        return row
+    
+    def insertRouteDetail(self,row):
+        insertStr="insert into tbl_route_detail(routeUuid,nodeIndex,nodeName,nodeStatus,nodeLng,nodeLat,number)\
+            values(%s,%s,%s,%s,%s,%s,%s)"
+        row=self.mysqlPool.insert(insertStr,row)
+        return row
+    

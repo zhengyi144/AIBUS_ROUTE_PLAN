@@ -116,7 +116,7 @@ def saveClusterResult():
         epsRadius=data["epsRadius"]
         minSamples=data["minSamples"]
         #1)先保存聚类参数
-        aiBusModel.saveClusterParams((1,epsRadius,minSamples,userInfo["userName"],fileId))
+        aiBusModel.updateClusterParams((1,epsRadius,minSamples,userInfo["userName"],fileId))
         #2)失效该网点文件的聚类结果
         aiBusModel.updateClusterResultByFileId((0,userInfo["userName"],fileId),[1])
         #3)保存
@@ -223,6 +223,7 @@ def removeClusterResult():
         data=request.get_json()
         fileId=data["fileId"]
         aiBusModel.updateClusterResultByFileId((0,userInfo["userName"],fileId),[1,2])
+        aiBusModel.updateClusterParams((0,0,0,userInfo["userName"],fileId))
         res.update(code=ResponseCode.Success, data="成功删除聚类结果!")
         return res.data
     except Exception as e:

@@ -10,3 +10,4 @@ sshtunnel==0.4.0
 DBUtils==2.0.1
 xlrd==1.2.0
 xlwt==1.3.0
+requests==2.25.1

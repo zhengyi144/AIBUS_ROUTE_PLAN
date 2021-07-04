@@ -1,5 +1,6 @@
 import numpy as np
 import math
+from copy import deepcopy
 from app.utils.GPSConvertUtil import getGPSDistance
 '''
 模拟退火算法
@@ -23,7 +24,10 @@ class SAOptimizer:
             xOld=initFun()
             yOld=fun(xOld)
         yBest=yOld
-        xBest=np.copy(xOld)
+        if isinstance(xOld, np.ndarray):
+            xBest=np.copy(xOld)
+        elif isinstance(xOld,dict):
+            xBest=deepcopy(xOld)
         #降温过程
         count=0
         while(t>stop):
@@ -45,12 +49,14 @@ class SAOptimizer:
                     yOld=yNew
                     if yOld<yBest:
                         yBest=yOld
-                        xBest=xOld
+                        if isinstance(xOld, np.ndarray):
+                            xBest=np.copy(xOld)
+                        elif isinstance(xOld,dict):
+                            xBest=deepcopy(xOld)
             if downT:
                 t=t*alpha
             #长时间不降温
             if count>1000:break
-        
         return xBest,yBest
     
     def judge(self,dE,t):
@@ -98,8 +104,52 @@ def tspSolution(destination,wayPoints):
         return dist
 
     sa = SAOptimizer()
-    xbest,ybest = sa.optimize(f, initFun=init, randFun=randf, stop=1e-3, t=1e3, alpha=0.98, l=10, iterPerT=1)
+    xbest,ybest = sa.optimize(f, initFun=init, randFun=randf, stop=1e-3, t=2e4, alpha=0.98, l=10, iterPerT=1)
     return xbest,ybest
+
+def singleRoutePlanSolution(routeInfo):
+    """
+    单路线规划解决方案
+    routeInfo:[{nodePair,routeNode,routeFactor}  
+    nodePair:{key:{dist,time},...}  结点对
+    routeNode:[{index,nodeName,lng,lat,number},...]  结点信息
+    routeFactor: 路线方案，0时间最短，1距离最短
+    """
+    routeInfo["routeNode"]=np.array(routeInfo["routeNode"])
+    init = lambda :routeInfo #参数为城市序列
+    #这里需要自定义扰动函数
+    def randf(now):
+        routeNode=now["routeNode"]
+        new = np.copy(routeNode)
+        size = new.shape[0]-1
+        while 1:
+            index1 = np.random.randint(size)
+            index2 = np.random.randint(size)
+            if index2 != index1: break
+        temp = new[index1]
+        new[index1] = new[index2]
+        new[index2] = temp
+        now["routeNode"]=new
+        return now
+
+    def f(X):
+        routeNode=X["routeNode"]
+        nodePair=X["nodePair"]
+        routeFactor=X["routeFactor"]
+        size = routeNode.shape[0]
+        cost = 0
+        for i in range(size - 1):
+            key=str(routeNode[i]["index"])+"-"+str(routeNode[i+1]["index"])
+            if routeFactor==1:
+                cost+=nodePair[key]["dist"]
+            else:
+                cost+=nodePair[key]["time"]
+        #print("cost",cost)
+        return cost
+
+    sa = SAOptimizer()
+    xbest,ybest = sa.optimize(f, initFun=init, randFun=randf, stop=1e-3, t=1e4, alpha=0.98, l=10, iterPerT=1)
+    return {"routeNode":xbest["routeNode"].tolist(),"cost":ybest}
 
 """
 if __name__=="__main__":
