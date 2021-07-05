@@ -315,7 +315,7 @@ class AiBusModel:
         return row
     
     def insertRouteInfo(self,row):
-        insertStr="insert into tbl_route_info(routeUuid,destLng,destLat,passengers,occupancyRate,odometerFactor,roundTrip,routeFactor)\
+        insertStr="insert into tbl_route_info(routeUuid,destLng,destLat,passengers,occupancyRate,odometerFactor,routeFactor,roundStatus)\
             values(%s,%s,%s,%s,%s,%s,%s,%s)"
         row=self.mysqlPool.insert(insertStr,row)
         return row
@@ -325,4 +325,9 @@ class AiBusModel:
             values(%s,%s,%s,%s,%s,%s,%s)"
         row=self.mysqlPool.insert(insertStr,row)
         return row
+    
+    def deleteNodesByRouteId(self,row):
+        deleteStr="delete from tbl_route_detail where routeUuid=%s"
+        return self.mysqlPool.delete(deleteStr,row)
+
     
