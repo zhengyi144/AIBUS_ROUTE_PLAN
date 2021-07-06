@@ -1,7 +1,7 @@
 import logging
 from re import S
 from flask import current_app
-from numpy import insert
+from numpy import insert, select
 from werkzeug.wrappers import CommonRequestDescriptorsMixin
 from app.utils.mysql import MysqlPool
 
@@ -326,6 +326,14 @@ class AiBusModel:
         row=self.mysqlPool.insert(insertStr,row)
         return row
     
+    def updateRouteDetail(self,row):
+        updateStr="update tbl_route_detail set nodeIndex=%s,nodeStatus=%s where routeUuid=%s and id=%s"
+        return self.mysqlPool.update(updateStr,row)
+    
+    def selectRouteDetail(self,row):
+        selectStr="select id,nodeIndex,nodeName,nodeStatus,nodeLng,nodeLat,number from tbl_route_detail where routeUuid=%s and nodeIndex=%s"
+        return self.mysqlPool.fetchOne(selectStr,row)
+
     def deleteNodesByRouteId(self,row):
         deleteStr="delete from tbl_route_detail where routeUuid=%s"
         return self.mysqlPool.delete(deleteStr,row)

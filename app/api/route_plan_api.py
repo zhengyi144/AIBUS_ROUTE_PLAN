@@ -192,15 +192,26 @@ def reSortRouteNode():
         routeId=data["routeId"]
         passengers=data["passengers"]
         routeNodeList=data["routeNodeList"]
+        removeNodeList=data["removeNodeList"]
         #根据routeId删除规划结点
-        aiBusModel.deleteNodesByRouteId((routeId))
+        #aiBusModel.deleteNodesByRouteId((routeId))
         #根据结点顺序获取对应信息
+        nodeIndex=0
+        newRemoveNodeList=[]
+        for node in removeNodeList:
+            item=aiBusModel.selectRouteDetail((routeId,node["nodeIndex"]))
+            newRemoveNodeList.append({"nodeIndex":nodeIndex,"nodeName":node["nodeName"],\
+                "lng":float(node["lng"]),"lat":float(node["lat"]),"number":node["number"]})
+            aiBusModel.updateRouteDetail((nodeIndex,0,routeId,item["id"]))
+            nodeIndex+=1
+        
         nodeIndex=0
         routeDist=0
         routeTime=0
         routeNumber=0
         newRouteNodeList=[]
-        for i in range(len(routeNodeList)-1):
+        length=len(routeNodeList)
+        for i in range(length-1):
             fromNode=routeNodeList[i]
             toNode=routeNodeList[i+1]
             row=aiBusModel.selectRouteParams((float(fromNode["lng"]),float(fromNode["lat"]),float(toNode["lng"]),float(toNode["lat"])))
@@ -209,15 +220,24 @@ def reSortRouteNode():
             routeNumber+=fromNode["number"]
             newRouteNodeList.append({"nodeIndex":nodeIndex,"nodeName":fromNode["nodeName"],\
                 "lng":float(fromNode["lng"]),"lat":float(fromNode["lat"]),"number":fromNode["number"]})
-            aiBusModel.insertRouteDetail((routeId,nodeIndex,fromNode["nodeName"],1,fromNode["lng"],fromNode["lat"],fromNode["number"]))
+            item=aiBusModel.selectRouteDetail((routeId,fromNode["nodeIndex"]))
+            aiBusModel.updateRouteDetail((nodeIndex,1,routeId,item["id"]))
             nodeIndex+=1
+            if i+1==length-1:
+                newRouteNodeList.append({"nodeIndex":nodeIndex,"nodeName":toNode["nodeName"],\
+                   "lng":float(toNode["lng"]),"lat":float(toNode["lat"]),"number":toNode["number"]})
+                item=aiBusModel.selectRouteDetail((routeId,toNode["nodeIndex"]))
+                aiBusModel.updateRouteDetail((nodeIndex,1,routeId,item["id"]))
+                routeNumber+=toNode["number"]
+        
         routeOccupancyRate=float(routeNumber)/passengers
         result={"routeId":routeId,"routeDist":routeDist,\
-                     "routeTime":routeTime,"routeNumber":routeNumber,\
-                    "routeOccupancyRate":routeOccupancyRate,"routeNodeList":newRouteNodeList}
+                    "routeTime":routeTime,"routeNumber":routeNumber,\
+                    "routeOccupancyRate":routeOccupancyRate,"routeNodeList":newRouteNodeList,\
+                    "removeNodeList":removeNodeList}
 
         res.update(code=ResponseCode.Success,data=result)
         return res.data
     except Exception as e:
-        res.update(code=ResponseCode.Fail, data="排序报错！")
+        res.update(code=ResponseCode.Fail, data="路线规划结点调整报错！")
         return res.data
