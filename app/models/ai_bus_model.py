@@ -331,8 +331,8 @@ class AiBusModel:
         return self.mysqlPool.update(updateStr,row)
     
     def selectRouteDetail(self,row):
-        selectStr="select id,nodeIndex,nodeName,nodeStatus,nodeLng,nodeLat,number from tbl_route_detail where routeUuid=%s and nodeIndex=%s"
-        return self.mysqlPool.fetchOne(selectStr,row)
+        selectStr="select id,nodeIndex,nodeName,nodeLng as lng,nodeLat as lat,number from tbl_route_detail where routeUuid=%s and nodeStatus=%s order by nodeIndex"
+        return self.mysqlPool.fetchAll(selectStr,row)
 
     def deleteNodesByRouteId(self,row):
         deleteStr="delete from tbl_route_detail where routeUuid=%s"
