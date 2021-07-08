@@ -1,4 +1,5 @@
 import logging
+from typing import Set
 from flask import Blueprint, jsonify, session, request, current_app
 from pymysql import NULL
 from app.utils.code import ResponseCode
@@ -185,24 +186,39 @@ def queryTempSiteInfo():
         pageSize=int(data['pageSize'])
         pageNum=int(data['pageNum'])
         kwargs={}
-        if "region" in data:
+        if "siteName" in data and data["siteName"] !="":
+            kwargs["siteName"]=data["siteName"]
+        if "region" in data and data['region']!="":
             region=data['region'] #区域
             kwargs["region"]=region
-        if "siteProperty" in data:
+        if "siteProperty" in data and data["siteProperty"]!="":
             kwargs["siteProperty"]=1 if data["siteProperty"]=="固定" else 0  #公交站点属性
-        if "clientName" in data:
+        if "clientName" in data and data['clientName']!="":
             kwargs["clientName"]=data['clientName']  #客户姓名
-        if "clientProperty" in data:
+        if "clientProperty" in data and data['clientProperty']!="":
             kwargs["clientProperty"]=data['clientProperty']  #客户属性
-        if "age" in data:
+        if "age" in data and data['age']!="":
             kwargs["age"]=data['age']  #客户年龄
-        if "grade" in data:
+        if "grade" in data and data['grade']!="":
             kwargs["grade"]=data['grade']  #客户年级
-        if "number" in data:
+        if "number" in data and data['number']!="":
             kwargs["number"]=data['number']  #客户年级
         
         siteInfo=aiBusModel.selectTempSiteInfo(fileId,kwargs,pageSize,pageNum)
-        res.update(code=ResponseCode.Success, data=siteInfo)
+        
+        #查询自定义项
+        customInfo=aiBusModel.selectCustomSiteInfo(fileId)
+        customItem={"siteProperty":set(),"region":set(), "clientName":set(),\
+            "clientProperty":set(),"age":set(),"clientAddress":set(),"number":set(),"grade":set()}
+        for item in customInfo:
+            for key in customItem.keys():
+                if item[key]!="":
+                    customItem[key].add(item[key])
+        #将set转为list
+        for key in customItem.keys():
+            customItem[key]=list(customItem[key])
+
+        res.update(code=ResponseCode.Success, data={"siteInfo":siteInfo,"customItem":customItem})
         return res.data
     except Exception as e:
         res.update(code=ResponseCode.Fail, data="查询报错！")

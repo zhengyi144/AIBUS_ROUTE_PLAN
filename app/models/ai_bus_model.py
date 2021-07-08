@@ -189,6 +189,15 @@ class AiBusModel:
                    FROM tbl_site WHERE fileId = %s AND siteStatus = 1 GROUP BY siteName, latitude,longitude"
         
         return self.mysqlPool.fetchAll(selectStr,row)
+
+    def selectCustomSiteInfo(self,fileId):
+        """
+        根据文件id查询自定义字段内容
+        """
+        selectStr="select if(siteProperty=1,'固定','临时') as siteProperty ,region, clientName,clientProperty,age,clientAddress,number,grade  \
+                  from tbl_site where fileId=%s AND siteStatus = 2"
+        return self.mysqlPool.fetchAll(selectStr,(fileId))
+
     
     def selectTempSiteInfo(self,fileId,kwargs,pageSize,pageNum):
         """
