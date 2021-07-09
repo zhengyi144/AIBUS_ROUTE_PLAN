@@ -234,7 +234,7 @@ class AiBusModel:
         """
         根据文件id导出网点文件
         """
-        selectStr="SELECT region,siteProperty, latitude,longitude,siteName,clientName,clientProperty,clientAddress,age,grade,number \
+        selectStr="SELECT region,if(siteProperty=1,'固定','临时') as siteProperty, latitude,longitude,siteName,clientName,clientProperty,clientAddress,age,grade,number \
                    FROM tbl_site WHERE fileId = %s AND siteStatus = 1"
         return self.mysqlPool.fetchAll(selectStr,(fileId))
 
@@ -284,7 +284,7 @@ class AiBusModel:
         return row
 
     def searchClusterResult(self,fileId):
-        selectStr="select region,clusterName,longitude,clusterProperty,\
+        selectStr="select region,clusterName,longitude,(case when clusterProperty=1 then '聚类点' when clusterProperty=2 then '边界点' else '异常点' end) as clusterProperty,\
                   latitude,number from tbl_cluster_result where  fileId=%s and clusterStatus = 1"
         return self.mysqlPool.fetchAll(selectStr,(fileId))
     
