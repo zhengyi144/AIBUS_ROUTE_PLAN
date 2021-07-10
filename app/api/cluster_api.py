@@ -31,9 +31,9 @@ def generateClusterPoints():
         minSamples=data["minSamples"]
         #先判断网点文件是否有效
         fileStatus=aiBusModel.selectSiteFileStatus(fileId)
-        if fileStatus["fileProperty"]==0:
-            res.update(code=ResponseCode.Fail,data="该网点文件还未确认导入!")
-            return res.data
+        #if fileStatus["fileProperty"]==0:
+        #    res.update(code=ResponseCode.Fail,data="该网点文件还未确认导入!")
+        #     return res.data
         if fileStatus["fileStatus"]==0:
             res.update(code=ResponseCode.Fail,data="该网点文件已经失效!")
             return res.data
@@ -185,7 +185,7 @@ def queryClusterResult():
         #1)先查询聚类参数
         clusterParams=aiBusModel.selectClusterParams((fileId))
         if clusterParams["clusterStatus"]==0:
-            res.update(code=ResponseCode.Fail,data="该文件还未进行聚类！")
+            res.update(code=ResponseCode.Success)
             return res.data
         #2)查询聚类结果
         clusterResut=aiBusModel.selectClusterResult((1,fileId))
