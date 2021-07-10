@@ -238,7 +238,7 @@ class AiBusModel:
                    FROM tbl_site WHERE fileId = %s AND siteStatus = 1"
         return self.mysqlPool.fetchAll(selectStr,(fileId))
 
-    def selectSiteFileStatus(self,fileId):
+    def selectSiteGeoListByFileId(self,fileId):
         """
         根据文件id查询SiteGeoList
         """
