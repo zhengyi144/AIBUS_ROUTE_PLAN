@@ -184,7 +184,7 @@ def queryTempSiteInfo():
         data=request.get_json()
         fileId=int(data["fileId"])
         pageSize=int(data['pageSize'])
-        pageNum=int(data['pageNum'])
+        pageNum=int(data['pageNum'])-1    #pageNum前端是从1开始
         kwargs={}
         if "siteName" in data and data["siteName"] !="":
             kwargs["siteName"]=data["siteName"]
