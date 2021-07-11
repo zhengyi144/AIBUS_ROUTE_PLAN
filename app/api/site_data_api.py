@@ -118,7 +118,7 @@ def uploadSiteExcel():
             res.update(code=ResponseCode.Success, data={"fileId":siteFile["id"], "fileName":destination,"siteCount":0})
             return res.data
     except Exception as e:
-        res.update(code=ResponseCode.Fail, data="插入失败！")
+        res.update(code=ResponseCode.Fail, data="插入异常！")
         return res.data
 
 @route(sitedata, '/querySiteFileList', methods=["POST"])
@@ -183,8 +183,8 @@ def queryTempSiteInfo():
         aiBusModel=AiBusModel()
         data=request.get_json()
         fileId=int(data["fileId"])
-        pageSize=int(data['pageSize'])
-        pageNum=int(data['pageNum'])-1    #pageNum前端是从1开始
+        #pageSize=int(data['pageSize'])
+        #pageNum=int(data['pageNum'])-1    #pageNum前端是从1开始
         kwargs={}
         if "siteName" in data and data["siteName"] !="":
             kwargs["siteName"]=data["siteName"]
@@ -204,7 +204,7 @@ def queryTempSiteInfo():
         if "number" in data and data['number']!="":
             kwargs["number"]=data['number']  #客户年级
         
-        siteInfo=aiBusModel.selectTempSiteInfo(fileId,kwargs,pageSize,pageNum)
+        siteInfo=aiBusModel.selectTempSiteInfo(fileId,kwargs)
         
         #查询自定义项
         customInfo=aiBusModel.selectCustomSiteInfo(fileId)
@@ -242,6 +242,8 @@ def saveSiteList():
         #siteIdList=list(map(int, request.form.get("siteIdList").split(",")))
         aiBusModel.updateSiteStatusByfieldId((3,userInfo["userName"],fileId,1))
         row=aiBusModel.updateSiteStatusByIds(fileId,1,siteIdList,userInfo["userName"])
+        #更新网点文件fileProperty为正式文件
+
         res.update(code=ResponseCode.Success, data="保存网点{}条".format(row))
         return res.data
     except Exception as e:

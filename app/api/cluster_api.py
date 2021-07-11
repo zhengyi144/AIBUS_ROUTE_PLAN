@@ -6,7 +6,7 @@ from app.utils.auth import login_required
 from app.utils.util import route
 from app.utils.tools import *
 from app.models.ai_bus_model import AiBusModel
-from app.algorithms.dbscan import clusterByDbscan
+from app.algorithms.dbscan import clusterByDbscan,clusterByAdaptiveDbscan
 
 """
 聚类模块api
@@ -15,9 +15,9 @@ cluster = Blueprint("cluster", __name__, url_prefix='/cluster')
 logger = logging.getLogger(__name__)
 
 
-@route(cluster,'/generateClusterPoints',methods=["POST"])
+@route(cluster,'/generateClusterPointsOld',methods=["POST"])
 @login_required
-def generateClusterPoints():
+def generateClusterPointsOld():
     """
     根据网点文件id生成聚类点
     """
@@ -100,6 +100,92 @@ def generateClusterPoints():
     except Exception as e:
         res.update(code=ResponseCode.Fail)
         return res.data
+
+@route(cluster,'/generateClusterPoints',methods=["POST"])
+@login_required
+def generateClusterPoints():
+    """
+    根据网点文件id生成聚类点
+    """
+    res = ResMsg()
+    try:
+        aiBusModel=AiBusModel()
+        userInfo = session.get("userInfo")
+        data=request.get_json()
+        fileId=data["fileId"]
+        epsRadius=float(data["epsRadius"])
+        minSamples=data["minSamples"]
+        #先判断网点文件是否有效
+        fileStatus=aiBusModel.selectSiteFileStatus(fileId)
+        if fileStatus["fileStatus"]==0:
+            res.update(code=ResponseCode.Fail,data="该网点文件已经失效!")
+            return res.data
+        #对聚类过的临时结果进行失效
+        aiBusModel.updateClusterResultByFileId((0,userInfo["userName"],fileId),[2])
+
+        #根据网点文件查询网点list
+        siteGeoList=aiBusModel.selectSiteGeoListByFileId(fileId)
+        #{"noiseList":[ids],"aroundList":[ids],"clusterDict":{"id":[ids],"id":[ids]}}
+        clusterInfo=clusterByAdaptiveDbscan(siteGeoList,epsRadius,minSamples)
+        #将聚类结果保存至表中
+        insertVals=[]
+        siteGeoDict={}
+        for site in siteGeoList:
+            siteGeoDict[str(site["id"])]=site
+        
+        clusterOutPoints=[]
+        clusterCorePoints=[]
+        clusterAroundPoints=[]
+        #1)处理异常点fileId,siteId,clusterName,clusterProperty,clusterStatus,longitude,latitude,number,siteSet
+        for id in clusterInfo["noiseList"]:
+            relativeId="site_"+str(id)
+            site=siteGeoDict[str(id)]
+            insertVals.append((fileId,relativeId,site["siteName"],site["siteProperty"],0,2,site["lng"],site["lat"],site["number"],"",userInfo["userName"],userInfo["userName"]))
+            #clusterOutPoints.append({"id":relativeId,"siteName":site["siteName"],"siteProperty":site["siteProperty"],"number":site["number"],"longitude":site["lng"],"latitude":site["lat"]})
+
+        #2)处理聚类点
+        for key in clusterInfo["clusterDict"].keys():
+            clusterSet=clusterInfo["clusterDict"][key]
+            #处理聚类核心点
+            clusterNumber=0
+            site=siteGeoDict[str(key)]
+            for id in clusterSet:
+                clusterNumber+=siteGeoDict[str(id)]["number"]
+            clusterIdStr=",".join(map(str, clusterSet))
+            insertVals.append((fileId,"site_"+str(key),site["siteName"],site["siteProperty"],1,2,site["lng"],site["lat"],clusterNumber,clusterIdStr,userInfo["userName"],userInfo["userName"]))
+            #clusterCorePoints.append({"id":"site_"+str(clusterId),"siteName":site["siteName"],"siteProperty":site["siteProperty"],"number":clusterNumber,"longitude":site["lng"],"latitude":site["lat"]})
+        #处理边界点
+        for id in clusterInfo["aroundList"]:
+            relativeId="site_"+str(id)
+            aroundSite=siteGeoDict[str(id)]
+            insertVals.append((fileId,relativeId,aroundSite["siteName"],aroundSite["siteProperty"],2,2,aroundSite["lng"],aroundSite["lat"],aroundSite["number"],"",userInfo["userName"],userInfo["userName"]))
+                #clusterAroundPoints.append({"id":relativeId,"siteName":aroundSite["siteName"],"siteProperty":site["siteProperty"],"number":aroundSite["number"],"longitude":aroundSite["lng"],"latitude":aroundSite["lat"]})
+        #3)插入聚类点并返回
+        aiBusModel.batchClusterSites(insertVals)
+
+        #4)返回聚类结果
+        clusterResut=aiBusModel.selectClusterResult((2,fileId))
+        for item in clusterResut:
+            if item["relativeProperty"]==1:
+                siteProperty="固定"
+            elif item["relativeProperty"]==0:
+                siteProperty="临时"
+            else:
+                siteProperty="自定义"
+            row={"id":item["id"],"siteName":item["clusterName"],"siteProperty":siteProperty,\
+                    "longitude":item["longitude"],"latitude":item["latitude"],"number":item["number"]}
+            if item["clusterProperty"]==1:
+                clusterCorePoints.append(row)
+            elif item["clusterProperty"]==2:
+                clusterAroundPoints.append(row)
+            else:
+                clusterOutPoints.append(row)
+        res.update(code=ResponseCode.Success, data={"clusterCorePoints":clusterCorePoints,"clusterAroundPoints":clusterAroundPoints,"clusterOutPoints":clusterOutPoints})
+        return res.data
+    except Exception as e:
+        res.update(code=ResponseCode.Fail)
+        return res.data
+
 
 @route(cluster,'/saveClusterResult',methods=["POST"])
 @login_required

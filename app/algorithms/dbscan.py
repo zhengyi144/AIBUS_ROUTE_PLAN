@@ -2,6 +2,7 @@ import os
 import sys
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parentdir)
+import itertools
 from sklearn.cluster import DBSCAN
 from numpy import *
 import pandas as pd
@@ -41,7 +42,6 @@ def calcClusterCenter(clusterDataFrame):
     minIndex=clusterDataFrame["dist"].idxmin()
     return clusterDataFrame.loc[minIndex,["id"]].values
     
-
 def clusterByDbscan(dataList,epsRadius,minSamples):
     """
     # DBSCAN算法：将簇定义为密度相连的点最大集合，能够把具有足够高密度的区域划分为簇，并且可在噪声的空间数据集中发现任意形状的簇。
@@ -103,6 +103,75 @@ def clusterByDbscan(dataList,epsRadius,minSamples):
 
     return clusterInfo
 
+def clusterByAdaptiveDbscan(siteList,epsRadius,minSamples):
+    """
+    DBSCAN算法是将密度相连点的最大集合作为簇，但是由于簇内点会辐射出去的原因会使簇内一些点距离聚类中心点超过实际限定距离epsRadius，
+    因此对DBSCAN算法进行改造，只取满足限定距离的最大集合，满足条件的集合但中心点已经被纳入其他集合，被抛弃的点作为边界点，
+    不满足minSamples作为异常点
+    siteList:[{"id","lat","lng",""},{"id","lat","lng",""}],必需包括id,lat,lng字段
+    epsRadius: 聚内直线距离(km)
+    minSamples：最少点数目
+    """
+    NOISE = "N"
+    UNASSIGNED = "U"
+    if epsRadius and minSamples and siteList:
+        #1)先构造集合对，计算两两之间的距离
+        sitePairInfo={}
+        sitePairs=list(itertools.permutations(siteList, 2))
+        for sitePair in sitePairs:
+            key=str(sitePair[0]["id"])+"-"+str(sitePair[1]["id"])
+            dist=getGPSDistance(float(sitePair[0]["lng"]),float(sitePair[0]["lat"]),float(sitePair[1]["lng"]),float(sitePair[1]["lat"]))
+            sitePairInfo[key]=dist
+          
+        #2)以每个点为中心找出限定范围内的点集
+        neighborPointsList=[]
+        clusterResult={}
+        for site in siteList:
+            neighborPoints=[]
+            neighborPoints.append(site["id"])
+            clusterResult[site["id"]]=UNASSIGNED
+            for point in siteList:
+                if site["id"]!=point["id"]:
+                    key=str(site["id"])+"-"+str(point["id"])
+                    if sitePairInfo[key]<=epsRadius:
+                        neighborPoints.append(point["id"])
+            if len(neighborPoints)<minSamples:
+                clusterResult[site["id"]]=NOISE
+            else:
+                neighborPointsList.append({"id":site["id"],"neighborPoints":neighborPoints,"size":len(neighborPoints)})
+        
+        #3)对上面点集进行按照点集大小排序，然后筛选出聚类集合
+        neighborPointsList.sort(key=lambda x: x["size"],reverse=True)
+        clusterDict={}
+        for item in neighborPointsList:
+            #先判断id是否已经被划分
+            if clusterResult[item["id"]]==UNASSIGNED:
+                clusterResult[item["id"]]=item["id"]
+                clusterDict[item["id"]]=set()
+                clusterDict[item["id"]].add(item["id"])
+
+                for idx in item["neighborPoints"]:
+                    #只标注未被聚类的点
+                    if clusterResult[idx]==UNASSIGNED or clusterResult[idx]==NOISE:
+                        clusterResult[idx]=item["id"]
+                        clusterDict[item["id"]].add(idx)
+                clusterDict[item["id"]]=list(clusterDict[item["id"]])
+                #重新判断聚类集合是否满足要求
+                if len(clusterDict[item["id"]])<minSamples:
+                    for idx in clusterDict[item["id"]]:
+                        clusterResult[idx]=UNASSIGNED
+                    del clusterDict[item["id"]]
+
+        #4)返回聚类核心点、边界点点集、异常点集
+        noiseList=[]
+        aroundList=[]
+        for key in clusterResult.keys():
+            if clusterResult[key]==UNASSIGNED:
+                aroundList.append(key)
+            elif clusterResult[key]==NOISE:
+                noiseList.append(key)
+        return {"noiseList":noiseList,"aroundList":aroundList,"clusterDict":clusterDict}
+
 """
 if __name__=="__main__":
 
@@ -125,5 +194,14 @@ if __name__=="__main__":
     clusterInfo=clusterByDbscan(data,eps,min_samples)
     print(clusterInfo)
 """
+"""
+if __name__=="__main__":
+    data=[{"id":0,"lng":119.310162,"lat":26.098756},{"id":1,"lng":119.311964,"lat":26.100529},{"id":2,"lng":119.309303,"lat":26.100529},{"id":3,"lng":119.306986,"lat":26.09945},\
+        {"id":4,"lng":119.33501,"lat":26.100182},{"id":5,"lng":119.335525,"lat":26.096944},{"id":6,"lng":119.332349,"lat":26.100953},\
+        {"id":7,"lng":119.327328,"lat":26.097638},{"id":8,"lng":119.315097,"lat":26.086307},{"id":9,"lng":119.335267,"lat":26.100684},
+        {"id":10,"lng":119.311428,"lat":26.098006},{"id":23,"lng":119.32710,"lat":26.140906},{"id":24,"lng":118.274692462,"lat":25.026210115},{"id":25,"lng":118.326902,"lat":25.1408961},{"id":26,"lng":119.274748,"lat":26.02631}]
+    print(clusterByAdaptiveDbscan(data,1000,5))
+"""
+
     
 

@@ -80,10 +80,10 @@ def queryStationList():
         siteName=data['siteName']
         road=data['road']
         siteStatus=data['siteStatus']
-        pageSize=int(data['pageSize'])
-        pageNum=int(data['pageNum'])
-        count,row=aiBusModel.selectStationList(province,city,siteName,road,siteStatus,userInfo["citycode"],pageSize,pageNum,userInfo["userNames"]) 
-        res.update(code=ResponseCode.Success, data={"count":count,"stationList":row,"pageNum":pageNum})
+        #pageSize=int(data['pageSize'])
+        #pageNum=int(data['pageNum'])
+        row=aiBusModel.selectStationList(province,city,siteName,road,siteStatus,userInfo["citycode"],userInfo["userNames"]) 
+        res.update(code=ResponseCode.Success, data={"stationList":row})
         return res.data
     except Exception as e:
         res.update(code=ResponseCode.QueryError)

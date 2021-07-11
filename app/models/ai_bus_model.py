@@ -72,7 +72,7 @@ class AiBusModel:
         row=self.mysqlPool.fetchAll(selectStr+authStr,(('%'+queryText+'%'),citycode))
         return row
     
-    def selectStationList(self,province,city,siteName,road,siteStatus,citycode,pageSize,pageNum,userNames):
+    def selectStationList(self,province,city,siteName,road,siteStatus,citycode,userNames):
         """
         查询站点列表
         """
@@ -107,12 +107,12 @@ class AiBusModel:
             selectStr+=" and siteStatus=%s"
             args.append(siteStatus)
         #计算总数
-        countStr="select count(1) as num from ( " +selectStr+") a"
-        res=self.mysqlPool.fetchOne(countStr,args)
-        selectStr+=" order by id limit %s ,%s"
-        args.append(pageNum*pageSize)
-        args.append(pageSize)
-        return res["num"],self.mysqlPool.fetchAll(selectStr,args)
+        #countStr="select count(1) as num from ( " +selectStr+") a"
+        #res=self.mysqlPool.fetchOne(countStr,args)
+        #selectStr+=" order by id limit %s ,%s"
+        #args.append(pageNum*pageSize)
+        #args.append(pageSize)
+        return self.mysqlPool.fetchAll(selectStr,args)
     
     def insertSiteFile(self,row):
         """
@@ -199,7 +199,7 @@ class AiBusModel:
         return self.mysqlPool.fetchAll(selectStr,(fileId))
 
     
-    def selectTempSiteInfo(self,fileId,kwargs,pageSize,pageNum):
+    def selectTempSiteInfo(self,fileId,kwargs):
         """
         根据文件id查找临时siteInfo
         """
@@ -211,9 +211,9 @@ class AiBusModel:
         for key,value in kwargs.items():
             selectStr=selectStr+" and "+key+"=%s"
             args.append(value)
-        selectStr+=" order by id limit %s ,%s"
-        args.append(pageNum*pageSize)
-        args.append(pageSize)
+        #selectStr+=" order by id limit %s ,%s"
+        #args.append(pageNum*pageSize)
+        #args.append(pageSize)
         return self.mysqlPool.fetchAll(selectStr,args)
     
     def invalidSiteBySiteName(self,row):
