@@ -1,5 +1,6 @@
 import logging
 from re import S
+from threading import Condition
 from flask import current_app
 from numpy import insert, select
 from werkzeug.wrappers import CommonRequestDescriptorsMixin
@@ -227,7 +228,7 @@ class AiBusModel:
         """
         查询网点文件状态
         """
-        selectStr="SELECT fileProperty,fileStatus from tbl_site_files where id=%s"
+        selectStr="SELECT fileName,fileProperty,fileStatus,siteFileId,clusterStatus,clusterRadius,clusterMinSamples,destination,mapType,longitude,latitude from tbl_site_files where id=%s"
         return self.mysqlPool.fetchOne(selectStr,(fileId))
     
     def searchSiteListByFileId(self,fileId):
@@ -245,6 +246,21 @@ class AiBusModel:
         selectStr="SELECT id,siteProperty, latitude as lat,longitude as lng,siteName,number \
                    FROM tbl_site WHERE fileId = %s AND siteStatus = 1"
         return self.mysqlPool.fetchAll(selectStr,(fileId))
+    
+    def insertClusterFile(self,row):
+        """
+        插入网点文件信息
+        """
+        insertStr="insert into tbl_site_files(fileName,fileProperty,fileStatus,siteFileId,clusterStatus,clusterRadius,clusterMinSamples,destination,mapType,longitude,latitude,userCitycode,createUser,updateUser)  \
+                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        return self.mysqlPool.insert(insertStr,row)
+    
+    def selectClusterFileId(self,row):
+        """
+        查找聚类文件id
+        """
+        selectStr="select id from tbl_site_files where fileName=%s and fileStatus=%s and siteFileId=%s"
+        return self.mysqlPool.fetchOne(selectStr,row)
 
     def batchClusterSites(self,rows):
         """
@@ -265,9 +281,15 @@ class AiBusModel:
         row=self.mysqlPool.update(updateStr+condition,row)
         return row
     
-    def invalidClusterSitesById(self,row):
-        updateStr="update tbl_cluster_result set clusterStatus=0,updateUser=%s where id=%s"
+    def updateClusterResultByClusterFileId(self,row):
+        updateStr="update tbl_cluster_result set fileId=%s,clusterStatus=%s,updateUser=%s where fileId=%s and clusterStatus=2"
         row=self.mysqlPool.update(updateStr,row)
+        return row
+    
+    def invalidClusterSitesById(self,row,idArr):
+        updateStr="update tbl_cluster_result set clusterStatus=0,updateUser=%s"
+        condition="where id in(%s)"% ','.join("%s" % item for item in idArr)
+        row=self.mysqlPool.update(updateStr+condition,row)
         return row
     
     def insertClusterPoint(self,row):
@@ -288,11 +310,15 @@ class AiBusModel:
                   latitude,number from tbl_cluster_result where  fileId=%s and clusterStatus = 1"
         return self.mysqlPool.fetchAll(selectStr,(fileId))
     
-    def selectClusterNumberById(self,fileId,siteIds):
-        selectStr="SELECT sum(t.number) AS number,GROUP_CONCAT(t.siteSet) AS siteSet FROM tbl_cluster_result t \
+    def selectClusterNumberById(self,fileId,id,label):
+        selectStr="SELECT id, number,siteSet FROM tbl_cluster_result t \
                          WHERE t.fileId = %s"
-        condition=" and id in (%s)"% ','.join("'%s'" % item for item in siteIds)
-        row=self.mysqlPool.fetchOne(selectStr+condition,(fileId))
+        if label=="U":
+            condition=" and relativeId=%s"
+            id="station_"+str(id)
+        else:
+            condition=" and id=%s"
+        row=self.mysqlPool.fetchOne(selectStr+condition,(fileId,id))
         return row
     
     def updateClusterPointById(self,row):
@@ -301,12 +327,12 @@ class AiBusModel:
         return row
 
     def selectClusterParams(self,row):
-        selectStr="select clusterStatus,clusterRadius,clusterMinSamples from tbl_site_files  where id=%s"
+        selectStr="select clusterRadius,clusterMinSamples from tbl_site_files  where id=%s and clusterStatus=1"
         row=self.mysqlPool.fetchOne(selectStr,row)
         return row
     
     def updateClusterParams(self,row):
-        updateStr="update tbl_site_files set clusterStatus=%s,clusterRadius=%s,clusterMinSamples=%s,updateUser=%s where id=%s"
+        updateStr="update tbl_site_files set clusterRadius=%s,clusterMinSamples=%s,updateUser=%s where id=%s"
         row=self.mysqlPool.update(updateStr,row)
         return row
 

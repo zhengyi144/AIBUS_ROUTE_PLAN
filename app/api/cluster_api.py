@@ -116,15 +116,26 @@ def generateClusterPoints():
         epsRadius=float(data["epsRadius"])
         minSamples=data["minSamples"]
         #先判断网点文件是否有效
-        fileStatus=aiBusModel.selectSiteFileStatus(fileId)
-        if fileStatus["fileStatus"]==0:
-            res.update(code=ResponseCode.Fail,data="该网点文件已经失效!")
+        fileProperty=aiBusModel.selectSiteFileStatus(fileId)
+        if fileProperty["fileStatus"]==0:
+            res.update(code=ResponseCode.Success,data="该文件已经失效!")
             return res.data
-        #对聚类过的临时结果进行失效
-        aiBusModel.updateClusterResultByFileId((0,userInfo["userName"],fileId),[2])
-
+        
         #根据网点文件查询网点list
-        siteGeoList=aiBusModel.selectSiteGeoListByFileId(fileId)
+        #先判断是该文件是聚类文件还是网点文件
+        if fileProperty["clusterStatus"]==1:
+            siteFileId=fileProperty["siteFileId"]  
+        else:
+            siteFileId=fileId
+            #对网点文件的临时聚类结果进行失效
+            aiBusModel.updateClusterResultByFileId((0,userInfo["userName"],fileId),[2])
+
+        siteGeoList=aiBusModel.selectSiteGeoListByFileId(siteFileId)
+        if not siteGeoList:
+            res.update(code=ResponseCode.Success,data="网点为空！")
+            return res.data
+
+
         #{"noiseList":[ids],"aroundList":[ids],"clusterDict":{"id":[ids],"id":[ids]}}
         clusterInfo=clusterByAdaptiveDbscan(siteGeoList,epsRadius,minSamples)
         #将聚类结果保存至表中
@@ -186,7 +197,6 @@ def generateClusterPoints():
         res.update(code=ResponseCode.Fail)
         return res.data
 
-
 @route(cluster,'/saveClusterResult',methods=["POST"])
 @login_required
 def saveClusterResult():
@@ -201,60 +211,60 @@ def saveClusterResult():
         fileId=data["fileId"]
         epsRadius=data["epsRadius"]
         minSamples=data["minSamples"]
-        #1)先保存聚类参数
-        aiBusModel.updateClusterParams((1,epsRadius,minSamples,userInfo["userName"],fileId))
-        #2)失效该网点文件的聚类结果
+        removePoints=data["removePoints"]
+        newPoints=data["newPoints"]
+        mergePoints=data["mergePoints"]
+        #1)先判断该文件是网点文件还是聚类结果文件,再更新文件表；对文件的之前确认的聚类结果进行失效
         aiBusModel.updateClusterResultByFileId((0,userInfo["userName"],fileId),[1])
-        #3)保存
-        aiBusModel.updateClusterResultByFileId((1,userInfo["userName"],fileId),[2])
+        fileProperty=aiBusModel.selectSiteFileStatus(fileId)
+        if fileProperty["clusterStatus"]==1:
+            aiBusModel.updateClusterParams((epsRadius,minSamples,userInfo["userName"],fileId))
+            #直接更新聚类结果状态
+            aiBusModel.updateClusterResultByFileId((1,userInfo["userName"],fileId),[2])
+        else:
+            #先判断是否存在聚类文件
+            row=aiBusModel.selectClusterFileId((fileProperty["fileName"]+"_聚类",1,fileId))
+            if not row:
+                #插入新的聚类文件
+                #fileName,fileProperty,fileStatus,siteFileId,clusterStatus,clusterRadius,clusterMinSamples,destination,mapType,longitude,latitude,userCitycode,createUser,updateUser
+                aiBusModel.insertClusterFile((fileProperty["fileName"]+"_聚类",1,1,fileId,\
+                    1,epsRadius,minSamples,fileProperty["destination"],fileProperty["mapType"],
+                    fileProperty["longitude"],fileProperty["latitude"],userInfo["citycode"],userInfo["userName"],userInfo["userName"]))
+                #查询对应聚类文件id
+                clusterFile=aiBusModel.selectClusterFileId((fileProperty["fileName"]+"_聚类",1,fileId))
+                #将网点文件的聚类结果关联至聚类文件id,并更新聚类结果状态
+                aiBusModel.updateClusterResultByClusterFileId((clusterFile["id"],1,userInfo["userName"],fileId))
+                fileId=clusterFile["id"]
+            else:
+                aiBusModel.updateClusterParams((epsRadius,minSamples,userInfo["userName"],row["id"]))
+                #直接更新聚类结果状态
+                aiBusModel.updateClusterResultByFileId((1,userInfo["userName"],row["id"]),[2])
+                fileId=row["id"]
+
+        #2)先对临时聚类结果进行删除操作
+        aiBusModel.invalidClusterSitesById((userInfo["userName"]),removePoints)
+
+        #3)新增聚类点
+        for point in newPoints:
+            aiBusModel.insertClusterPoint((fileId,"station_"+str(point["id"]),point["stationName"],1,1,point["longitude"],point["latitude"],point["number"],userInfo["userName"],userInfo["userName"]))
+        
+        #4)合并聚类点，按照顺序合并
+        for item in mergePoints:
+            #{"originPoint":{"id":23,"label":"C"}, "destPoint":{"id":121,"label":"U"}}
+            originPoint=item["originPoint"]
+            destPoint=item["destPoint"]
+            originInfo=aiBusModel.selectClusterNumberById(fileId,originPoint["id"],originPoint["label"])
+            destInfo=aiBusModel.selectClusterNumberById(fileId,destPoint["id"],destPoint["label"])
+            #更新destId并失效originId
+            aiBusModel.updateClusterPointById((int(destInfo["number"])+int(originInfo["number"]),str(destInfo["siteSet"])+","+str(originInfo["siteSet"]),userInfo["userName"],fileId,destInfo["id"]))
+            aiBusModel.invalidClusterSitesById((userInfo["userName"]),[originInfo["id"]])
+
         res.update(code=ResponseCode.Success, data="成功保存聚类结果！")
         return res.data
     except Exception as e:
         res.update(code=ResponseCode.Fail)
         return res.data
 
-@route(cluster,'/removeClusterPoint',methods=["POST"])
-@login_required
-def removeClusterPoint():
-    """
-    删除选中的聚类点
-    """
-    res = ResMsg()
-    try:
-        aiBusModel=AiBusModel()
-        userInfo = session.get("userInfo")
-        data=request.get_json()
-        id=data["id"]
-        row=aiBusModel.invalidClusterSitesById((userInfo["userName"],id))
-        res.update(code=ResponseCode.Success, data="成功删除{}条记录！".format(row))
-        return res.data
-    except Exception as e:
-        res.update(code=ResponseCode.Fail)
-        return res.data
-
-@route(cluster,'/addNewClusterPoint',methods=["POST"])
-@login_required
-def addNewClusterPoint():
-    """
-    新增聚类点
-    """
-    res = ResMsg()
-    try:
-        aiBusModel=AiBusModel()
-        userInfo = session.get("userInfo")
-        data=request.get_json()
-        fileId=data["fileId"]
-        stationId=data["stationId"]
-        stationName=data["stationName"]
-        longitude=data["longitude"]
-        latitude=data["latitude"]
-        number=data["number"]
-        row=aiBusModel.insertClusterPoint((fileId,"station_"+str(stationId),stationName,1,1,longitude,latitude,number,userInfo["userName"],userInfo["userName"]))
-        res.update(code=ResponseCode.Success, data="成功新增{}条记录！".format(row))
-        return res.data
-    except Exception as e:
-        res.update(code=ResponseCode.Fail)
-        return res.data
 
 @route(cluster,'/queryClusterResult',methods=["POST"])
 @login_required
@@ -270,7 +280,7 @@ def queryClusterResult():
         clusterAroundPoints=[]
         #1)先查询聚类参数
         clusterParams=aiBusModel.selectClusterParams((fileId))
-        if clusterParams["clusterStatus"]==0:
+        if not clusterParams:
             res.update(code=ResponseCode.Success)
             return res.data
         #2)查询聚类结果
@@ -309,19 +319,17 @@ def removeClusterResult():
         data=request.get_json()
         fileId=data["fileId"]
         aiBusModel.updateClusterResultByFileId((0,userInfo["userName"],fileId),[1,2])
-        aiBusModel.updateClusterParams((0,0,0,userInfo["userName"],fileId))
+        aiBusModel.updateClusterParams((0,0,userInfo["userName"],fileId))
         res.update(code=ResponseCode.Success, data="成功删除聚类结果!")
         return res.data
     except Exception as e:
         res.update(code=ResponseCode.Fail)
         return res.data
 
+"""
 @route(cluster,'/mergeClusterPoints',methods=["POST"])
 @login_required
 def mergeClusterPoints():
-    """
-    合并聚类点
-    """
     res = ResMsg()
     try:
         aiBusModel=AiBusModel()
@@ -342,6 +350,44 @@ def mergeClusterPoints():
         return res.data
 
 
+@route(cluster,'/removeClusterPoint',methods=["POST"])
+@login_required
+def removeClusterPoint():
+    res = ResMsg()
+    try:
+        aiBusModel=AiBusModel()
+        userInfo = session.get("userInfo")
+        data=request.get_json()
+        id=data["id"]
+        row=aiBusModel.invalidClusterSitesById((userInfo["userName"],id))
+        res.update(code=ResponseCode.Success, data="成功删除{}条记录！".format(row))
+        return res.data
+    except Exception as e:
+        res.update(code=ResponseCode.Fail)
+        return res.data
+
+@route(cluster,'/addNewClusterPoint',methods=["POST"])
+@login_required
+def addNewClusterPoint():
+    res = ResMsg()
+    try:
+        aiBusModel=AiBusModel()
+        userInfo = session.get("userInfo")
+        data=request.get_json()
+        fileId=data["fileId"]
+        stationId=data["stationId"]
+        stationName=data["stationName"]
+        longitude=data["longitude"]
+        latitude=data["latitude"]
+        number=data["number"]
+        row=aiBusModel.insertClusterPoint((fileId,"station_"+str(stationId),stationName,1,1,longitude,latitude,number,userInfo["userName"],userInfo["userName"]))
+        res.update(code=ResponseCode.Success, data="成功新增{}条记录！".format(row))
+        return res.data
+    except Exception as e:
+        res.update(code=ResponseCode.Fail)
+        return res.data
+"""
+
 @route(cluster,'/exportClusterPoints',methods=["POST"])
 @login_required
 def exportClusterPoints():
@@ -360,8 +406,6 @@ def exportClusterPoints():
         clusterInfo = aiBusModel.searchClusterResult(fileId)
         if None == clusterInfo:
             clusterInfo = []
-       
-
         res.update(code=ResponseCode.Success, data={"sitefile":sitefileList,"clusterfile":clusterInfo})
         return res.data
     except Exception as e:
