@@ -151,7 +151,7 @@ def generateClusterPoints():
         for id in clusterInfo["noiseList"]:
             relativeId="site_"+str(id)
             site=siteGeoDict[str(id)]
-            insertVals.append((fileId,relativeId,site["siteName"],site["siteProperty"],0,2,site["lng"],site["lat"],site["number"],"",userInfo["userName"],userInfo["userName"]))
+            insertVals.append((fileId,relativeId,site["siteName"],site["siteProperty"],0,2,site["lng"],site["lat"],site["number"],str(id),userInfo["userName"],userInfo["userName"]))
             #clusterOutPoints.append({"id":relativeId,"siteName":site["siteName"],"siteProperty":site["siteProperty"],"number":site["number"],"longitude":site["lng"],"latitude":site["lat"]})
 
         #2)处理聚类点
@@ -169,7 +169,7 @@ def generateClusterPoints():
         for id in clusterInfo["aroundList"]:
             relativeId="site_"+str(id)
             aroundSite=siteGeoDict[str(id)]
-            insertVals.append((fileId,relativeId,aroundSite["siteName"],aroundSite["siteProperty"],2,2,aroundSite["lng"],aroundSite["lat"],aroundSite["number"],"",userInfo["userName"],userInfo["userName"]))
+            insertVals.append((fileId,relativeId,aroundSite["siteName"],aroundSite["siteProperty"],2,2,aroundSite["lng"],aroundSite["lat"],aroundSite["number"],str(id),userInfo["userName"],userInfo["userName"]))
                 #clusterAroundPoints.append({"id":relativeId,"siteName":aroundSite["siteName"],"siteProperty":site["siteProperty"],"number":aroundSite["number"],"longitude":aroundSite["lng"],"latitude":aroundSite["lat"]})
         #3)插入聚类点并返回
         aiBusModel.batchClusterSites(insertVals)
@@ -184,7 +184,7 @@ def generateClusterPoints():
             else:
                 siteProperty="自定义"
             row={"id":item["id"],"siteName":item["clusterName"],"siteProperty":siteProperty,\
-                    "longitude":item["longitude"],"latitude":item["latitude"],"number":item["number"]}
+                    "longitude":item["longitude"],"latitude":item["latitude"],"number":item["number"],"users":item["siteSet"].split(",")}
             if item["clusterProperty"]==1:
                 clusterCorePoints.append(row)
             elif item["clusterProperty"]==2:
@@ -211,16 +211,14 @@ def saveClusterResult():
         fileId=data["fileId"]
         epsRadius=data["epsRadius"]
         minSamples=data["minSamples"]
-        removePoints=data["removePoints"]
-        newPoints=data["newPoints"]
-        mergePoints=data["mergePoints"]
-        #1)先判断该文件是网点文件还是聚类结果文件,再更新文件表；对文件的之前确认的聚类结果进行失效
-        aiBusModel.updateClusterResultByFileId((0,userInfo["userName"],fileId),[1])
+        clusterAroundPoints=data["clusterAroundPoints"]
+        clusterCorePoints=data["clusterCorePoints"]
+        clusterOutPoints=data["clusterOutPoints"]
+        #1)先判断该文件是网点文件还是聚类结果文件,再更新文件表；对文件的之前的聚类结果进行失效
+        aiBusModel.updateClusterResultByFileId((0,userInfo["userName"],fileId),[1,2])
         fileProperty=aiBusModel.selectSiteFileStatus(fileId)
         if fileProperty["clusterStatus"]==1:
             aiBusModel.updateClusterParams((epsRadius,minSamples,userInfo["userName"],fileId))
-            #直接更新聚类结果状态
-            aiBusModel.updateClusterResultByFileId((1,userInfo["userName"],fileId),[2])
         else:
             #先判断是否存在聚类文件
             row=aiBusModel.selectClusterFileId((fileProperty["fileName"]+"_聚类",1,fileId))
@@ -232,33 +230,59 @@ def saveClusterResult():
                     fileProperty["longitude"],fileProperty["latitude"],userInfo["citycode"],userInfo["userName"],userInfo["userName"]))
                 #查询对应聚类文件id
                 clusterFile=aiBusModel.selectClusterFileId((fileProperty["fileName"]+"_聚类",1,fileId))
-                #将网点文件的聚类结果关联至聚类文件id,并更新聚类结果状态
-                aiBusModel.updateClusterResultByClusterFileId((clusterFile["id"],1,userInfo["userName"],fileId))
                 fileId=clusterFile["id"]
             else:
                 aiBusModel.updateClusterParams((epsRadius,minSamples,userInfo["userName"],row["id"]))
-                #直接更新聚类结果状态
-                aiBusModel.updateClusterResultByFileId((1,userInfo["userName"],row["id"]),[2])
                 fileId=row["id"]
 
-        #2)先对临时聚类结果进行删除操作
-        aiBusModel.invalidClusterSitesById((userInfo["userName"]),removePoints)
+        #2)插入边界点
+        for point in clusterAroundPoints:
+            if point["siteProperty"]=="固定":
+                relativeProperty=1
+            elif point["siteProperty"]=="临时":
+                relativeProperty=0
+            else:
+                relativeProperty=2
+            siteSet=",".join(point["users"]).strip(",")
 
-        #3)新增聚类点
-        for point in newPoints:
-            aiBusModel.insertClusterPoint((fileId,"station_"+str(point["id"]),point["stationName"],1,1,point["longitude"],point["latitude"],point["number"],userInfo["userName"],userInfo["userName"]))
+            if point["id"]!="":
+                #clusterName=%s,fileId=%s,clusterProperty=%s,clusterStatus=%s,relativeProperty=%s,longitude=%s,latitude=%s, number=%s,siteSet=%s,updateUser=%s
+                aiBusModel.updateClusterPointById((point["siteName"],fileId,2,1,relativeProperty, float(point["longitude"]),float(point["latitude"]),point["number"],siteSet,userInfo["userName"],point["id"]))
+            else:
+                aiBusModel.insertClusterPoint((fileId,"",relativeProperty,point["siteName"],2,1,float(point["longitude"]),float(point["latitude"]),point["number"],siteSet,userInfo["userName"],userInfo["userName"]))
         
-        #4)合并聚类点，按照顺序合并
-        for item in mergePoints:
-            #{"originPoint":{"id":23,"label":"C"}, "destPoint":{"id":121,"label":"U"}}
-            originPoint=item["originPoint"]
-            destPoint=item["destPoint"]
-            originInfo=aiBusModel.selectClusterNumberById(fileId,originPoint["id"],originPoint["label"])
-            destInfo=aiBusModel.selectClusterNumberById(fileId,destPoint["id"],destPoint["label"])
-            #更新destId并失效originId
-            aiBusModel.updateClusterPointById((int(destInfo["number"])+int(originInfo["number"]),str(destInfo["siteSet"])+","+str(originInfo["siteSet"]),userInfo["userName"],fileId,destInfo["id"]))
-            aiBusModel.invalidClusterSitesById((userInfo["userName"]),[originInfo["id"]])
+        #3)插入聚类点
+        for point in clusterCorePoints:
+            if point["siteProperty"]=="固定":
+                relativeProperty=1
+            elif point["siteProperty"]=="临时":
+                relativeProperty=0
+            else:
+                relativeProperty=2
+            siteSet=",".join(point["users"]).strip(",")
 
+            if point["id"]!="":
+                #clusterName=%s,fileId=%s,clusterProperty=%s,clusterStatus=%s,relativeProperty=%s,longitude=%s,latitude=%s, number=%s,siteSet=%s,updateUser=%s
+                aiBusModel.updateClusterPointById((point["siteName"],fileId,1,1,relativeProperty, float(point["longitude"]),float(point["latitude"]),point["number"],siteSet,userInfo["userName"],point["id"]))
+            else:
+                aiBusModel.insertClusterPoint((fileId,"",relativeProperty,point["siteName"],1,1,float(point["longitude"]),float(point["latitude"]),point["number"],siteSet,userInfo["userName"],userInfo["userName"]))
+        
+        #4)插入异常点
+        for point in clusterOutPoints:
+            if point["siteProperty"]=="固定":
+                relativeProperty=1
+            elif point["siteProperty"]=="临时":
+                relativeProperty=0
+            else:
+                relativeProperty=2
+            siteSet=",".join(point["users"]).strip(",")
+
+            if point["id"]!="":
+                #clusterName=%s,fileId=%s,clusterProperty=%s,clusterStatus=%s,relativeProperty=%s,longitude=%s,latitude=%s, number=%s,siteSet=%s,updateUser=%s
+                aiBusModel.updateClusterPointById((point["siteName"],fileId,0,1,relativeProperty, float(point["longitude"]),float(point["latitude"]),point["number"],siteSet,userInfo["userName"],point["id"]))
+            else:
+                aiBusModel.insertClusterPoint((fileId,"",relativeProperty,point["siteName"],0,1,float(point["longitude"]),float(point["latitude"]),point["number"],siteSet,userInfo["userName"],userInfo["userName"]))
+        
         res.update(code=ResponseCode.Success, data="成功保存聚类结果！")
         return res.data
     except Exception as e:
@@ -293,13 +317,13 @@ def queryClusterResult():
             else:
                 siteProperty="自定义"
             row={"id":item["id"],"siteName":item["clusterName"],"siteProperty":siteProperty,\
-                    "longitude":item["longitude"],"latitude":item["latitude"],"number":item["number"]}
+                    "longitude":item["longitude"],"latitude":item["latitude"],"number":item["number"],"users":item["siteSet"].split(",")}
             if item["clusterProperty"]==1:
                 clusterCorePoints.append(row)
             elif item["clusterProperty"]==2:
                 clusterAroundPoints.append(row)
             else:
-                clusterAroundPoints.append(row)
+                clusterOutPoints.append(row)
         res.update(code=ResponseCode.Success, data={"epsRadius":clusterParams["clusterRadius"],"minSamples":clusterParams["clusterMinSamples"],"clusterCorePoints":clusterCorePoints,"clusterAroundPoints":clusterAroundPoints,"clusterOutPoints":clusterOutPoints})
         return res.data
     except Exception as e:

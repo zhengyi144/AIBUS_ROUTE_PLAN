@@ -293,9 +293,9 @@ class AiBusModel:
         return row
     
     def insertClusterPoint(self,row):
-        insertStr="insert into tbl_cluster_result(fileId,relativeId,clusterName,clusterProperty,clusterStatus,\
-                                                 longitude,latitude,number,createUser,updateUser)  \
-                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        insertStr="insert into tbl_cluster_result(fileId,relativeId,relativeProperty,clusterName,clusterProperty,clusterStatus,\
+                                                 longitude,latitude,number,siteSet,createUser,updateUser)  \
+                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
         row=self.mysqlPool.insert(insertStr,row)
         return row
     
@@ -322,7 +322,7 @@ class AiBusModel:
         return row
     
     def updateClusterPointById(self,row):
-        updateStr="update tbl_cluster_result set number=%s,siteSet=%s,updateUser=%s where fileId=%s and id=%s"
+        updateStr="update tbl_cluster_result set clusterName=%s,fileId=%s,clusterProperty=%s,clusterStatus=%s,relativeProperty=%s,longitude=%s,latitude=%s, number=%s,siteSet=%s,updateUser=%s where  id=%s"
         row=self.mysqlPool.update(updateStr,row)
         return row
 
