@@ -350,6 +350,31 @@ def removeClusterResult():
         res.update(code=ResponseCode.Fail)
         return res.data
 
+
+@route(cluster,'/exportClusterPoints',methods=["POST"])
+@login_required
+def exportClusterPoints():
+    """
+    根据网点文件id导出网点和聚类信息
+    """
+    res = ResMsg()
+    try:
+        aiBusModel=AiBusModel()
+        userInfo = session.get("userInfo")
+        data=request.get_json()
+        fileId=data["fileId"]
+        # print(fileId)
+        #sitefileList=aiBusModel.searchSiteListByFileId(fileId)
+        # 聚类文件导出
+        clusterInfo = aiBusModel.searchClusterResult(fileId)
+        if None == clusterInfo:
+            clusterInfo = []
+        res.update(code=ResponseCode.Success, data={"clusterResult":clusterInfo})
+        return res.data
+    except Exception as e:
+        res.update(code=ResponseCode.Fail)
+        return res.data
+
 """
 @route(cluster,'/mergeClusterPoints',methods=["POST"])
 @login_required
@@ -412,26 +437,3 @@ def addNewClusterPoint():
         return res.data
 """
 
-@route(cluster,'/exportClusterPoints',methods=["POST"])
-@login_required
-def exportClusterPoints():
-    """
-    根据网点文件id导出网点和聚类信息
-    """
-    res = ResMsg()
-    try:
-        aiBusModel=AiBusModel()
-        userInfo = session.get("userInfo")
-        data=request.get_json()
-        fileId=data["fileId"]
-        # print(fileId)
-        sitefileList=aiBusModel.searchSiteListByFileId(fileId)
-        # 聚类文件导出
-        clusterInfo = aiBusModel.searchClusterResult(fileId)
-        if None == clusterInfo:
-            clusterInfo = []
-        res.update(code=ResponseCode.Success, data={"sitefile":sitefileList,"clusterfile":clusterInfo})
-        return res.data
-    except Exception as e:
-        res.update(code=ResponseCode.Fail)
-        return res.data

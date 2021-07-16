@@ -45,7 +45,7 @@ def uploadSiteExcel():
         #先判断目的地网点是否存在,存在则覆盖
         siteFile=aiBusModel.selectSiteFileIdByFileName((destination))
         if siteFile is None or siteFile["id"] is None :
-           aiBusModel.insertSiteFile((destination,0,0,destination,mapType,longitude,latitude,userInfo["citycode"],userInfo["userName"],userInfo["userName"]))
+           aiBusModel.insertSiteFile((destination,0,0,0,destination,mapType,longitude,latitude,userInfo["citycode"],userInfo["userName"],userInfo["userName"]))
            siteFile=aiBusModel.selectSiteFileIdByFileName((destination))
         else:
             #失效该文件对应所有临时site，后面重新插入
@@ -105,7 +105,7 @@ def uploadSiteExcel():
                     float(item["longitude"]),float(item["latitude"]),clientName,clientProperty,clientAddress,age,grade,number,others,userInfo["userName"],userInfo["userName"],geojson))
         if len(insertVals)>0:
             #现将批量导入文件信息插入tbl_site_files,并更新tbl_site_files.fileStatus为有效文件
-            aiBusModel.updateSiteFile((1,len(insertVals),siteFile["id"]))
+            aiBusModel.updateSiteFile((1,0,userInfo["userName"],siteFile["id"]))
             #此时tbl_site中siteStatus还是临时站点
             row=aiBusModel.batchSites(tuple(insertVals))
             if row>0:
@@ -239,10 +239,10 @@ def saveSiteList():
         data=request.get_json()
         fileId=int(data["fileId"])
         siteIdList=data["siteIdList"]
-        #siteIdList=list(map(int, request.form.get("siteIdList").split(",")))
-        aiBusModel.updateSiteStatusByfieldId((3,userInfo["userName"],fileId,1))
+        aiBusModel.updateSiteStatusByfieldId((0,userInfo["userName"],fileId,1))
         row=aiBusModel.updateSiteStatusByIds(fileId,1,siteIdList,userInfo["userName"])
-        #更新网点文件fileProperty为正式文件
+        #更新网点文件sitecount
+        aiBusModel.updateSiteFile((1,row,userInfo["userName"],fileId))
 
         res.update(code=ResponseCode.Success, data="保存网点{}条".format(row))
         return res.data
@@ -270,4 +270,28 @@ def deleteSite():
         return res.data
     except Exception as e:
         res.update(code=ResponseCode.Fail, data="删除出错！")
+        return res.data
+
+@route(sitedata,'/exportSitePoints',methods=["POST"])
+@login_required
+def exportSitePoints():
+    """
+    根据网点文件id导出网点和聚类信息
+    """
+    res = ResMsg()
+    try:
+        aiBusModel=AiBusModel()
+        userInfo = session.get("userInfo")
+        data=request.get_json()
+        fileId=data["fileId"]
+        # print(fileId)
+        sitefileList=aiBusModel.searchSiteListByFileId(fileId)
+        if sitefileList is None:
+            sitefileList=[]
+        # 聚类文件导出
+        #clusterInfo = aiBusModel.searchClusterResult(fileId)
+        res.update(code=ResponseCode.Success, data={"siteResult":sitefileList})
+        return res.data
+    except Exception as e:
+        res.update(code=ResponseCode.Fail)
         return res.data

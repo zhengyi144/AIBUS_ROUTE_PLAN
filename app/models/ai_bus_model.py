@@ -119,8 +119,8 @@ class AiBusModel:
         """
         插入网点文件信息
         """
-        insertStr="insert into tbl_site_files(fileName,fileProperty,fileStatus,destination,mapType,longitude,latitude,userCitycode,createUser,updateUser)  \
-                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        insertStr="insert into tbl_site_files(fileName,fileProperty,fileStatus,siteCount,destination,mapType,longitude,latitude,userCitycode,createUser,updateUser)  \
+                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
         row=self.mysqlPool.insert(insertStr,row)
     
     def selectSiteFileIdByFileName(self,row):
@@ -163,7 +163,7 @@ class AiBusModel:
         """
         更新tbl_site_files.fileStatus=1
         """
-        updateStr="update tbl_site_files set fileStatus=%s,siteCount=%s where id=%s"
+        updateStr="update tbl_site_files set fileStatus=%s,siteCount=%s,updateUser=%s where id=%s"
         row=self.mysqlPool.update(updateStr,row)
         return row
     
