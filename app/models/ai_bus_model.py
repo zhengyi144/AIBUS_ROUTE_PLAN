@@ -131,13 +131,24 @@ class AiBusModel:
         row=self.mysqlPool.fetchOne(selectStr,row)
         return row
 
+    def selectFileList(self,citycode,userNames):
+        """
+        查询网点文件和聚类文件列表
+        """
+        selectStr="select id as fileId, fileName,siteCount from tbl_site_files t where t.userCitycode=%s and t.fileStatus=1 "
+        authStr=" and createUser in (%s)"% ','.join("'%s'" % item for item in userNames) 
+        orderStr=" order by id desc "
+        selectStr=selectStr+authStr+orderStr
+        return self.mysqlPool.fetchAll(selectStr,(citycode))
+    
     def selectSiteFileList(self,citycode,userNames):
         """
         查询网点文件列表
         """
-        selectStr="select id as fileId, fileName,siteCount from tbl_site_files t where t.userCitycode=%s and t.fileStatus=1 "
+        selectStr="select id as fileId, fileName,siteCount from tbl_site_files t where t.userCitycode=%s and t.fileStatus=1 and clusterStatus=0 "
         authStr=" and createUser in (%s)"% ','.join("'%s'" % item for item in userNames) 
-        selectStr=selectStr+authStr
+        selectStr="select tt.*,c.fileName as clusterFileName,c.id as clusterFileId,c.clusterMinSamples,c.clusterRadius from ("\
+                  +selectStr+authStr+") tt LEFT JOIN tbl_site_files c on c.siteFileId=tt.fileId order by tt.fileId desc"
         return self.mysqlPool.fetchAll(selectStr,(citycode))
 
     def fuzzyQuerySiteFileList(self,queryText,citycode,userNames):
@@ -327,7 +338,12 @@ class AiBusModel:
         return row
 
     def selectClusterParams(self,row):
-        selectStr="select clusterRadius,clusterMinSamples from tbl_site_files  where id=%s and clusterStatus=1"
+        selectStr="select clusterRadius,clusterMinSamples from tbl_site_files  where id=%s and clusterStatus=1 and fileStatus=1"
+        row=self.mysqlPool.fetchOne(selectStr,row)
+        return row
+
+    def selectClusterParamsBySiteFileId(self,row):
+        selectStr="select id, clusterRadius,clusterMinSamples from tbl_site_files  where siteFileId=%s and clusterStatus=1 and fileStatus=1"
         row=self.mysqlPool.fetchOne(selectStr,row)
         return row
     

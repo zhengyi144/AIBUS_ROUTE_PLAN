@@ -130,8 +130,14 @@ def querySiteFileList():
     res = ResMsg()
     try:
         aiBusModel=AiBusModel()
+        data=request.get_json()
+        #根据fileType来判断聚类文件是否展开
+        fileType=int(data["fileType"])
         userInfo = session.get("userInfo")
-        siteFileList=aiBusModel.selectSiteFileList(userInfo["citycode"],userInfo["userNames"])
+        if fileType==1:
+            siteFileList=aiBusModel.selectFileList(userInfo["citycode"],userInfo["userNames"])
+        else:
+            siteFileList=aiBusModel.selectSiteFileList(userInfo["citycode"],userInfo["userNames"])
         res.update(code=ResponseCode.Success, data=siteFileList)
         return res.data
     except Exception as e:

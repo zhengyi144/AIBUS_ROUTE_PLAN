@@ -289,7 +289,6 @@ def saveClusterResult():
         res.update(code=ResponseCode.Fail)
         return res.data
 
-
 @route(cluster,'/queryClusterResult',methods=["POST"])
 @login_required
 def queryClusterResult():
@@ -305,8 +304,11 @@ def queryClusterResult():
         #1)先查询聚类参数
         clusterParams=aiBusModel.selectClusterParams((fileId))
         if not clusterParams:
-            res.update(code=ResponseCode.Success)
-            return res.data
+            clusterParams=aiBusModel.selectClusterParamsBySiteFileId((fileId))
+            if not clusterParams:
+                res.update(code=ResponseCode.Success)
+                return res.data
+            fileId=clusterParams["id"]
         #2)查询聚类结果
         clusterResut=aiBusModel.selectClusterResult((1,fileId))
         for item in clusterResut:
