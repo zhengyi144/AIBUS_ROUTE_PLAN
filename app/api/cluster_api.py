@@ -214,8 +214,7 @@ def saveClusterResult():
         clusterAroundPoints=data["clusterAroundPoints"]
         clusterCorePoints=data["clusterCorePoints"]
         clusterOutPoints=data["clusterOutPoints"]
-        #1)先判断该文件是网点文件还是聚类结果文件,再更新文件表；对文件的之前的聚类结果进行失效
-        aiBusModel.updateClusterResultByFileId((0,userInfo["userName"],fileId),[1,2])
+        #1)先判断该文件是网点文件还是聚类结果文件,再更新文件表；
         fileProperty=aiBusModel.selectSiteFileStatus(fileId)
         if fileProperty["clusterStatus"]==1:
             aiBusModel.updateClusterParams((epsRadius,minSamples,userInfo["userName"],fileId))
@@ -234,6 +233,8 @@ def saveClusterResult():
             else:
                 aiBusModel.updateClusterParams((epsRadius,minSamples,userInfo["userName"],row["id"]))
                 fileId=row["id"]
+        #对文件的之前的聚类结果进行失效
+        aiBusModel.updateClusterResultByFileId((0,userInfo["userName"],fileId),[1,2])
 
         #2)插入边界点
         for point in clusterAroundPoints:
@@ -377,6 +378,37 @@ def exportClusterPoints():
         res.update(code=ResponseCode.Fail)
         return res.data
 
+
+@route(cluster,'/addNewClusterPoint',methods=["POST"])
+@login_required
+def addNewClusterPoint():
+    res = ResMsg()
+    try:
+        aiBusModel=AiBusModel()
+        userInfo = session.get("userInfo")
+        data=request.get_json()
+        fileId=data["fileId"]
+        siteName=data["siteName"]
+        longitude=data["longitude"]
+        latitude=data["latitude"]
+        number=data["number"]
+        siteProperty=data["siteProperty"]
+        if siteProperty=="固定":
+            relativeProperty=1
+        elif siteProperty=="临时":
+            relativeProperty=0
+        else:
+            relativeProperty=2
+        #插入
+        aiBusModel.insertClusterPoint((fileId,' ',relativeProperty,siteName,1,2,float(longitude),float(latitude),number,' ',userInfo["userName"],userInfo["userName"]))
+        #查找id
+        row=aiBusModel.selectClusterPointId((fileId,siteName,float(longitude),float(latitude)))
+        res.update(code=ResponseCode.Success, data={"id":row["id"],"siteName":siteName,\
+            "longitude":longitude,"latitude":latitude,"number":number,"siteProperty":siteProperty,"users":[]})
+        return res.data
+    except Exception as e:
+        res.update(code=ResponseCode.Fail)
+        return res.data
 """
 @route(cluster,'/mergeClusterPoints',methods=["POST"])
 @login_required

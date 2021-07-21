@@ -135,7 +135,7 @@ class AiBusModel:
         """
         查询网点文件和聚类文件列表
         """
-        selectStr="select id as fileId, fileName,siteCount from tbl_site_files t where t.userCitycode=%s and t.fileStatus=1 "
+        selectStr="select id as fileId, fileName,siteCount,null as clusterFileName,null as clusterFileId,clusterMinSamples,clusterRadius from tbl_site_files t where t.userCitycode=%s and t.fileStatus=1 "
         authStr=" and createUser in (%s)"% ','.join("'%s'" % item for item in userNames) 
         orderStr=" order by id desc "
         selectStr=selectStr+authStr+orderStr
@@ -306,9 +306,14 @@ class AiBusModel:
     def insertClusterPoint(self,row):
         insertStr="insert into tbl_cluster_result(fileId,relativeId,relativeProperty,clusterName,clusterProperty,clusterStatus,\
                                                  longitude,latitude,number,siteSet,createUser,updateUser)  \
-                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
         row=self.mysqlPool.insert(insertStr,row)
         return row
+    
+    def selectClusterPointId(self,row):
+        selectStr="select id from tbl_cluster_result where fileId=%s and clusterName=%s and longitude=%s and latitude=%s"
+        return self.mysqlPool.fetchOne(selectStr,row)
+
     
     def selectClusterResult(self,row):
         selectStr="select id,relativeId,clusterName,relativeProperty,clusterProperty,longitude,\
