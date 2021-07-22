@@ -68,12 +68,12 @@ class AiBusModel:
         模糊查询stationName
         """
         selectStr="select id,siteName,if(siteProperty=1,'固定','临时') as siteProperty,province,city,region,road,longitude,latitude \
-                   from tbl_station where siteName like %s and userCitycode=%s "
+                   from tbl_station where siteName like %s "
         authStr="and createUser in (%s)"% ','.join("'%s'" % item for item in userNames) 
-        row=self.mysqlPool.fetchAll(selectStr+authStr,(('%'+queryText+'%'),citycode))
+        row=self.mysqlPool.fetchAll(selectStr+authStr,(('%'+queryText+'%')))
         return row
     
-    def selectStationList(self,province,city,siteName,road,siteStatus,citycode,userNames):
+    def selectStationList(self,province,city,siteName,road,siteStatus,pageSize,pageNum,citycode,userNames):
         """
         查询站点列表
         """
@@ -108,12 +108,12 @@ class AiBusModel:
             selectStr+=" and siteStatus=%s"
             args.append(siteStatus)
         #计算总数
-        #countStr="select count(1) as num from ( " +selectStr+") a"
-        #res=self.mysqlPool.fetchOne(countStr,args)
-        #selectStr+=" order by id limit %s ,%s"
-        #args.append(pageNum*pageSize)
-        #args.append(pageSize)
-        return self.mysqlPool.fetchAll(selectStr,args)
+        countStr="select count(1) as num from ( " +selectStr+") a"
+        res=self.mysqlPool.fetchOne(countStr,args)
+        selectStr+=" order by updateTime,id limit %s ,%s"
+        args.append(pageNum*pageSize)
+        args.append(pageSize)
+        return res["num"],self.mysqlPool.fetchAll(selectStr,args)
     
     def insertSiteFile(self,row):
         """

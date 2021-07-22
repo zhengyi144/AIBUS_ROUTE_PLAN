@@ -47,20 +47,22 @@ def planSingleRoute():
         destination=data["destination"]
         waypoints=data["waypoints"]          
         passengers=data["passengers"]         #座位上限
-        occupancyRate=data["occupancyRate"]    #上座率
+        occupancyRate=float(data["occupancyRate"])    #上座率
         odometerFactor=data["odometerFactor"]   #非直线系数
         roundTrip=data["roundTrip"]   #是否往返0,
         routeFactor=data["routeFactor"]   #路线方案，0时间最短，1距离最短
+        MAXNODE=30
         if not destination:
-            res.update(code=ResponseCode.Fail,data="目的地不能为空！")
+            res.update(code=ResponseCode.Success,data="目的地不能为空！")
             return res.data
 
         #1)先查询聚类点，聚类点不存在则查询网点
         routeNode=[]
         index=0
         if fileId is not None and fileId!='':
-            clusterParams=aiBusModel.selectClusterParams((fileId))
-            if clusterParams["clusterStatus"]==1:
+            #根据fileId查询文件信息，判断是聚类文件还网点文件
+            fileInfo=aiBusModel.selectSiteFileStatus(fileId)
+            if fileInfo and fileInfo["clusterStatus"]==1:
                 clusterPoints=aiBusModel.selectClusterResult((1,fileId))
                 for point in clusterPoints:
                     routeNode.append({"index":index,"nodeName":point["clusterName"],"lng":format(point["longitude"],'.6f'),"lat":format(point["latitude"],'.6f'),"number":point["number"]})
@@ -74,6 +76,12 @@ def planSingleRoute():
         for point in waypoints:
             routeNode.append({"index":index,"nodeName":point["siteName"],"lng":format(point["lng"],'.6f'),"lat":format(point["lat"],'.6f'),"number":point["number"]})
             index+=1
+        
+        #判断结点数量是否超过限制
+        if len(routeNode)>MAXNODE:
+            res.update(code=ResponseCode.Success,data="路线规划结点数量超过限制！")
+            return res.data
+
         #将目标点一起添加至末尾
         routeNode.append({"index":"dest","nodeName":destination["siteName"],"lng":format(destination["lng"],'.6f'),"lat":format(destination["lat"],'.6f'),"number":0})
 
@@ -126,15 +134,15 @@ def planSingleRoute():
         routeNodeList.append({"nodeIndex":nodeIndex,"nodeName":destination["siteName"],\
                 "lng":float(destination["lng"]),"lat":float(destination["lat"]),"number":0})
         
-        routeOccupancyRate=float(routeNumber)/passengers
+        routeOccupancyRate=float(routeNumber)/passengers*100
         if routeNumber>passengers:
-            res.update(code=ResponseCode.Fail,data="路线人数超过座位上限！")
+            res.update(code=ResponseCode.Success,data="路线人数超过座位上限！")
             return res.data
         if routeOccupancyRate<occupancyRate:
-            res.update(code=ResponseCode.Fail,data="路线人数上座率未达到下限！")
+            res.update(code=ResponseCode.Success,data="路线人数上座率未达到下限！")
             return res.data
         if float(routeDist)/directDist>odometerFactor:
-            res.update(code=ResponseCode.Fail,data="超过非直线里程系数！")
+            res.update(code=ResponseCode.Success,data="超过非直线里程系数！")
             return res.data
         #存储路线结点
         routeUuid1 = uuid.uuid1().int
@@ -235,7 +243,7 @@ def reSortRouteNode():
                 aiBusModel.updateRouteDetail((nodeIndex,1,routeId,toNode["id"]))
                 routeNumber+=toNode["number"]
         
-        routeOccupancyRate=float(routeNumber)/passengers
+        routeOccupancyRate=float(routeNumber)/passengers*100
         result={"routeId":routeId,"routeDist":routeDist,\
                     "routeTime":routeTime,"routeNumber":routeNumber,\
                     "routeOccupancyRate":routeOccupancyRate,"routeNodeList":newRouteNodeList,\
