@@ -160,6 +160,15 @@ class AiBusModel:
         selectStr=selectStr+authStr
         return self.mysqlPool.fetchAll(selectStr,(citycode,('%'+queryText+'%')))
 
+    def selectSiteNameByText(self,queryText,fileId,siteStatus):
+        """"
+        根据文件id+站点名称模糊查询，clientName,clientProperty,age,clientAddress,number,grade  
+        """
+        selectStr="select id,siteName,if(siteProperty=1,'固定','临时') as siteProperty,longitude,latitude \
+                  from tbl_site where fileId=%s and siteName like %s AND siteStatus = %s"
+        return self.mysqlPool.fetchAll(selectStr,(fileId,('%'+queryText+'%'),siteStatus))
+        
+
     def batchSites(self,rows):
         """
         插入tbl_site
