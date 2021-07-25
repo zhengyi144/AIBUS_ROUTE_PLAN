@@ -183,8 +183,16 @@ def generateClusterPoints():
                 siteProperty="临时"
             else:
                 siteProperty="自定义"
+            
+            #根据site id查询网点信息
+            siteInfo=aiBusModel.selectSiteNameByIds(item["siteSet"].split(","))
+            siteNames=[]
+            for site in siteInfo:
+                siteNames.append(site["siteName"])
+
             row={"id":item["id"],"siteName":item["clusterName"],"siteProperty":siteProperty,\
-                    "longitude":item["longitude"],"latitude":item["latitude"],"number":item["number"],"users":item["siteSet"].split(",")}
+                    "longitude":item["longitude"],"latitude":item["latitude"],"number":item["number"],\
+                        "users":item["siteSet"].split(","),"userNames":siteNames}
             if item["clusterProperty"]==1:
                 clusterCorePoints.append(row)
             elif item["clusterProperty"]==2:
@@ -319,8 +327,16 @@ def queryClusterResult():
                 siteProperty="临时"
             else:
                 siteProperty="自定义"
+            
+            #根据site id查询网点信息
+            siteInfo=aiBusModel.selectSiteNameByIds(item["siteSet"].split(","))
+            siteNames=[]
+            for site in siteInfo:
+                siteNames.append(site["siteName"])
+
             row={"id":item["id"],"siteName":item["clusterName"],"siteProperty":siteProperty,\
-                    "longitude":item["longitude"],"latitude":item["latitude"],"number":item["number"],"users":item["siteSet"].split(",")}
+                    "longitude":item["longitude"],"latitude":item["latitude"],"number":item["number"],\
+                        "users":item["siteSet"].split(","),"userNames":siteNames}
             if item["clusterProperty"]==1:
                 clusterCorePoints.append(row)
             elif item["clusterProperty"]==2:

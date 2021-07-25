@@ -210,7 +210,10 @@ class AiBusModel:
         selectStr="SELECT siteName, latitude,longitude,SUM(number) AS clientNumber \
                    FROM tbl_site WHERE fileId = %s AND siteStatus = 1 GROUP BY siteName, latitude,longitude"
         return self.mysqlPool.fetchAll(selectStr,row)
-
+    
+    def selectSiteNameByIds(self,siteIds):
+        selectStr="select siteName from tbl_site where "+" id in (%s)"% ','.join("%s" % item for item in siteIds)
+        return self.mysqlPool.fetchAll(selectStr,())
     
     def selectSiteClientNumberByFileId(self,fileId):
         """
