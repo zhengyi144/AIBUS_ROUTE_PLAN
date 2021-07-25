@@ -48,8 +48,10 @@ def uploadSiteExcel():
            aiBusModel.insertSiteFile((destination,0,0,0,destination,mapType,longitude,latitude,userInfo["citycode"],userInfo["userName"],userInfo["userName"]))
            siteFile=aiBusModel.selectSiteFileIdByFileName((destination))
         else:
+            res.update(code=ResponseCode.Success, data="重复插入网点文件！")
+            return res.data
             #失效该文件对应所有临时site，后面重新插入
-            aiBusModel.updateSiteStatusByfieldId((3,userInfo["userName"],siteFile["id"],2))
+            #aiBusModel.updateSiteStatusByfieldId((3,userInfo["userName"],siteFile["id"],2))
         #循环判断数据类型
         insertVals = []
         for item in data["items"]:
@@ -105,11 +107,11 @@ def uploadSiteExcel():
                     float(item["longitude"]),float(item["latitude"]),clientName,clientProperty,clientAddress,age,grade,number,others,userInfo["userName"],userInfo["userName"],geojson))
         if len(insertVals)>0:
             #现将批量导入文件信息插入tbl_site_files,并更新tbl_site_files.fileStatus为有效文件
-            aiBusModel.updateSiteFile((1,0,userInfo["userName"],siteFile["id"]))
+            aiBusModel.updateSiteFile((0,0,userInfo["userName"],siteFile["id"]))
             #此时tbl_site中siteStatus还是临时站点
             row=aiBusModel.batchSites(tuple(insertVals))
             if row>0:
-                res.update(code=ResponseCode.Success, data={"fileId":siteFile["id"], "fileName":destination,"siteCount":row})
+                res.update(code=ResponseCode.Success, data={"fileId":siteFile["id"], "fileName":destination,"siteCount":0})
                 return res.data
             else:
                 res.update(code=ResponseCode.Fail, data="插入失败！")
@@ -268,7 +270,8 @@ def saveSiteList():
         aiBusModel.updateSiteStatusByfieldId((0,userInfo["userName"],fileId,1))
         row=aiBusModel.updateSiteStatusByIds(fileId,1,siteIdList,userInfo["userName"])
         #更新网点文件sitecount
-        aiBusModel.updateSiteFile((1,row,userInfo["userName"],fileId))
+        client=aiBusModel.selectSiteClientNumberByFileId(fileId)
+        aiBusModel.updateSiteFile((1,client["clientNumber"],userInfo["userName"],fileId))
 
         res.update(code=ResponseCode.Success, data="保存网点{}条".format(row))
         return res.data
@@ -292,6 +295,11 @@ def deleteSite():
         latitude=float(data["latitude"])
         longitude=float(data["longitude"])
         row=aiBusModel.invalidSiteBySiteName((3,userInfo["userName"],siteName,fileId,longitude,latitude))
+        #失效网点后需要更新对应的网点文件siteCount
+        if row>0:
+            client=aiBusModel.selectInvalidClientNumber((siteName,fileId,longitude,latitude))
+            fileInfo=aiBusModel.selectSiteFileStatus(fileId)
+            aiBusModel.updateSiteFile((1,int(fileInfo["siteCount"])-client["clientNumber"],userInfo["userName"],fileId))
         res.update(code=ResponseCode.Success, data="删除网点{}条".format(row))
         return res.data
     except Exception as e:

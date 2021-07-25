@@ -209,8 +209,15 @@ class AiBusModel:
         """
         selectStr="SELECT siteName, latitude,longitude,SUM(number) AS clientNumber \
                    FROM tbl_site WHERE fileId = %s AND siteStatus = 1 GROUP BY siteName, latitude,longitude"
-        
         return self.mysqlPool.fetchAll(selectStr,row)
+
+    
+    def selectSiteClientNumberByFileId(self,fileId):
+        """
+        根据文件id查询总人数
+        """
+        selectStr="SELECT SUM(number) AS clientNumber FROM tbl_site WHERE fileId = %s AND siteStatus = 1"
+        return self.mysqlPool.fetchOne(selectStr,(fileId))
 
     def selectCustomSiteInfo(self,fileId):
         """
@@ -244,12 +251,19 @@ class AiBusModel:
         """
         updateStr="update tbl_site set siteStatus=%s,updateUser=%s WHERE siteName =%s and fileId=%s and longitude=%s and latitude=%s "
         return self.mysqlPool.update(updateStr,row)
-    
+
+    def selectInvalidClientNumber(self,row):
+        """
+        根据
+        """
+        selectStr="select sum(number) as clientNumber from tbl_site where siteName =%s and fileId=%s and longitude=%s and latitude=%s "
+        return self.mysqlPool.fetchOne(selectStr,row)
+
     def selectSiteFileStatus(self,fileId):
         """
         查询网点文件状态
         """
-        selectStr="SELECT fileName,fileProperty,fileStatus,siteFileId,clusterStatus,clusterRadius,clusterMinSamples,destination,mapType,longitude,latitude from tbl_site_files where id=%s"
+        selectStr="SELECT fileName,fileProperty,fileStatus,siteFileId,clusterStatus,clusterRadius,clusterMinSamples,destination,mapType,longitude,latitude,siteCount from tbl_site_files where id=%s"
         return self.mysqlPool.fetchOne(selectStr,(fileId))
     
     def searchSiteListByFileId(self,fileId):
