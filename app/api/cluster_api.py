@@ -185,14 +185,14 @@ def generateClusterPoints():
                 siteProperty="自定义"
             
             #根据site id查询网点信息
-            siteInfo=aiBusModel.selectSiteNameByIds(item["siteSet"].split(","))
-            siteNames=[]
+            siteInfo=aiBusModel.selectClientNameByIds(item["siteSet"].split(","))
+            clientNames=[]
             for site in siteInfo:
-                siteNames.append(site["siteName"])
+                clientNames.append(site["clientName"])
 
             row={"id":item["id"],"siteName":item["clusterName"],"siteProperty":siteProperty,\
                     "longitude":item["longitude"],"latitude":item["latitude"],"number":item["number"],\
-                        "users":item["siteSet"].split(","),"userNames":siteNames}
+                        "users":item["siteSet"].split(","),"userNames":clientNames}
             if item["clusterProperty"]==1:
                 clusterCorePoints.append(row)
             elif item["clusterProperty"]==2:
@@ -329,14 +329,14 @@ def queryClusterResult():
                 siteProperty="自定义"
             
             #根据site id查询网点信息
-            siteInfo=aiBusModel.selectSiteNameByIds(item["siteSet"].split(","))
-            siteNames=[]
+            siteInfo=aiBusModel.selectClientNameByIds(item["siteSet"].split(","))
+            clientNames=[]
             for site in siteInfo:
-                siteNames.append(site["siteName"])
+                clientNames.append(site["clientName"])
 
             row={"id":item["id"],"siteName":item["clusterName"],"siteProperty":siteProperty,\
                     "longitude":item["longitude"],"latitude":item["latitude"],"number":item["number"],\
-                        "users":item["siteSet"].split(","),"userNames":siteNames}
+                        "users":item["siteSet"].split(","),"userNames":clientNames}
             if item["clusterProperty"]==1:
                 clusterCorePoints.append(row)
             elif item["clusterProperty"]==2:
@@ -385,6 +385,14 @@ def exportClusterPoints():
         # print(fileId)
         #sitefileList=aiBusModel.searchSiteListByFileId(fileId)
         # 聚类文件导出
+        #1)先查询聚类参数
+        clusterParams=aiBusModel.selectClusterParams((fileId))
+        if not clusterParams:
+            clusterParams=aiBusModel.selectClusterParamsBySiteFileId((fileId))
+            if not clusterParams:
+                res.update(code=ResponseCode.Success,data={"clusterResult":[]})
+                return res.data
+            fileId=clusterParams["id"]
         clusterInfo = aiBusModel.searchClusterResult(fileId)
         if None == clusterInfo:
             clusterInfo = []

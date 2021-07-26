@@ -141,4 +141,22 @@ def upInsertStation():
         res.update(code=ResponseCode.Fail)
         return res.data
 
+@route(basicdata,'/fuzzyQueryRoad',methods=["POST"])
+@login_required
+def fuzzyQueryRoad():
+    """
+    根据站点名称模糊查询站点
+    """
+    res = ResMsg()
+    try:
+        aiBusModel=AiBusModel()
+        userInfo = session.get("userInfo")
+        data=request.get_json()
+        queryText=data['queryText']
+        row=aiBusModel.selectRoadByText(queryText,userInfo["userNames"])
+        res.update(code=ResponseCode.Success, data=row)
+        return res.data
+    except Exception as e:
+        res.update(code=ResponseCode.QueryError)
+        return res.data
 

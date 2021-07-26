@@ -83,7 +83,7 @@ class Auth(object):
             return res.data
         else:
             token=self.encode_auth_token(userName,citycode)
-            res.update(code=ResponseCode.Success,data={"token":token})
+            res.update(code=ResponseCode.Success,data={"token":token,"citycode":citycode})
             return res.data
     
     def identify(self, auth_header):

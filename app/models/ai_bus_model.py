@@ -73,6 +73,15 @@ class AiBusModel:
         row=self.mysqlPool.fetchAll(selectStr+authStr,(('%'+queryText+'%')))
         return row
     
+    def selectRoadByText(self,queryText,userNames):
+        """
+        模糊查询stationName
+        """
+        selectStr="select province,city,region,road from tbl_station where road like %s "
+        authStr="and createUser in (%s)"% ','.join("'%s'" % item for item in userNames) 
+        row=self.mysqlPool.fetchAll(selectStr+authStr,(('%'+queryText+'%')))
+        return row
+
     def selectStationList(self,province,city,siteName,road,siteStatus,pageSize,pageNum,citycode,userNames):
         """
         查询站点列表
@@ -111,7 +120,7 @@ class AiBusModel:
         #计算总数
         countStr="select count(1) as num from ( " +selectStr+") a"
         res=self.mysqlPool.fetchOne(countStr,args)
-        selectStr+=" order by updateTime,id limit %s ,%s"
+        selectStr+=" order by updateTime desc,id desc limit %s ,%s"
         args.append(pageNum*pageSize)
         args.append(pageSize)
         return res["num"],self.mysqlPool.fetchAll(selectStr,args)
@@ -211,8 +220,8 @@ class AiBusModel:
                    FROM tbl_site WHERE fileId = %s AND siteStatus = 1 GROUP BY siteName, latitude,longitude"
         return self.mysqlPool.fetchAll(selectStr,row)
     
-    def selectSiteNameByIds(self,siteIds):
-        selectStr="select siteName from tbl_site where "+" id in (%s)"% ','.join("%s" % item for item in siteIds)
+    def selectClientNameByIds(self,siteIds):
+        selectStr="select clientName from tbl_site where "+" id in (%s)"% ','.join("%s" % item for item in siteIds)
         return self.mysqlPool.fetchAll(selectStr,())
     
     def selectSiteClientNumberByFileId(self,fileId):
@@ -349,8 +358,9 @@ class AiBusModel:
         return row
 
     def searchClusterResult(self,fileId):
-        selectStr="select region,clusterName,longitude,(case when clusterProperty=1 then '聚类点' when clusterProperty=2 then '边界点' else '异常点' end) as clusterProperty,\
-                  latitude,number from tbl_cluster_result where  fileId=%s and clusterStatus = 1"
+        selectStr="select region,clusterName,longitude,\
+        (case when clusterProperty=1 then '聚类点' when clusterProperty=2 then '边界点' else '异常点' end) as clusterProperty,\
+                  latitude,number,if(relativeProperty=1,'固定','临时') as siteProperty from tbl_cluster_result where  fileId=%s and clusterStatus = 1"
         return self.mysqlPool.fetchAll(selectStr,(fileId))
     
     def selectClusterNumberById(self,fileId,id,label):
