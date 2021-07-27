@@ -145,7 +145,8 @@ class AiBusModel:
         """
         查询网点文件和聚类文件列表
         """
-        selectStr="select id as fileId, fileName,siteCount,null as clusterFileName,null as clusterFileId,clusterMinSamples,clusterRadius,destination,longitude,latitude from tbl_site_files t where t.userCitycode=%s and t.fileStatus=1 "
+        selectStr="select id as fileId, fileName,siteCount,null as clusterFileName,null as clusterFileId,clusterMinSamples,clusterRadius,\
+                   destination,longitude,latitude from tbl_site_files t where t.userCitycode=%s and t.fileStatus=1 "
         authStr=" and createUser in (%s)"% ','.join("'%s'" % item for item in userNames) 
         orderStr=" order by id desc "
         selectStr=selectStr+authStr+orderStr
@@ -396,8 +397,8 @@ class AiBusModel:
 
     def inserRouteParams(self,row):
         insertStr="insert into tbl_route_node(startLng,startLat,startNode,endLng,endLat,\
-                                                endNode,minDist,minTime)  \
-                values(%s,%s,ST_GeomFromGeoJSON(%s,2,0),%s,%s,ST_GeomFromGeoJSON(%s,2,0),%s,%s)"
+                                                endNode,minDist,minTime,directDist)  \
+                values(%s,%s,ST_GeomFromGeoJSON(%s,2,0),%s,%s,ST_GeomFromGeoJSON(%s,2,0),%s,%s,%s)"
         row=self.mysqlPool.insert(insertStr,row)
         return row
     
@@ -408,23 +409,23 @@ class AiBusModel:
         return row
     
     def insertRouteInfo(self,row):
-        insertStr="insert into tbl_route_info(routeUuid,destLng,destLat,passengers,occupancyRate,odometerFactor,routeFactor,roundStatus)\
-            values(%s,%s,%s,%s,%s,%s,%s,%s)"
+        insertStr="insert into tbl_route_info(fileId,routeUuid,destName,destLng,destLat,passengers,occupancyRate,odometerFactor,routeFactor,roundTrip)\
+            values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
         row=self.mysqlPool.insert(insertStr,row)
         return row
     
     def insertRouteDetail(self,row):
-        insertStr="insert into tbl_route_detail(routeUuid,nodeIndex,nodeName,nodeStatus,nodeLng,nodeLat,number)\
-            values(%s,%s,%s,%s,%s,%s,%s)"
+        insertStr="insert into tbl_route_detail(routeUuid,nodeIndex,nodeName,nodeStatus,nodeLng,nodeLat,number,nextDist,nextTime,nodeProperty)\
+            values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
         row=self.mysqlPool.insert(insertStr,row)
         return row
     
     def updateRouteDetail(self,row):
-        updateStr="update tbl_route_detail set nodeIndex=%s,nodeStatus=%s where routeUuid=%s and id=%s"
+        updateStr="update tbl_route_detail set nodeIndex=%s,nodeProperty=%s,nextDist=%s,nextTime=%s where routeUuid=%s and id=%s"
         return self.mysqlPool.update(updateStr,row)
     
     def selectRouteDetail(self,row):
-        selectStr="select id,nodeIndex,nodeName,nodeLng as lng,nodeLat as lat,number from tbl_route_detail where routeUuid=%s and nodeStatus=%s order by nodeIndex"
+        selectStr="select id,nodeIndex,nodeName,nodeLng as lng,nodeLat as lat,number,nextDist,nextTime from tbl_route_detail where routeUuid=%s and nodeStatus=%s order by nodeIndex"
         return self.mysqlPool.fetchAll(selectStr,row)
 
     def deleteNodesByRouteId(self,row):
@@ -436,10 +437,18 @@ class AiBusModel:
         """
         查询网点文件和聚类文件列表
         """
-        selectStr="select id as fileId, fileName,siteCount,destination,longitude,latitude from tbl_site_files t \
+        selectStr="select id as fileId, fileName,destination,longitude,latitude from tbl_site_files t \
             where t.userCitycode=%s and t.fileStatus=1 and clusterStatus=%s"
         authStr=" and createUser in (%s)"% ','.join("'%s'" % item for item in userNames) 
         orderStr=" order by id desc "
         selectStr=selectStr+authStr+orderStr
         return self.mysqlPool.fetchAll(selectStr,(citycode,clusterStatus))
+    
+    def updateFileRoutePlanParams(self,row):
+        """
+        更新路径规划参数
+        """
+        updateStr="update tbl_site_files set passengers=%s,occupancyRate=%s,odometerFactor=%s,\
+                  roundTrip=%s,routeFactor=%s,waypoints=%s where fileId=%s"
+        return self.mysqlPool.update(updateStr,row)
     
