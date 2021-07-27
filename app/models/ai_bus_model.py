@@ -145,7 +145,7 @@ class AiBusModel:
         """
         查询网点文件和聚类文件列表
         """
-        selectStr="select id as fileId, fileName,siteCount,null as clusterFileName,null as clusterFileId,clusterMinSamples,clusterRadius from tbl_site_files t where t.userCitycode=%s and t.fileStatus=1 "
+        selectStr="select id as fileId, fileName,siteCount,null as clusterFileName,null as clusterFileId,clusterMinSamples,clusterRadius,destination,longitude,latitude from tbl_site_files t where t.userCitycode=%s and t.fileStatus=1 "
         authStr=" and createUser in (%s)"% ','.join("'%s'" % item for item in userNames) 
         orderStr=" order by id desc "
         selectStr=selectStr+authStr+orderStr
@@ -155,7 +155,7 @@ class AiBusModel:
         """
         查询网点文件列表
         """
-        selectStr="select id as fileId, fileName,siteCount from tbl_site_files t where t.userCitycode=%s and t.fileStatus=1 and clusterStatus=0 "
+        selectStr="select id as fileId, fileName,siteCount,destination,longitude,latitude from tbl_site_files t where t.userCitycode=%s and t.fileStatus=1 and clusterStatus=0 "
         authStr=" and createUser in (%s)"% ','.join("'%s'" % item for item in userNames) 
         selectStr="select tt.*,c.fileName as clusterFileName,c.id as clusterFileId,c.clusterMinSamples,c.clusterRadius from ("\
                   +selectStr+authStr+") tt LEFT JOIN tbl_site_files c on c.siteFileId=tt.fileId order by tt.fileId desc"
@@ -430,5 +430,16 @@ class AiBusModel:
     def deleteNodesByRouteId(self,row):
         deleteStr="delete from tbl_route_detail where routeUuid=%s"
         return self.mysqlPool.delete(deleteStr,row)
+    
 
+    def selectFileListByClusterStatus(self,clusterStatus,citycode,userNames):
+        """
+        查询网点文件和聚类文件列表
+        """
+        selectStr="select id as fileId, fileName,siteCount,destination,longitude,latitude from tbl_site_files t \
+            where t.userCitycode=%s and t.fileStatus=1 and clusterStatus=%s"
+        authStr=" and createUser in (%s)"% ','.join("'%s'" % item for item in userNames) 
+        orderStr=" order by id desc "
+        selectStr=selectStr+authStr+orderStr
+        return self.mysqlPool.fetchAll(selectStr,(citycode,clusterStatus))
     

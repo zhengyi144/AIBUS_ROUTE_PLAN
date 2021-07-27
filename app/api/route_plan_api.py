@@ -254,3 +254,25 @@ def reSortRouteNode():
     except Exception as e:
         res.update(code=ResponseCode.Fail, data="路线规划结点调整报错！")
         return res.data
+
+@route(routeplan, '/queryRoutePlanFileList', methods=["POST"])
+@login_required
+def queryRoutePlanFileList():
+    """
+    根据用户权限查询文件列表
+    """
+    res = ResMsg()
+    try:
+        aiBusModel=AiBusModel()
+        data=request.get_json()
+        clusterStatus=int(data["clusterStatus"])
+        if clusterStatus !=1:
+            clusterStatus=0
+        userInfo = session.get("userInfo")
+        clusterFileList=aiBusModel.selectFileListByClusterStatus(clusterStatus,userInfo["citycode"],userInfo["userNames"])
+        res.update(code=ResponseCode.Success, data=clusterFileList)
+        return res.data
+    except Exception as e:
+        res.update(code=ResponseCode.Fail, data="查询聚类文件报错！")
+        return res.data
+
