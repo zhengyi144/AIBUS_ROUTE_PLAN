@@ -48,7 +48,7 @@ def uploadSiteExcel():
            aiBusModel.insertSiteFile((destination,0,0,0,destination,mapType,longitude,latitude,userInfo["citycode"],userInfo["userName"],userInfo["userName"]))
            siteFile=aiBusModel.selectSiteFileIdByFileName((destination))
         else:
-            res.update(code=ResponseCode.Success, data="重复插入网点文件！")
+            res.update(code=ResponseCode.Fail, data="重复插入网点文件！")
             return res.data
             #失效该文件对应所有临时site，后面重新插入
             #aiBusModel.updateSiteStatusByfieldId((3,userInfo["userName"],siteFile["id"],2))

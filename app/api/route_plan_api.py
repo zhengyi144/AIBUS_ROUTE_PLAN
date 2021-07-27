@@ -79,7 +79,7 @@ def planSingleRoute():
         
         #判断结点数量是否超过限制
         if len(routeNode)>MAXNODE:
-            res.update(code=ResponseCode.Success,data="路线规划结点数量超过限制！")
+            res.update(code=ResponseCode.Fail,data="路线规划结点数量超过限制！")
             return res.data
 
         #将目标点一起添加至末尾
@@ -136,13 +136,13 @@ def planSingleRoute():
         
         routeOccupancyRate=float(routeNumber)/passengers*100
         if routeNumber>passengers:
-            res.update(code=ResponseCode.Success,data="路线人数超过座位上限！")
+            res.update(code=ResponseCode.Fail,data="路线人数超过座位上限！")
             return res.data
         if routeOccupancyRate<occupancyRate:
-            res.update(code=ResponseCode.Success,data="路线人数上座率未达到下限！")
+            res.update(code=ResponseCode.Fail,data="路线人数上座率未达到下限！")
             return res.data
         if float(routeDist)/directDist>odometerFactor:
-            res.update(code=ResponseCode.Success,data="超过非直线里程系数！")
+            res.update(code=ResponseCode.Fail,data="超过非直线里程系数！")
             return res.data
         #存储路线结点
         routeUuid1 = uuid.uuid1().int

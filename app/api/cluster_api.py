@@ -118,7 +118,7 @@ def generateClusterPoints():
         #先判断网点文件是否有效
         fileProperty=aiBusModel.selectSiteFileStatus(fileId)
         if fileProperty["fileStatus"]==0:
-            res.update(code=ResponseCode.Success,data="该文件已经失效!")
+            res.update(code=ResponseCode.Fail,data="该文件已经失效!")
             return res.data
         
         #根据网点文件查询网点list
@@ -132,7 +132,7 @@ def generateClusterPoints():
 
         siteGeoList=aiBusModel.selectSiteGeoListByFileId(siteFileId)
         if not siteGeoList:
-            res.update(code=ResponseCode.Success,data="网点为空！")
+            res.update(code=ResponseCode.Fail,data="网点为空！")
             return res.data
 
 
@@ -315,7 +315,7 @@ def queryClusterResult():
         if not clusterParams:
             clusterParams=aiBusModel.selectClusterParamsBySiteFileId((fileId))
             if not clusterParams:
-                res.update(code=ResponseCode.Success)
+                res.update(code=ResponseCode.Fail,data="没有对应文件！")
                 return res.data
             fileId=clusterParams["id"]
         #2)查询聚类结果
