@@ -433,6 +433,27 @@ def addNewClusterPoint():
     except Exception as e:
         res.update(code=ResponseCode.Fail)
         return res.data
+
+@route(cluster, '/queryClusterFileList', methods=["POST"])
+@login_required
+def queryClusterFileList():
+    """
+    根据用户权限查询文件列表
+    """
+    res = ResMsg()
+    try:
+        aiBusModel=AiBusModel()
+        data=request.get_json()
+        userInfo = session.get("userInfo")
+        clusterFileList=aiBusModel.selectClusterFileList(userInfo["citycode"],userInfo["userNames"])
+        res.update(code=ResponseCode.Success, data=clusterFileList)
+        return res.data
+    except Exception as e:
+        res.update(code=ResponseCode.Fail, data="查询聚类文件报错！")
+        return res.data
+
+
+
 """
 @route(cluster,'/mergeClusterPoints',methods=["POST"])
 @login_required
