@@ -300,14 +300,15 @@ def queryRouteInfo():
         aiBusModel=AiBusModel()
         fileId=data["fileId"]
         if fileId is None or fileId=='':
-            res.update(code=ResponseCode.Fail,data=[],msg="fileId不能为空！")
+            res.update(code=ResponseCode.Fail,msg="fileId不能为空！")
             return res.data
         
         #1)查询routeInfo
+        
 
         #2)查询路线规划信息
     
     except Exception as e:
-        res.update(code=ResponseCode.Fail, msg="查询聚类文件报错！")
+        res.update(code=ResponseCode.Fail, msg="查询路线规划信息报错！")
         return res.data
     

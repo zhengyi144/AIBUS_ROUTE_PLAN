@@ -452,3 +452,11 @@ class AiBusModel:
                   roundTrip=%s,routeFactor=%s,waypoints=%s where fileId=%s"
         return self.mysqlPool.update(updateStr,row)
     
+    def selectRouteInfo(self,row):
+        """
+        根据fileid查询路线规划参数
+        """
+        selectStr="select routeUuid,destName,destLng,destLat,passengers,occupancyRate,odometerFactor,routeFactor,roundTrip \
+                from tbl_route_info where fileId=%s group by routeUuid,destName,destLng,destLat,passengers,occupancyRate,odometerFactor,routeFactor,roundTrip"
+        return self.mysqlPool.fetchAll(select,row)
+    
