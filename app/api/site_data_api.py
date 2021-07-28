@@ -273,7 +273,7 @@ def saveSiteList():
         client=aiBusModel.selectSiteClientNumberByFileId(fileId)
         aiBusModel.updateSiteFile((1,client["clientNumber"],userInfo["userName"],fileId))
 
-        res.update(code=ResponseCode.Success, data="保存网点{}条".format(row))
+        res.update(code=ResponseCode.Success, msg="保存网点{}条".format(row))
         return res.data
     except Exception as e:
         res.update(code=ResponseCode.Fail, msg="保存网点信息报错！")
@@ -300,7 +300,7 @@ def deleteSite():
             client=aiBusModel.selectInvalidClientNumber((siteName,fileId,longitude,latitude))
             fileInfo=aiBusModel.selectSiteFileStatus(fileId)
             aiBusModel.updateSiteFile((1,int(fileInfo["siteCount"])-client["clientNumber"],userInfo["userName"],fileId))
-        res.update(code=ResponseCode.Success, data="删除网点{}条".format(row))
+        res.update(code=ResponseCode.Success, msg="删除网点{}条".format(row))
         return res.data
     except Exception as e:
         res.update(code=ResponseCode.Fail, msg="删除网点报错！")

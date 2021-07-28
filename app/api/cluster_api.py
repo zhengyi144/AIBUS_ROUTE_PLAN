@@ -292,7 +292,7 @@ def saveClusterResult():
             else:
                 aiBusModel.insertClusterPoint((fileId,"",relativeProperty,point["siteName"],0,1,float(point["longitude"]),float(point["latitude"]),point["number"],siteSet,userInfo["userName"],userInfo["userName"]))
         
-        res.update(code=ResponseCode.Success, data="成功保存聚类结果！")
+        res.update(code=ResponseCode.Success, msg="成功保存聚类结果！")
         return res.data
     except Exception as e:
         res.update(code=ResponseCode.Fail,msg="保存聚类点保存！")

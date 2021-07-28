@@ -42,7 +42,7 @@ def uploadStationExcel():
                 float(item["longitude"]),float(item["latitude"]),item["road"],userInfo["citycode"],userInfo["userName"],userInfo["userName"],geojson))
     row=aiBusModel.batchStation(tuple(insertVals))
     if row>0:
-        res.update(code=ResponseCode.Success, data="成功插入{}条记录！".format(row))
+        res.update(code=ResponseCode.Success, msg="成功插入{}条记录！".format(row))
         return res.data
     else:
         res.update(code=ResponseCode.Fail, msg="插入失败！")
@@ -132,7 +132,7 @@ def upInsertStation():
         else:
             id=data['id']
             if id is None or id=="":
-                res.update(code=ResponseCode.InvalidParameter,msg="更新站点id不能为null")
+                res.update(code=ResponseCode.Fail,msg="更新站点id不能为null")
                 return res.data
             row=aiBusModel.updateStation((province,city,region,siteName,siteProperty,siteStatus,direction,longitude,latitude,road,unilateral,userInfo["citycode"],userInfo["userName"],id),geojson)
         res.update(code=ResponseCode.Success, data=row)
@@ -157,6 +157,6 @@ def fuzzyQueryRoad():
         res.update(code=ResponseCode.Success, data=row)
         return res.data
     except Exception as e:
-        res.update(code=ResponseCode.QueryError,msg="道路模糊查询报错！")
+        res.update(code=ResponseCode.Fail,msg="道路模糊查询报错！")
         return res.data
 
