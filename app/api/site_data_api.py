@@ -48,7 +48,7 @@ def uploadSiteExcel():
            aiBusModel.insertSiteFile((destination,0,0,0,destination,mapType,longitude,latitude,userInfo["citycode"],userInfo["userName"],userInfo["userName"]))
            siteFile=aiBusModel.selectSiteFileIdByFileName((destination))
         else:
-            res.update(code=ResponseCode.Fail, data="重复插入网点文件！")
+            res.update(code=ResponseCode.Fail, msg="重复插入网点文件！")
             return res.data
             #失效该文件对应所有临时site，后面重新插入
             #aiBusModel.updateSiteStatusByfieldId((3,userInfo["userName"],siteFile["id"],2))
@@ -114,13 +114,13 @@ def uploadSiteExcel():
                 res.update(code=ResponseCode.Success, data={"fileId":siteFile["id"], "fileName":destination,"siteCount":0})
                 return res.data
             else:
-                res.update(code=ResponseCode.Fail, data="插入失败！")
+                res.update(code=ResponseCode.Fail, msg="插入失败！")
                 return res.data
         else:
             res.update(code=ResponseCode.Success, data={"fileId":siteFile["id"], "fileName":destination,"siteCount":0})
             return res.data
     except Exception as e:
-        res.update(code=ResponseCode.Fail, data="插入异常！")
+        res.update(code=ResponseCode.Fail, msg="网点插入报错！")
         return res.data
 
 @route(sitedata, '/querySiteFileList', methods=["POST"])
@@ -143,7 +143,7 @@ def querySiteFileList():
         res.update(code=ResponseCode.Success, data=siteFileList)
         return res.data
     except Exception as e:
-        res.update(code=ResponseCode.Fail, data="查询报错！")
+        res.update(code=ResponseCode.Fail, msg="网点文件查询报错！")
         return res.data
 
 @route(sitedata, '/fuzzyQuerySiteFileList', methods=["POST"])
@@ -161,7 +161,7 @@ def fuzzyQuerySiteFileList():
         res.update(code=ResponseCode.Success, data=siteFileList)
         return res.data
     except Exception as e:
-        res.update(code=ResponseCode.Fail, data="查询报错！")
+        res.update(code=ResponseCode.Fail, msg="网点文件模糊查询报错！")
         return res.data
 
 @route(sitedata,'/fuzzyQuerySiteName', methods=["POST"])
@@ -181,7 +181,7 @@ def fuzzyQuerySiteName():
         res.update(code=ResponseCode.Success, data=row)
         return res.data
     except Exception as e:
-        res.update(code=ResponseCode.QueryError)
+        res.update(code=ResponseCode.Fail,msg="模糊查询网点名称报错！")
         return res.data
 
 @route(sitedata, '/queryConfirmedSiteInfo', methods=["POST"])
@@ -198,7 +198,7 @@ def queryConfirmedSiteInfo():
         res.update(code=ResponseCode.Success, data=siteInfo)
         return res.data
     except Exception as e:
-        res.update(code=ResponseCode.Fail, data="查询报错！")
+        res.update(code=ResponseCode.Fail, msg="查询网点信息报错！")
         return res.data
 
 @route(sitedata, '/queryTempSiteInfo', methods=["POST"])
@@ -249,7 +249,7 @@ def queryTempSiteInfo():
         res.update(code=ResponseCode.Success, data={"siteInfo":siteInfo,"customItem":customItem})
         return res.data
     except Exception as e:
-        res.update(code=ResponseCode.Fail, data="查询报错！")
+        res.update(code=ResponseCode.Fail, msg="查询临时网点信息报错！")
         return res.data
     
 @route(sitedata, '/saveSiteList', methods=["POST"])
@@ -276,7 +276,7 @@ def saveSiteList():
         res.update(code=ResponseCode.Success, data="保存网点{}条".format(row))
         return res.data
     except Exception as e:
-        res.update(code=ResponseCode.Fail, data="保存报错！")
+        res.update(code=ResponseCode.Fail, msg="保存网点信息报错！")
         return res.data
 
 @route(sitedata, '/deleteSite', methods=["POST"])
@@ -303,7 +303,7 @@ def deleteSite():
         res.update(code=ResponseCode.Success, data="删除网点{}条".format(row))
         return res.data
     except Exception as e:
-        res.update(code=ResponseCode.Fail, data="删除出错！")
+        res.update(code=ResponseCode.Fail, msg="删除网点报错！")
         return res.data
 
 @route(sitedata,'/exportSitePoints',methods=["POST"])

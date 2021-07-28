@@ -32,7 +32,7 @@ def uploadStationExcel():
            item["siteProperty"] =="" or item["siteProperty"] is None or\
            item["longitude"] =="" or item["longitude"] is None or \
            item["latitude"] =="" or item["latitude"] is None:
-           res.update(code=ResponseCode.InsertValueIsNull)
+           res.update(code=ResponseCode.Fail,msg="名称经纬度站点属性字段不能为空！")
            return res.data
         else:
             siteProperty=1 if item["siteProperty"]=="固定" else 0
@@ -45,7 +45,7 @@ def uploadStationExcel():
         res.update(code=ResponseCode.Success, data="成功插入{}条记录！".format(row))
         return res.data
     else:
-        res.update(code=ResponseCode.Fail, data="插入失败！")
+        res.update(code=ResponseCode.Fail, msg="插入失败！")
         return res.data
 
 @route(basicdata,'/fuzzyQueryStationName',methods=["POST"])
@@ -64,7 +64,7 @@ def fuzzyQueryStationName():
         res.update(code=ResponseCode.Success, data=row)
         return res.data
     except Exception as e:
-        res.update(code=ResponseCode.QueryError)
+        res.update(code=ResponseCode.Fail,msg="站点名称模糊查询报错！")
         return res.data
 
 @route(basicdata,'/queryStationList',methods=["POST"])
@@ -86,7 +86,7 @@ def queryStationList():
         res.update(code=ResponseCode.Success, data={"count":count,"stationList":row})
         return res.data
     except Exception as e:
-        res.update(code=ResponseCode.QueryError)
+        res.update(code=ResponseCode.Fail,msg="查询站点列表报错！")
         return res.data
 
 @route(basicdata,'/upInsertStation',methods=["POST"])
@@ -132,7 +132,7 @@ def upInsertStation():
         else:
             id=data['id']
             if id is None or id=="":
-                res.update(code=ResponseCode.InvalidParameter,data="更新站点id不能为null")
+                res.update(code=ResponseCode.InvalidParameter,msg="更新站点id不能为null")
                 return res.data
             row=aiBusModel.updateStation((province,city,region,siteName,siteProperty,siteStatus,direction,longitude,latitude,road,unilateral,userInfo["citycode"],userInfo["userName"],id),geojson)
         res.update(code=ResponseCode.Success, data=row)
@@ -157,6 +157,6 @@ def fuzzyQueryRoad():
         res.update(code=ResponseCode.Success, data=row)
         return res.data
     except Exception as e:
-        res.update(code=ResponseCode.QueryError)
+        res.update(code=ResponseCode.QueryError,msg="道路模糊查询报错！")
         return res.data
 

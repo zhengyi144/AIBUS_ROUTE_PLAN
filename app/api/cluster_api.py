@@ -35,7 +35,7 @@ def generateClusterPointsOld():
         #    res.update(code=ResponseCode.Fail,data="该网点文件还未确认导入!")
         #     return res.data
         if fileStatus["fileStatus"]==0:
-            res.update(code=ResponseCode.Fail,data="该网点文件已经失效!")
+            res.update(code=ResponseCode.Fail,msg="该网点文件已经失效!")
             return res.data
         #对聚类过的临时结果进行失效
         aiBusModel.updateClusterResultByFileId((0,userInfo["userName"],fileId),[2])
@@ -98,7 +98,7 @@ def generateClusterPointsOld():
         res.update(code=ResponseCode.Success, data={"clusterCorePoints":clusterCorePoints,"clusterAroundPoints":clusterAroundPoints,"clusterOutPoints":clusterOutPoints})
         return res.data
     except Exception as e:
-        res.update(code=ResponseCode.Fail)
+        res.update(code=ResponseCode.Fail,msg="生成聚类点报错！")
         return res.data
 
 @route(cluster,'/generateClusterPoints',methods=["POST"])
@@ -118,7 +118,7 @@ def generateClusterPoints():
         #先判断网点文件是否有效
         fileProperty=aiBusModel.selectSiteFileStatus(fileId)
         if fileProperty["fileStatus"]==0:
-            res.update(code=ResponseCode.Fail,data="该文件已经失效!")
+            res.update(code=ResponseCode.Fail,msg="该文件已经失效!")
             return res.data
         
         #根据网点文件查询网点list
@@ -132,7 +132,7 @@ def generateClusterPoints():
 
         siteGeoList=aiBusModel.selectSiteGeoListByFileId(siteFileId)
         if not siteGeoList:
-            res.update(code=ResponseCode.Fail,data="网点为空！")
+            res.update(code=ResponseCode.Fail,msg="网点为空！")
             return res.data
 
 
@@ -202,7 +202,7 @@ def generateClusterPoints():
         res.update(code=ResponseCode.Success, data={"clusterCorePoints":clusterCorePoints,"clusterAroundPoints":clusterAroundPoints,"clusterOutPoints":clusterOutPoints})
         return res.data
     except Exception as e:
-        res.update(code=ResponseCode.Fail)
+        res.update(code=ResponseCode.Fail,msg="生成聚类点报错！")
         return res.data
 
 @route(cluster,'/saveClusterResult',methods=["POST"])
@@ -295,7 +295,7 @@ def saveClusterResult():
         res.update(code=ResponseCode.Success, data="成功保存聚类结果！")
         return res.data
     except Exception as e:
-        res.update(code=ResponseCode.Fail)
+        res.update(code=ResponseCode.Fail,msg="保存聚类点保存！")
         return res.data
 
 @route(cluster,'/queryClusterResult',methods=["POST"])
@@ -315,7 +315,7 @@ def queryClusterResult():
         if not clusterParams:
             clusterParams=aiBusModel.selectClusterParamsBySiteFileId((fileId))
             if not clusterParams:
-                res.update(code=ResponseCode.Fail,data="没有对应文件！")
+                res.update(code=ResponseCode.Fail,msg="没有对应文件！")
                 return res.data
             fileId=clusterParams["id"]
         #2)查询聚类结果
@@ -346,7 +346,7 @@ def queryClusterResult():
         res.update(code=ResponseCode.Success, data={"epsRadius":clusterParams["clusterRadius"],"minSamples":clusterParams["clusterMinSamples"],"clusterCorePoints":clusterCorePoints,"clusterAroundPoints":clusterAroundPoints,"clusterOutPoints":clusterOutPoints})
         return res.data
     except Exception as e:
-        res.update(code=ResponseCode.Fail)
+        res.update(code=ResponseCode.Fail,msg="查询聚类结果报错！")
         return res.data
 
 @route(cluster,'/removeClusterResult',methods=["POST"])
@@ -366,7 +366,7 @@ def removeClusterResult():
         res.update(code=ResponseCode.Success, data="成功删除聚类结果!")
         return res.data
     except Exception as e:
-        res.update(code=ResponseCode.Fail)
+        res.update(code=ResponseCode.Fail,msg="删除聚类结果报错！")
         return res.data
 
 
@@ -431,7 +431,7 @@ def addNewClusterPoint():
             "longitude":longitude,"latitude":latitude,"number":number,"siteProperty":siteProperty,"users":[]})
         return res.data
     except Exception as e:
-        res.update(code=ResponseCode.Fail)
+        res.update(code=ResponseCode.Fail,msg="新增聚类点报错！")
         return res.data
 
 
