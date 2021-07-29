@@ -315,7 +315,7 @@ def queryClusterResult():
         if not clusterParams:
             clusterParams=aiBusModel.selectClusterParamsBySiteFileId((fileId))
             if not clusterParams:
-                res.update(code=ResponseCode.Fail,msg="没有对应文件！")
+                res.update(code=ResponseCode.Fail,msg="没有对应的聚类文件！")
                 return res.data
             fileId=clusterParams["id"]
         #2)查询聚类结果
