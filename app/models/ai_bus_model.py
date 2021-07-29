@@ -103,11 +103,11 @@ class AiBusModel:
             selectStr+=" and city=%s"
             args.append(city)
         if siteName is not None and siteName !="":
-            selectStr+=" and siteName=%s"
-            args.append(siteName)
+            selectStr+=" and siteName like %s"
+            args.append(('%'+siteName+'%'))
         if road is not None and road !="":
-            selectStr+=" and road=%s"
-            args.append(road)
+            selectStr+=" and road like %s"
+            args.append(('%'+road+'%'))
         if siteStatus is not None and siteStatus !="":
             if siteStatus=="有效":
                 siteStatus=1

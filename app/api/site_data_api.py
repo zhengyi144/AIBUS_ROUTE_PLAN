@@ -43,10 +43,10 @@ def uploadSiteExcel():
            return res.data
         
         #先判断目的地网点是否存在,存在则覆盖
-        siteFile=aiBusModel.selectSiteFileIdByFileName((destination,[1,2]))
+        siteFile=aiBusModel.selectSiteFileIdByFileName((destination),[1,2])
         if siteFile is None or siteFile["id"] is None :
            aiBusModel.insertSiteFile((destination,0,0,0,destination,mapType,longitude,latitude,userInfo["citycode"],userInfo["userName"],userInfo["userName"]))
-           siteFile=aiBusModel.selectSiteFileIdByFileName((destination,[0]))
+           siteFile=aiBusModel.selectSiteFileIdByFileName((destination),[0])
         else:
             res.update(code=ResponseCode.Fail, msg="重复插入网点文件！")
             return res.data
@@ -94,8 +94,10 @@ def uploadSiteExcel():
                     grade=item["grade"]
                 else:
                     grade=""
-                if "number" in item:
+                if "number" in item and isinstance(item["number"],int):
                     number=int(item["number"])
+                elif clientName!="":
+                    number=1
                 else:
                     number=0
                 if "others" in item:

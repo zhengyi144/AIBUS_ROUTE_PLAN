@@ -329,14 +329,17 @@ def queryClusterResult():
                 siteProperty="自定义"
             
             #根据site id查询网点信息
-            siteInfo=aiBusModel.selectClientNameByIds(item["siteSet"].split(","))
             clientNames=[]
-            for site in siteInfo:
-                clientNames.append(site["clientName"])
+            users=[]
+            if item["siteSet"]!='':
+                users=item["siteSet"].split(",")
+                siteInfo=aiBusModel.selectClientNameByIds(users)
+                for site in siteInfo:
+                    clientNames.append(site["clientName"])
 
             row={"id":item["id"],"siteName":item["clusterName"],"siteProperty":siteProperty,\
                     "longitude":item["longitude"],"latitude":item["latitude"],"number":item["number"],\
-                        "users":item["siteSet"].split(","),"userNames":clientNames}
+                        "users":users,"userNames":clientNames}
             if item["clusterProperty"]==1:
                 clusterCorePoints.append(row)
             elif item["clusterProperty"]==2:
