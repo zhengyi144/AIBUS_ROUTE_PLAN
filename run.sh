@@ -1,2 +1,2 @@
 # 启动FlaskAPP
-gunicorn -c config/gun.conf run:app
+nohup gunicorn -c config/gun.conf run:app &
