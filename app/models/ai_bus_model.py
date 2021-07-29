@@ -133,11 +133,11 @@ class AiBusModel:
                    values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
         row=self.mysqlPool.insert(insertStr,row)
     
-    def selectSiteFileIdByFileName(self,row):
+    def selectSiteFileIdByFileName(self,row,fileStatus):
         """
         根据文件名查找
         """
-        selectStr="select max(id) as id from tbl_site_files where fileName=%s"
+        selectStr="select max(id) as id from tbl_site_files where fileName=%s"+"  and fileStatus in (%s)"% ','.join("%s" % item for item in fileStatus)
         row=self.mysqlPool.fetchOne(selectStr,row)
         return row
 

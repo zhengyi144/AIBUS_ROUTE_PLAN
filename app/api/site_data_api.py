@@ -43,10 +43,10 @@ def uploadSiteExcel():
            return res.data
         
         #先判断目的地网点是否存在,存在则覆盖
-        siteFile=aiBusModel.selectSiteFileIdByFileName((destination))
+        siteFile=aiBusModel.selectSiteFileIdByFileName((destination,[1,2]))
         if siteFile is None or siteFile["id"] is None :
            aiBusModel.insertSiteFile((destination,0,0,0,destination,mapType,longitude,latitude,userInfo["citycode"],userInfo["userName"],userInfo["userName"]))
-           siteFile=aiBusModel.selectSiteFileIdByFileName((destination))
+           siteFile=aiBusModel.selectSiteFileIdByFileName((destination,[0]))
         else:
             res.update(code=ResponseCode.Fail, msg="重复插入网点文件！")
             return res.data
@@ -106,8 +106,8 @@ def uploadSiteExcel():
                 insertVals.append((siteFile["id"],region,item["siteName"],siteProperty,2,\
                     float(item["longitude"]),float(item["latitude"]),clientName,clientProperty,clientAddress,age,grade,number,others,userInfo["userName"],userInfo["userName"],geojson))
         if len(insertVals)>0:
-            #现将批量导入文件信息插入tbl_site_files,并更新tbl_site_files.fileStatus为有效文件
-            aiBusModel.updateSiteFile((0,0,userInfo["userName"],siteFile["id"]))
+            #现将批量导入文件信息插入tbl_site_files,并更新tbl_site_files.fileStatus为临时文件2
+            aiBusModel.updateSiteFile((2,0,userInfo["userName"],siteFile["id"]))
             #此时tbl_site中siteStatus还是临时站点
             row=aiBusModel.batchSites(tuple(insertVals))
             if row>0:
