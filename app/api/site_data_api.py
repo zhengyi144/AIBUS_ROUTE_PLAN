@@ -69,13 +69,15 @@ def uploadSiteExcel():
                 else:
                     siteProperty=2
                 
-                lng=float(item["longitude"])
-                lat=float(item["latitude"])
+                
                 #根据mapType进行坐标转换
                 if mapType==2:
                     #百度地图
-                    lng,lat=convert_BD09_to_GCJ02(lng,lat)
-                
+                    lng,lat=convert_BD09_to_GCJ02(float(item["longitude"]),float(item["latitude"]))
+                else:
+                    lng=float(item["longitude"])
+                    lat=float(item["latitude"])
+
                 #geojson = { "type": "Point", "coordinates": [float(item["longitude"]),float(item["latitude"])]}
                 geojson = '{ "type": "Point", "coordinates": [%s, %s]}'%(lng,lat)
 
