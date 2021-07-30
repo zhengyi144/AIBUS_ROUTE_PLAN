@@ -315,7 +315,7 @@ def queryClusterResult():
         if not clusterParams:
             clusterParams=aiBusModel.selectClusterParamsBySiteFileId((fileId))
             if not clusterParams:
-                res.update(code=ResponseCode.Fail,msg="没有对应的聚类文件！")
+                res.update(code=ResponseCode.Success,data=[])
                 return res.data
             fileId=clusterParams["id"]
         #2)查询聚类结果
@@ -426,6 +426,11 @@ def addNewClusterPoint():
             relativeProperty=0
         else:
             relativeProperty=2
+
+        row=aiBusModel.selectClusterPointId((fileId,siteName,float(longitude),float(latitude)))
+        if row:
+            res.update(code=ResponseCode.Success,msg="新增加的站点己存在!")
+            return res.data
         #插入
         aiBusModel.insertClusterPoint((fileId,' ',relativeProperty,siteName,1,2,float(longitude),float(latitude),number,' ',userInfo["userName"],userInfo["userName"]))
         #查找id

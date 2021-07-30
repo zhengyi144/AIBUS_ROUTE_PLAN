@@ -105,40 +105,57 @@ def upInsertStation():
         region=data["region"]
         siteName=data['siteName']
         siteProperty=data['siteProperty']
-        if siteProperty=="固定":
-            siteProperty=1
-        else:
-            siteProperty=0
         road=data['road']
         siteStatus=data['siteStatus']
-        if siteStatus=="有效":
-            siteStatus=1
-        elif siteStatus=="无效":
-            siteStatus=2
-        else:
-            siteStatus=3
         latitude=float(data["latitude"])
         longitude=float(data["longitude"])
         direction=data["direction"]
         unilateral=data["unilateral"]
+        upInsertType=data["upInsertType"]
+        if siteName=="" or \
+            siteProperty=="" or\
+            latitude=="" or \
+            longitude=="" or \
+            direction=="" or \
+            upInsertType=="":
+            res.update(code=ResponseCode.Fail,msg="必填字段不可为空！")
+            return res.data
+
+        if siteProperty=="临时":
+            siteProperty=0
+        else:
+            siteProperty=1
+        
+        if siteStatus=="停用":
+            siteStatus=3
+        elif siteStatus=="无效":
+            siteStatus=2
+        else:
+            siteStatus=1
+        
         if unilateral=="是":
             unilateral=1
         else:
             unilateral=0
-        upInsertType=data["upInsertType"]
+        
         geojson = '{ "type": "Point", "coordinates": [%s, %s]}'% (longitude,latitude)
         if upInsertType=="I":
-            row=aiBusModel.insertStation((province,city,region,siteName,siteProperty,siteStatus,direction,longitude,latitude,road,unilateral,userInfo["citycode"],userInfo["userName"],userInfo["userName"]),geojson)
+            #根据站点名称和地理方位保持唯一性
+            row=aiBusModel.selectStationByNameDirection((siteName,direction))
+            if row["num"]>0:
+                res.update(code=ResponseCode.Fail,msg="该站点+地理方位己存在!")
+                return res.data
+            aiBusModel.insertStation((province,city,region,siteName,siteProperty,siteStatus,direction,longitude,latitude,road,unilateral,userInfo["citycode"],userInfo["userName"],userInfo["userName"]),geojson)
         else:
             id=data['id']
             if id is None or id=="":
                 res.update(code=ResponseCode.Fail,msg="更新站点id不能为null")
                 return res.data
             row=aiBusModel.updateStation((province,city,region,siteName,siteProperty,siteStatus,direction,longitude,latitude,road,unilateral,userInfo["citycode"],userInfo["userName"],id),geojson)
-        res.update(code=ResponseCode.Success, data=row)
+        res.update(code=ResponseCode.Success, msg="保存成功！")
         return res.data
     except Exception as e:
-        res.update(code=ResponseCode.Fail)
+        res.update(code=ResponseCode.Fail,msg="站点新增/编辑报错！")
         return res.data
 
 @route(basicdata,'/fuzzyQueryRoad',methods=["POST"])

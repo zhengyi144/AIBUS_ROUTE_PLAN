@@ -7,6 +7,7 @@ from app.utils.response import ResMsg
 from app.utils.auth import login_required
 from app.utils.util import route
 from app.utils.tools import *
+from app.utils.GPSConvertUtil import *
 from app.models.ai_bus_model import AiBusModel
 
 """
@@ -67,8 +68,19 @@ def uploadSiteExcel():
                     siteProperty=0
                 else:
                     siteProperty=2
+                
+                lng=float(item["longitude"])
+                lat=float(item["latitude"])
+                #根据mapType进行坐标转换
+                if mapType==1:
+                    #百度地图
+                    lng,lat=convert_BD09_to_GCJ02(lng,lat)
+                elif mapType==2:
+                    #ws1984
+                    lng,lat=convert_WGS84_to_GCJ02(lng,lat)
+                
                 #geojson = { "type": "Point", "coordinates": [float(item["longitude"]),float(item["latitude"])]}
-                geojson = '{ "type": "Point", "coordinates": [%s, %s]}'%(float(item["longitude"]),float(item["latitude"]))
+                geojson = '{ "type": "Point", "coordinates": [%s, %s]}'%(lng,lat)
 
                 if "region" in item:
                     region=item["region"]
@@ -106,12 +118,13 @@ def uploadSiteExcel():
                     others=NULL
 
                 insertVals.append((siteFile["id"],region,item["siteName"],siteProperty,2,\
-                    float(item["longitude"]),float(item["latitude"]),clientName,clientProperty,clientAddress,age,grade,number,others,userInfo["userName"],userInfo["userName"],geojson))
+                    lng,lat,clientName,clientProperty,clientAddress,age,grade,number,others,\
+                    userInfo["userName"],userInfo["userName"],geojson,float(item["longitude"]),float(item["latitude"])))
         if len(insertVals)>0:
-            #现将批量导入文件信息插入tbl_site_files,并更新tbl_site_files.fileStatus为临时文件2
-            aiBusModel.updateSiteFile((2,0,userInfo["userName"],siteFile["id"]))
             #此时tbl_site中siteStatus还是临时站点
             row=aiBusModel.batchSites(tuple(insertVals))
+            #现将批量导入文件信息插入tbl_site_files,并更新tbl_site_files.fileStatus为临时文件2
+            aiBusModel.updateSiteFile((2,0,userInfo["userName"],siteFile["id"]))
             if row>0:
                 res.update(code=ResponseCode.Success, data={"fileId":siteFile["id"], "fileName":destination,"siteCount":0})
                 return res.data

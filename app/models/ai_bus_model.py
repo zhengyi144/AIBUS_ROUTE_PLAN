@@ -73,6 +73,13 @@ class AiBusModel:
         row=self.mysqlPool.fetchAll(selectStr+authStr,(('%'+queryText+'%')))
         return row
     
+    def selectStationByNameDirection(self,row):
+        """
+        判断站点是否唯一
+        """
+        selectStr="select count(1) as num from tbl_station where siteName=%s and direction=%s"
+        return self.mysqlPool.fetchOne(selectStr,row)
+    
     def selectRoadByText(self,queryText,userNames):
         """
         模糊查询stationName
@@ -185,8 +192,8 @@ class AiBusModel:
         插入tbl_site
         """
         batchStr="insert into tbl_site(fileId,region,siteName,siteProperty,siteStatus,longitude,latitude,clientName,\
-                 clientProperty,clientAddress,age,grade,number,others,createUser,updateUser,location)  \
-                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,ST_GeomFromGeoJSON(%s,2,0))"
+                 clientProperty,clientAddress,age,grade,number,others,createUser,updateUser,location,srcLongitude,srcLatitude)  \
+                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,ST_GeomFromGeoJSON(%s,2,0),%s,%s)"
         row=self.mysqlPool.batch(batchStr,rows)
         return row
     
