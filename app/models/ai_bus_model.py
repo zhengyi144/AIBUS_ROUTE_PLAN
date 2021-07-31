@@ -248,6 +248,13 @@ class AiBusModel:
                   from tbl_site where fileId=%s AND siteStatus = 2"
         return self.mysqlPool.fetchAll(selectStr,(fileId))
 
+    def exportCustomSiteInfo(self,fileId):
+        """
+        根据文件id导出
+        """
+        selectStr="select region, longitude, latitude,siteName,siteProperty,clientName,clientProperty,age,clientAddress,number,grade  \
+                  from tbl_site where fileId=%s AND siteStatus = 1"
+        return self.mysqlPool.fetchAll(selectStr,(fileId))
     
     def selectTempSiteInfo(self,fileId,kwargs):
         """
@@ -366,6 +373,12 @@ class AiBusModel:
         row=self.mysqlPool.fetchAll(selectStr,row)
         return row
 
+    def exportClusterResult(self,row):
+        selectStr="select region,longitude,latitude,clusterName,relativeProperty,\
+                  number,siteSet from tbl_cluster_result where clusterStatus=%s and fileId=%s"
+        row=self.mysqlPool.fetchAll(selectStr,row)
+        return row    
+
     def searchClusterResult(self,fileId):
         selectStr="select region,clusterName,longitude,\
         (case when clusterProperty=1 then '聚类点' when clusterProperty=2 then '边界点' else '异常点' end) as clusterProperty,\
@@ -389,9 +402,10 @@ class AiBusModel:
         return row
 
     def selectClusterParams(self,row):
-        selectStr="select clusterRadius,clusterMinSamples from tbl_site_files  where id=%s and clusterStatus=1 and fileStatus=1"
+        selectStr="select id,clusterRadius,clusterMinSamples from tbl_site_files  where id=%s and clusterStatus=1 and fileStatus=1"
         row=self.mysqlPool.fetchOne(selectStr,row)
         return row
+
 
     def selectClusterParamsBySiteFileId(self,row):
         selectStr="select id, clusterRadius,clusterMinSamples from tbl_site_files  where siteFileId=%s and clusterStatus=1 and fileStatus=1"

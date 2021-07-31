@@ -122,7 +122,7 @@ def set_style(name,size,color,bold=False):
     style.font = font
     return style
 
-def writeExcel(filename,fields,resultdata):
+def writeExcel(filename,fields,resultdata,i):
     """
     filename: 保存文件名称省市
     fields: 字段名称
@@ -130,7 +130,7 @@ def writeExcel(filename,fields,resultdata):
     """
     # 定义输出excel文件名
     workbook=xlwt.Workbook(filename + '.xls')
-    sheet=workbook.add_sheet(filename,cell_overwrite_ok=True)
+    sheet=workbook.add_sheet(str(i),cell_overwrite_ok=True)
     for field in range(0,len(fields)):
         sheet.write(0,field,fields[field],set_style('Times New Roman',11,0x0C,True))
     for row in range(1,len(resultdata)+1):

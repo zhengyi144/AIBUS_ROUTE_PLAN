@@ -1,5 +1,7 @@
 import logging
-from flask import Blueprint, jsonify, session, request, current_app
+import os
+from urllib.parse import quote
+from flask import Blueprint, jsonify, session, request, current_app,Response
 from app.utils.code import ResponseCode
 from app.utils.response import ResMsg
 from app.utils.auth import login_required
@@ -444,6 +446,102 @@ def addNewClusterPoint():
         res.update(code=ResponseCode.Fail,msg="新增聚类点报错！")
         return res.data
 
+####################--------前端网页下载excel表格--------###########################
+def file_iterator(file_path, chunk_size=512):
+    """        
+    文件读取迭代器    
+    :param file_path:文件路径    
+    :param chunk_size: 每次读取流大小    
+    :return:   
+    """ 
+    with open(file_path, 'rb') as target_file: 
+        while True:            
+            chunk = target_file.read(chunk_size)      
+            if chunk:                
+                yield chunk            
+            else:
+                break                
+
+
+def to_json(obj):
+    """
+        放置
+    :return:
+    """
+    return json.dumps(obj, ensure_ascii=False)
+
+@route(cluster,'/exportClusterResult',methods=["POST"])
+@login_required
+def exportClusterResult():
+    res = ResMsg()
+    try:
+        aiBusModel=AiBusModel()
+        userInfo = session.get("userInfo")
+        data=request.get_json()
+        fileId=data["fileId"]
+        clusterPoints=[]
+        sitePoints=[]
+        
+        #1)先查询聚类参数
+        siteParams=aiBusModel.selectClusterParams((fileId))##根据网点文件fileId的查询网点文件
+        if not siteParams:
+            siteId = siteParams["id"]
+            siteResut=aiBusModel.exportCustomSiteInfo(siteId)
+            siteItems =["region", "longitude", "latitude","siteName","siteProperty","clientName","clientProperty","age","clientAddress","number","grade"]
+            for item in siteResut:
+                if item["siteProperty"]==1:
+                    item["siteProperty"]="固定"
+                elif item["siteProperty"]==0:
+                    item["siteProperty"]="临时"
+                else:
+                    item["siteProperty"]="自定义"
+            
+                row=[item["region"],item["longitude"],item["latitude"],item["siteName"],item["siteProperty"],item["clientName"],item["clientProperty"],item["age"],item["clientAddress"],item["number"],item["grade"]]
+                sitePoints.append(row)
+            writeExcel(fileId,siteItems,sitePoints,0)
+            clusterParams=aiBusModel.selectClusterParamsBySiteFileId((fileId))##根据网点文件fileId查询聚类文件
+            clusterId=clusterParams["id"]
+        else:
+            res.update(code=ResponseCode.Success, data={"clusterResult":clusterPoints})
+            return res.data
+        #2)查询聚类结果
+        clusterResut=aiBusModel.exportClusterResult((1,clusterId))
+        clusterItems =["region","longitude","latitude","clusterName","relativeProperty", "number"]
+        
+        for item in clusterResut:
+            if item["relativeProperty"]==1:
+                item["relativeProperty"]="固定"
+            elif item["relativeProperty"]==0:
+                item["relativeProperty"]="临时"
+            else:
+                item["relativeProperty"]="自定义"
+            
+            clusterrow=[item["region"],item["longitude"],item["latitude"],item["clusterName"],item["relativeProperty"],item["number"]]
+            clusterPoints.append(clusterrow)
+        file_path = writeExcel(fileId,clusterItems,clusterPoints,1) 
+        if file_path is None:        
+            return to_json({'success': 0, 'message': '请输入参数'})    
+        else:
+            if file_path == '':
+                return to_json({'success': 0, 'message': '请输入正确路径'})                   
+            else:
+                if not os.path.isfile(file_path):
+                    return to_json({'success': 0, 'message': '文件路径不存在'})                                      
+                else:
+                    filename = os.path.basename(file_path)#filename=routeplan_student.xls
+                    utf_filename=quote(filename.encode('utf-8'))
+                    # print(utf_filename)
+                    response = Response(file_iterator(file_path))
+                    # response.headers['Content-Type'] = 'application/octet-stream'
+                    # response.headers["Content-Disposition"] = 'attachment;filename="{}"'.format(filename)
+                    response.headers["Content-Disposition"] = "attachment;filename*=UTF-8''{}".format(utf_filename)
+
+                    response.headers['Content-Type'] = "application/octet-stream; charset=UTF-8"
+                    #print(response)
+                    return response
+    except Exception as e:
+        res.update(code=ResponseCode.Fail,msg="导出报错！")
+        return res.data
 
 
 """
