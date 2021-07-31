@@ -164,7 +164,7 @@ def planSingleRoute():
         routeList.append({"routeId":routeUuid,"routeDist":routeDist,\
                      "routeTime":routeTime,"routeNumber":routeNumber,\
                     "routeOccupancyRate":routeOccupancyRate,"roundStatus":0,\
-                    "routeNodeList":routeNodeResult1})
+                    "routeNodeList":routeNodeResult1,"invalidNodeList":[]})
         
         #############返程################
         if roundTrip==1:
@@ -199,9 +199,9 @@ def planSingleRoute():
             routeList.append({"routeId":routeUuid,"routeDist":roundRouteDist,\
                      "routeTime":roundRouteTime,"routeNumber":routeNumber,\
                     "routeOccupancyRate":routeOccupancyRate,"roundStatus":1,\
-                    "routeNodeList":routeNodeResult2})
+                    "routeNodeList":routeNodeResult2,"invalidNodeList":[]})
         
-        res.update(code=ResponseCode.Success,data={"destination":destination,"routeList":routeList,"invalidNodeList":[]})
+        res.update(code=ResponseCode.Success,data={"destination":destination,"routeList":routeList})
         return res.data
     except Exception as e:
         res.update(code=ResponseCode.Fail, msg=str(e))

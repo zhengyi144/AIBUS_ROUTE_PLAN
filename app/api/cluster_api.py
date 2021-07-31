@@ -315,7 +315,7 @@ def queryClusterResult():
         if not clusterParams:
             clusterParams=aiBusModel.selectClusterParamsBySiteFileId((fileId))
             if not clusterParams:
-                res.update(code=ResponseCode.Success,data=[])
+                res.update(code=ResponseCode.Success)
                 return res.data
             fileId=clusterParams["id"]
         #2)查询聚类结果
@@ -356,7 +356,7 @@ def queryClusterResult():
 @login_required
 def removeClusterResult():
     """
-    根据网点文件，失效聚类结果
+    根据网点文件id，失效网点文件、聚类问件，聚类结果和网点结果
     """
     res = ResMsg()
     try:
@@ -364,12 +364,14 @@ def removeClusterResult():
         userInfo = session.get("userInfo")
         data=request.get_json()
         fileId=data["fileId"]
+        aiBusModel.updateSiteFile((0,0,userInfo["userName"],fileId))
+        aiBusModel.updateSiteStatusByfieldId((0,userInfo["userName"],fileId,1))
         aiBusModel.updateClusterResultByFileId((0,userInfo["userName"],fileId),[1,2])
         aiBusModel.updateClusterParams((0,0,userInfo["userName"],fileId))
-        res.update(code=ResponseCode.Success, data="成功删除聚类结果!")
+        res.update(code=ResponseCode.Success, msg="成功删除网点聚类结果!")
         return res.data
     except Exception as e:
-        res.update(code=ResponseCode.Fail,msg="删除聚类结果报错！")
+        res.update(code=ResponseCode.Fail,msg="删除网点聚类结果报错！")
         return res.data
 
 
@@ -429,7 +431,7 @@ def addNewClusterPoint():
 
         row=aiBusModel.selectClusterPointId((fileId,siteName,float(longitude),float(latitude)))
         if row:
-            res.update(code=ResponseCode.Success,msg="新增加的站点己存在!")
+            res.update(code=ResponseCode.Fail,msg="新增加的站点己存在!")
             return res.data
         #插入
         aiBusModel.insertClusterPoint((fileId,' ',relativeProperty,siteName,1,2,float(longitude),float(latitude),number,' ',userInfo["userName"],userInfo["userName"]))

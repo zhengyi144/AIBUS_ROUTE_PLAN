@@ -144,7 +144,8 @@ class AiBusModel:
         """
         根据文件名查找
         """
-        selectStr="select max(id) as id from tbl_site_files where fileName=%s"+"  and fileStatus in (%s)"% ','.join("%s" % item for item in fileStatus)
+        selectStr="select id,fileStatus from tbl_site_files where fileName=%s"+"  and fileStatus in (%s)"% ','.join("%s" % item for item in fileStatus)
+        selectStr+=" order by id desc"
         row=self.mysqlPool.fetchOne(selectStr,row)
         return row
 

@@ -45,10 +45,10 @@ def uploadSiteExcel():
         
         #先判断目的地网点是否存在,存在则覆盖
         siteFile=aiBusModel.selectSiteFileIdByFileName((destination),[1,2])
-        if siteFile is None or siteFile["id"] is None :
+        if siteFile is None or siteFile["id"] is None or siteFile["fileStatus"]==2 :
            aiBusModel.insertSiteFile((destination,0,0,0,destination,mapType,longitude,latitude,userInfo["citycode"],userInfo["userName"],userInfo["userName"]))
            siteFile=aiBusModel.selectSiteFileIdByFileName((destination),[0])
-        else:
+        elif siteFile["fileStatus"]==1:
             res.update(code=ResponseCode.Fail, msg="重复插入网点文件！")
             return res.data
             #失效该文件对应所有临时site，后面重新插入
@@ -69,9 +69,8 @@ def uploadSiteExcel():
                 else:
                     siteProperty=2
                 
-                
                 #根据mapType进行坐标转换
-                if mapType==2:
+                if int(mapType)==2:
                     #百度地图
                     lng,lat=convert_BD09_to_GCJ02(float(item["longitude"]),float(item["latitude"]))
                 else:
@@ -313,7 +312,10 @@ def deleteSite():
         if row>0:
             client=aiBusModel.selectInvalidClientNumber((siteName,fileId,longitude,latitude))
             fileInfo=aiBusModel.selectSiteFileStatus(fileId)
-            aiBusModel.updateSiteFile((1,int(fileInfo["siteCount"])-client["clientNumber"],userInfo["userName"],fileId))
+            number=int(fileInfo["siteCount"])-client["clientNumber"]
+            if number<0:
+                number=0
+            aiBusModel.updateSiteFile((1,number,userInfo["userName"],fileId))
         res.update(code=ResponseCode.Success, msg="删除网点{}条".format(row))
         return res.data
     except Exception as e:
