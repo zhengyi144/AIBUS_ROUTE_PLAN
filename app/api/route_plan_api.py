@@ -271,9 +271,10 @@ def reSortRouteNode():
         result={"routeId":routeId,"routeDist":routeDist,\
                     "routeTime":routeTime,"routeNumber":routeNumber,\
                     "routeOccupancyRate":routeOccupancyRate,"routeNodeList":newRouteNodeList,\
-                    "invalidNodeList":newInvalidNodeList}
+                    "invalidNodeList":newInvalidNodeList,"routeStatus":roundStatus}
+        
 
-        res.update(code=ResponseCode.Success,data=result)
+        res.update(code=ResponseCode.Success,data={"routeList":[result]})
         return res.data
     except Exception as e:
         res.update(code=ResponseCode.Fail, msg="路线规划结点调整报错！")
@@ -298,7 +299,6 @@ def queryRoutePlanFileList():
         res.update(code=ResponseCode.Fail, msg="查询聚类文件报错！")
         return res.data
 
-
 @route(routeplan, '/queryRouteInfo', methods=["POST"])
 def queryRouteInfo():
     """
@@ -315,7 +315,7 @@ def queryRouteInfo():
         #1)查询routeInfo
         routeParams=aiBusModel.selectRouteInfo((fileId))
         if not routeParams:
-            res.update(code=ResponseCode.Fail,data=[],msg="没有保存路线规矩数据！")
+            res.update(code=ResponseCode.Success)
             return res.data
         routeParams["destination"]={"siteName":routeParams["destName"], "lng":routeParams["destLng"],"lat": routeParams["destLat"]}
         routeParams["waypoints"]=json.loads(routeParams["wayPoints"])

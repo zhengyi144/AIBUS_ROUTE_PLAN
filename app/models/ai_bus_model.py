@@ -261,13 +261,16 @@ class AiBusModel:
         根据文件id查找临时siteInfo
         """
         args=[]
-        selectStr="select id,siteName,if(siteProperty=1,'固定','临时') as siteProperty,longitude,latitude,\
+        selectStr="select id,siteName,(case when siteProperty=1 then '固定' when siteProperty=0 then '临时' else '自定义' end) as siteProperty,longitude,latitude,\
                   clientName,clientProperty,age,clientAddress,number,grade  \
                   from tbl_site where fileId=%s AND siteStatus = 2"
         args.append(fileId)
         for key,value in kwargs.items():
-            selectStr=selectStr+" and "+key+"=%s"
-            args.append(value)
+            if key in ("number","siteProperty"):
+                selectStr=selectStr+" and "+key+" in (%s) "% ','.join("%s" % item for item in value)
+            else:
+                selectStr=selectStr+" and "+key+" in (%s) "% ','.join("'%s'" % item for item in value)
+
         #selectStr+=" order by id limit %s ,%s"
         #args.append(pageNum*pageSize)
         #args.append(pageSize)

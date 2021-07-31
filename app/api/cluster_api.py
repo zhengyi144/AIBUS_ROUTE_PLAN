@@ -376,7 +376,6 @@ def removeClusterResult():
         res.update(code=ResponseCode.Fail,msg="删除网点聚类结果报错！")
         return res.data
 
-
 @route(cluster,'/exportClusterPoints',methods=["POST"])
 @login_required
 def exportClusterPoints():
@@ -542,7 +541,6 @@ def exportClusterResult():
     except Exception as e:
         res.update(code=ResponseCode.Fail,msg="导出报错！")
         return res.data
-
 
 """
 @route(cluster,'/mergeClusterPoints',methods=["POST"])

@@ -1,6 +1,7 @@
 import logging
 from typing import Set
 from flask import Blueprint, jsonify, session, request, current_app
+from numpy import array
 from pymysql import NULL
 from app.utils.code import ResponseCode
 from app.utils.response import ResMsg
@@ -227,22 +228,38 @@ def queryTempSiteInfo():
         #pageSize=int(data['pageSize'])
         #pageNum=int(data['pageNum'])-1    #pageNum前端是从1开始
         kwargs={}
-        if "siteName" in data and data["siteName"] !="":
+        if "siteName" in data and data["siteName"]:
             kwargs["siteName"]=data["siteName"]
-        if "region" in data and data['region']!="":
+
+        if "region" in data and isinstance(data["siteName"],list) and len(data["siteName"])>0:
             region=data['region'] #区域
             kwargs["region"]=region
-        if "siteProperty" in data and data["siteProperty"]!="":
-            kwargs["siteProperty"]=1 if data["siteProperty"]=="固定" else 0  #公交站点属性
-        if "clientName" in data and data['clientName']!="":
+
+        if "siteProperty" in data and isinstance(data["siteProperty"],list) and len(data["siteProperty"])>0:
+            siteProperty=[]
+            for item in data["siteProperty"]:
+                if item=="固定":
+                    siteProperty.append(1)
+                elif item=="临时":
+                    siteProperty.append(0)
+                else:
+                    siteProperty.append(2)
+                    
+            kwargs["siteProperty"]=siteProperty  #公交站点属性
+        
+        if "clientName" in data and isinstance(data["clientName"],list) and len(data["clientName"])>0:
             kwargs["clientName"]=data['clientName']  #客户姓名
-        if "clientProperty" in data and data['clientProperty']!="":
+        
+        if "clientProperty" in data and isinstance(data["clientProperty"],list) and len(data["clientProperty"])>0:
             kwargs["clientProperty"]=data['clientProperty']  #客户属性
-        if "age" in data and data['age']!="":
+        
+        if "age" in data and isinstance(data["age"],list) and len(data["age"])>0:
             kwargs["age"]=data['age']  #客户年龄
-        if "grade" in data and data['grade']!="":
+        
+        if "grade" in data and isinstance(data["grade"],list) and len(data["grade"])>0:
             kwargs["grade"]=data['grade']  #客户年级
-        if "number" in data and data['number']!="":
+        
+        if "number" in data and isinstance(data["number"],list) and len(data["number"])>0:
             kwargs["number"]=data['number']  #客户年级
         
         siteInfo=aiBusModel.selectTempSiteInfo(fileId,kwargs)
