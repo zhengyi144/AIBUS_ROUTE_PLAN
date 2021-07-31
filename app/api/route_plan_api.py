@@ -53,6 +53,7 @@ def planSingleRoute():
         roundTrip=data["roundTrip"]   #是否往返0,
         routeFactor=data["routeFactor"]   #路线方案，0时间最短，1距离最短
         MAXNODE=20
+        MINNODE=2
         if not destination:
             res.update(code=ResponseCode.Fail,data=[],msg="目的地不能为空！")
             return res.data
@@ -81,9 +82,10 @@ def planSingleRoute():
             index+=1
         
         #判断结点数量是否超过限制
-        if len(routeNode)>MAXNODE:
-            res.update(code=ResponseCode.Fail,data=[],msg="路线规划结点数量超过限制！")
+        if len(routeNode)>MAXNODE and len(routeNode)<MINNODE:
+            res.update(code=ResponseCode.Fail,data=[],msg="路线规划结点数量超过最大限制{}或者小于最小限度{}！".format(MAXNODE,MINNODE))
             return res.data
+
 
         #将目标点一起添加至末尾
         routeNode.append({"index":"dest","nodeName":destination["siteName"],"lng":format(destination["lng"],'.6f'),"lat":format(destination["lat"],'.6f'),"number":0})
@@ -100,7 +102,7 @@ def planSingleRoute():
                 toNode=str(nodePair[1]["lng"])+","+str(nodePair[1]["lat"])
                 distTime=get_route_distance_time(fromNode,toNode)
                 directDist=getGPSDistance(float(nodePair[0]["lng"]),float(nodePair[0]["lat"]),float(nodePair[1]["lng"]),float(nodePair[1]["lat"]))
-                nodePairDict[key]=distTime
+                nodePairDict[key]={"dist":distTime["dist"],"time":distTime["time"],"directDist":directDist}
                 #存储获取的数据
                 startGeo = '{ "type": "Point", "coordinates": [%s, %s]}'%(float(nodePair[0]["lng"]),float(nodePair[0]["lat"]))
                 endGeo = '{ "type": "Point", "coordinates": [%s, %s]}'%(float(nodePair[1]["lng"]),float(nodePair[1]["lat"]))
