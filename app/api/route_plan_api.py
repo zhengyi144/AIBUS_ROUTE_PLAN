@@ -271,9 +271,8 @@ def reSortRouteNode():
         result={"routeId":routeId,"routeDist":routeDist,\
                     "routeTime":routeTime,"routeNumber":routeNumber,\
                     "routeOccupancyRate":routeOccupancyRate,"routeNodeList":newRouteNodeList,\
-                    "invalidNodeList":newInvalidNodeList,"routeStatus":roundStatus}
+                    "invalidNodeList":newInvalidNodeList,"roundStatus":roundStatus}
         
-
         res.update(code=ResponseCode.Success,data={"routeList":[result]})
         return res.data
     except Exception as e:

@@ -432,7 +432,8 @@ def addNewClusterPoint():
 
         row=aiBusModel.selectClusterPointId((fileId,siteName,float(longitude),float(latitude)))
         if row:
-            res.update(code=ResponseCode.Fail,msg="新增加的站点己存在!")
+            res.update(code=ResponseCode.Success, data={"id":row["id"],"siteName":siteName,\
+                "longitude":longitude,"latitude":latitude,"number":number,"siteProperty":siteProperty,"users":[]})
             return res.data
         #插入
         aiBusModel.insertClusterPoint((fileId,' ',relativeProperty,siteName,1,2,float(longitude),float(latitude),number,' ',userInfo["userName"],userInfo["userName"]))
