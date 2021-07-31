@@ -1,9 +1,4 @@
-import logging
-from re import S
-from threading import Condition
 from flask import current_app
-from numpy import insert, select
-from werkzeug.wrappers import CommonRequestDescriptorsMixin
 from app.utils.mysql import MysqlPool
 
 

@@ -1,9 +1,9 @@
-import logging
 import pymysql
 import time
 from dbutils.pooled_db import PooledDB
+from app.utils.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger=get_logger(name="mysqlOperator",log_file="logs/logger.log")
 
 class MysqlPool():
     def __init__(self,host,port,user,password,db):

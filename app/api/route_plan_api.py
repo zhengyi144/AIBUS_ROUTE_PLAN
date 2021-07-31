@@ -161,7 +161,7 @@ def planSingleRoute():
         
         #查询路线结点及未规划的结点
         routeNodeResult1=aiBusModel.selectRouteDetail((routeUuid,2,0))
-        routeList.append({"routeId":routeUuid,"routeDist":routeDist,\
+        routeList.append({"routeId":routeUuid,"routeDist":int(routeDist),\
                      "routeTime":routeTime,"routeNumber":routeNumber,\
                     "routeOccupancyRate":routeOccupancyRate,"roundStatus":0,\
                     "routeNodeList":routeNodeResult1,"invalidNodeList":[]})
@@ -196,7 +196,7 @@ def planSingleRoute():
 
             #查询路线结点及未规划的结点
             routeNodeResult2=aiBusModel.selectRouteDetail((routeUuid,2,1))
-            routeList.append({"routeId":routeUuid,"routeDist":roundRouteDist,\
+            routeList.append({"routeId":routeUuid,"routeDist":int(roundRouteDist),\
                      "routeTime":roundRouteTime,"routeNumber":routeNumber,\
                     "routeOccupancyRate":routeOccupancyRate,"roundStatus":1,\
                     "routeNodeList":routeNodeResult2,"invalidNodeList":[]})
@@ -268,7 +268,7 @@ def reSortRouteNode():
                 routeNumber+=toNode["number"]
         
         routeOccupancyRate=float(routeNumber)/passengers*100
-        result={"routeId":routeId,"routeDist":routeDist,\
+        result={"routeId":routeId,"routeDist":int(routeDist),\
                     "routeTime":routeTime,"routeNumber":routeNumber,\
                     "routeOccupancyRate":routeOccupancyRate,"routeNodeList":newRouteNodeList,\
                     "invalidNodeList":newInvalidNodeList,"roundStatus":roundStatus}
@@ -338,7 +338,7 @@ def queryRouteInfo():
                 routeNumber+=routeNode["number"]
             routeOccupancyRate=float(routeNumber)/routeParams["passengers"]*100
     
-            routeList.append({"routeId":routeParams["routeId"],"routeDist":routeDist,\
+            routeList.append({"routeId":routeParams["routeId"],"routeDist":int(routeDist),\
                      "routeTime":routeTime,"routeNumber":routeNumber,\
                     "routeOccupancyRate":routeOccupancyRate,"roundStatus":0,\
                     "routeNodeList":routeNodeResult})
@@ -355,7 +355,7 @@ def queryRouteInfo():
                 routeNumber+=routeNode["number"]
             routeOccupancyRate=float(routeNumber)/routeParams["passengers"]*100
     
-            routeList.append({"routeId":routeParams["routeId"],"routeDist":routeDist,\
+            routeList.append({"routeId":routeParams["routeId"],"routeDist":int(routeDist),\
                      "routeTime":routeTime,"routeNumber":routeNumber,\
                     "routeOccupancyRate":routeOccupancyRate,"roundStatus":1,\
                     "routeNodeList":roundRouteNodeResult})
