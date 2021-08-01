@@ -224,17 +224,72 @@ def reSortRouteNode():
         passengers=data["passengers"]
         routeNodeList=data["routeNodeList"]
         invalidNodeList=data["invalidNodeList"]
+        
+        #根据结点顺序获取对应信息
+        nodeIndex=0
+        newInvalidNodeList=[]
+        for node in invalidNodeList:
+            #aiBusModel.updateRouteDetail((nodeIndex,0,0,0,2,2,routeId,node["id"]))
+            newInvalidNodeList.append({"id":node["id"],"nodeIndex":nodeIndex,"nodeName":node["nodeName"],\
+                "lng":float(node["lng"]),"lat":float(node["lat"]),"number":node["number"]})
+            nodeIndex+=1
+        
+        nodeIndex=0
+        routeDist=0
+        routeTime=0
+        routeNumber=0
+        newRouteNodeList=[]
+        length=len(routeNodeList)
+        for i in range(length-1):
+            fromNode=routeNodeList[i]
+            toNode=routeNodeList[i+1]
+            row=aiBusModel.selectRouteParams((float(fromNode["lng"]),float(fromNode["lat"]),float(toNode["lng"]),float(toNode["lat"])))
+            routeDist+=row["dist"]
+            routeTime+=row["time"]
+            routeNumber+=fromNode["number"]
+            newRouteNodeList.append({"id":fromNode["id"],"nodeIndex":nodeIndex,"nodeName":fromNode["nodeName"],\
+                "lng":float(fromNode["lng"]),"lat":float(fromNode["lat"]),"number":fromNode["number"],\
+                "nextDist":row["dist"],"nextTime":row["time"]})
+
+            #aiBusModel.updateRouteDetail((nodeIndex,1,row["dist"],row["time"],2,roundStatus,routeId,fromNode["id"]))
+            nodeIndex+=1
+            if i+1==length-1:
+                newRouteNodeList.append({"id":toNode["id"],"nodeIndex":nodeIndex,"nodeName":toNode["nodeName"],\
+                   "lng":float(toNode["lng"]),"lat":float(toNode["lat"]),"number":toNode["number"],"nextDist":0,"nextTime":0})
+                #aiBusModel.updateRouteDetail((nodeIndex,1,0,0,2,roundStatus,routeId,toNode["id"]))
+                routeNumber+=toNode["number"]
+        
+        routeOccupancyRate=float(routeNumber)/passengers*100
+        result={"routeId":routeId,"routeDist":int(routeDist),\
+                    "routeTime":routeTime,"routeNumber":routeNumber,\
+                    "routeOccupancyRate":routeOccupancyRate,"routeNodeList":newRouteNodeList,\
+                    "invalidNodeList":newInvalidNodeList,"roundStatus":roundStatus}
+
+        res.update(code=ResponseCode.Success,data={"routeList":[result]})
+        return res.data
+    except Exception as e:
+        res.update(code=ResponseCode.Fail, msg="路线规划结点调整报错！")
+        return res.data
+
+@route(routeplan,'/saveRouteNode', methods=["POST"])
+def saveRouteNode():
+    """
+    保存规划路线接口
+    """
+    res = ResMsg()
+    try:
+        aiBusModel=AiBusModel()
+        data=request.get_json()
+        fileId=data["fileId"]
+        routeId=data["routeId"]
+        roundStatus=data["roundStatus"]
+        passengers=data["passengers"]
+        routeNodeList=data["routeNodeList"]
+        invalidNodeList=data["invalidNodeList"]
         if fileId is None or fileId=="":
-            res.update(code=ResponseCode.Fail, msg="路线规划保存调整时,fileId不能为空！")
+            res.update(code=ResponseCode.Fail, msg="路线规划保存时,fileId不能为空！")
             return res.data
         
-        #更新routeInfo参数表,实现之前保存的参数，替换为当前的参数
-        if fileId!=-1:
-            aiBusModel.invalidRouteInfo((0,fileId))
-            aiBusModel.validRouteInfo((1,fileId,routeId))
-
-        #根据routeId删除规划结点
-        #aiBusModel.deleteNodesByRouteId((routeId))
         #根据结点顺序获取对应信息
         nodeIndex=0
         newInvalidNodeList=[]
@@ -275,10 +330,15 @@ def reSortRouteNode():
                     "routeOccupancyRate":routeOccupancyRate,"routeNodeList":newRouteNodeList,\
                     "invalidNodeList":newInvalidNodeList,"roundStatus":roundStatus}
         
-        res.update(code=ResponseCode.Success,data={"routeList":[result]})
+        #更新routeInfo参数表,实现之前保存的参数，替换为当前的参数
+        if fileId!=-1:
+            aiBusModel.invalidRouteInfo((0,fileId))
+            aiBusModel.validRouteInfo((1,fileId,routeId))
+
+        res.update(code=ResponseCode.Success,msg="路线保存成功！")
         return res.data
     except Exception as e:
-        res.update(code=ResponseCode.Fail, msg="路线规划结点调整报错！")
+        res.update(code=ResponseCode.Fail, msg="路线规划结点保存报错！")
         return res.data
 
 @route(routeplan, '/queryRoutePlanFileList', methods=["POST"])

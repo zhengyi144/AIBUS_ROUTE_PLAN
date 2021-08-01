@@ -47,9 +47,9 @@ def create_app(config_name, config_path=None):
         os.mkdir(app.config['REPORT_PATH'])
 
     # 日志设置
-    with open(app.config['LOGGING_CONFIG_PATH'], 'r', encoding='utf-8') as f:
-        dict_conf = yaml.safe_load(f.read())
-    logging.config.dictConfig(dict_conf)
+    #with open(app.config['LOGGING_CONFIG_PATH'], 'r', encoding='utf-8') as f:
+    #    dict_conf = yaml.safe_load(f.read())
+    #logging.config.dictConfig(dict_conf)
 
     # 读取msg配置
     with open(app.config['RESPONSE_MESSAGE'], 'r', encoding='utf-8') as f:
