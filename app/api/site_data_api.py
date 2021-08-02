@@ -207,9 +207,15 @@ def queryConfirmedSiteInfo():
     try:
         aiBusModel=AiBusModel()
         data=request.get_json()
-        fileId=int(data["fileId"])
-        siteInfo=aiBusModel.selectSiteInfoByFileId((fileId))
-        res.update(code=ResponseCode.Success, data=siteInfo)
+        fileId=data["fileId"]
+        siteParams=aiBusModel.selectClusterParams((fileId))##根据网点文件fileId的查询网点文件
+        if siteParams:
+            #查询聚类点
+            clusterInfo=aiBusModel.selectClusterSiteInfoByFileId((fileId))
+            res.update(code=ResponseCode.Success, data=clusterInfo)
+        else:
+            siteInfo=aiBusModel.selectSiteInfoByFileId((fileId))
+            res.update(code=ResponseCode.Success, data=siteInfo)
         return res.data
     except Exception as e:
         res.update(code=ResponseCode.Fail, msg="查询网点信息报错！")

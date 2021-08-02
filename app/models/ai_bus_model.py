@@ -218,10 +218,19 @@ class AiBusModel:
     
     def selectSiteInfoByFileId(self,row):
         """
-        根据文件id查找siteInfo,GROUP BY siteName, latitude,longitude
+        根据文件id查找siteInfo,GROUP BY siteName, latitude,longitude,clientNumber
         """
         selectStr="SELECT siteName, latitude,longitude,SUM(number) AS clientNumber \
                    FROM tbl_site WHERE fileId = %s AND siteStatus = 1 GROUP BY siteName, latitude,longitude"
+        return self.mysqlPool.fetchAll(selectStr,row)
+    
+    def selectClusterSiteInfoByFileId(self,row):
+        """
+        根据fileId查找聚类结果，与上面方法的字段相同
+        """
+        selectStr="select clusterName as siteName,longitude,latitude,number,\
+                 (case when clusterProperty=1 then '聚类点' when clusterProperty=2 then '边界点' else '异常点' end) as clusterProperty\
+                  from tbl_cluster_result where fileId=%s and clusterStatus=1"
         return self.mysqlPool.fetchAll(selectStr,row)
     
     def selectClientNameByIds(self,siteIds):
@@ -371,6 +380,12 @@ class AiBusModel:
                   latitude,number,siteSet from tbl_cluster_result where clusterStatus=%s and fileId=%s"
         row=self.mysqlPool.fetchAll(selectStr,row)
         return row
+    
+    def selectClusterCorePoints(self,row):
+        selectStr="select id,relativeId,clusterName,relativeProperty,clusterProperty,longitude,\
+                  latitude,number,siteSet from tbl_cluster_result where clusterStatus=%s and fileId=%s and clusterProperty=1"
+        row=self.mysqlPool.fetchAll(selectStr,row)
+        return row
 
     def exportClusterResult(self,row):
         selectStr="select region,longitude,latitude,clusterName,relativeProperty,\
@@ -423,8 +438,12 @@ class AiBusModel:
         row=self.mysqlPool.insert(insertStr,row)
         return row
     
+    def updateRouteParams(self,row):
+        updateStr="update tbl_route_node set minDist=%s,minTime=%s,directDist%s where id=%s"
+        return self.mysqlPool.update(updateStr,row)
+    
     def selectRouteParams(self,row):
-        selectStr="select minDist as dist,minTime as time from tbl_route_node where ABS(startlng-%s)<=0.000001 and ABS(startlat-%s)<=0.000001 \
+        selectStr="select id, minDist as dist,minTime as time from tbl_route_node where ABS(startlng-%s)<=0.000001 and ABS(startlat-%s)<=0.000001 \
                    and ABS(endLng-%s)<=0.000001 and ABS(endLat-%s)<=0.000001"
         row=self.mysqlPool.fetchOne(selectStr,row)
         return row

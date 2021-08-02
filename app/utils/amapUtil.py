@@ -1,6 +1,6 @@
 import requests,json
 
-key = "c499537db92f1234f8390eeec13cfbe5"  # 你的KEY
+key = "36fdeffd608643f8dec6d43b2d9b8ec8"  # 你的KEY
 # 驾车路径规划 36fdeffd608643f8dec6d43b2d9b8ec8 
 def get_route(origin,destination):
     api=f'http://restapi.amap.com/v3/direction/driving?origin={origin}&destination={destination}&output=JSON&key={key}'

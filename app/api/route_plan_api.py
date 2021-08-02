@@ -65,7 +65,7 @@ def planSingleRoute():
             #根据fileId查询文件信息，判断是聚类文件还网点文件
             fileInfo=aiBusModel.selectSiteFileStatus(fileId)
             if fileInfo and fileInfo["clusterStatus"]==1:
-                clusterPoints=aiBusModel.selectClusterResult((1,fileId))
+                clusterPoints=aiBusModel.selectClusterCorePoints((1,fileId))
                 for point in clusterPoints:
                     routeNode.append({"index":index,"nodeName":point["clusterName"],"lng":format(point["longitude"],'.6f'),"lat":format(point["latitude"],'.6f'),"number":point["number"]})
                     index+=1
@@ -82,7 +82,7 @@ def planSingleRoute():
             index+=1
         
         #判断结点数量是否超过限制
-        if len(routeNode)>MAXNODE and len(routeNode)<MINNODE:
+        if len(routeNode)>MAXNODE or len(routeNode)<MINNODE:
             res.update(code=ResponseCode.Fail,data=[],msg="路线规划结点数量超过最大限制{}或者小于最小限度{}！".format(MAXNODE,MINNODE))
             return res.data
 
@@ -97,17 +97,21 @@ def planSingleRoute():
             key=str(nodePair[0]["index"])+"-"+str(nodePair[1]["index"])
             #先查找数据库是否已经存储好数据
             row=aiBusModel.selectRouteParams((float(nodePair[0]["lng"]),float(nodePair[0]["lat"]),float(nodePair[1]["lng"]),float(nodePair[1]["lat"])))
-            if not row:
+            if not row or row["dist"]<0.5:
                 fromNode=str(nodePair[0]["lng"])+","+str(nodePair[0]["lat"])
                 toNode=str(nodePair[1]["lng"])+","+str(nodePair[1]["lat"])
                 distTime=get_route_distance_time(fromNode,toNode)
                 directDist=getGPSDistance(float(nodePair[0]["lng"]),float(nodePair[0]["lat"]),float(nodePair[1]["lng"]),float(nodePair[1]["lat"]))
                 nodePairDict[key]={"dist":distTime["dist"],"time":distTime["time"],"directDist":directDist}
                 #存储获取的数据
-                startGeo = '{ "type": "Point", "coordinates": [%s, %s]}'%(float(nodePair[0]["lng"]),float(nodePair[0]["lat"]))
-                endGeo = '{ "type": "Point", "coordinates": [%s, %s]}'%(float(nodePair[1]["lng"]),float(nodePair[1]["lat"]))
-                aiBusModel.inserRouteParams((float(nodePair[0]["lng"]),float(nodePair[0]["lat"]),startGeo,\
-                    float(nodePair[1]["lng"]),float(nodePair[1]["lat"]),endGeo,distTime["dist"],distTime["time"],directDist))
+                if not row:
+                    startGeo = '{ "type": "Point", "coordinates": [%s, %s]}'%(float(nodePair[0]["lng"]),float(nodePair[0]["lat"]))
+                    endGeo = '{ "type": "Point", "coordinates": [%s, %s]}'%(float(nodePair[1]["lng"]),float(nodePair[1]["lat"]))
+                    aiBusModel.inserRouteParams((float(nodePair[0]["lng"]),float(nodePair[0]["lat"]),startGeo,\
+                        float(nodePair[1]["lng"]),float(nodePair[1]["lat"]),endGeo,distTime["dist"],distTime["time"],directDist))
+                if row:
+                    aiBusModel.updateRouteParams((distTime["dist"],distTime["time"],directDist,row["id"]))
+
             else:
                 nodePairDict[key]={"dist":float(row["dist"]),"time":row["time"]}
 
