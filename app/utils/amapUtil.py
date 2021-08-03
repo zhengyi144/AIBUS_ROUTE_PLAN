@@ -1,4 +1,7 @@
 import requests,json
+from app.utils.logger import get_logger
+
+logger=get_logger(name="amapUtil",log_file="logs/logger.log")
 
 key = "36fdeffd608643f8dec6d43b2d9b8ec8"  # 你的KEY
 # 驾车路径规划 36fdeffd608643f8dec6d43b2d9b8ec8 
@@ -31,9 +34,13 @@ def get_route_distance_time(origin,destination):
         
         #路线距离
         try:
+            
             distance=int(info['route']['paths'][0]['distance'])
         except:
             distance= 0
+        logger.info("get amap dist:{},time:{}".format(distance,duration))
+    else:
+        logger.info("get amap fail!")
     return {"dist":distance,"time":duration}
 
 """

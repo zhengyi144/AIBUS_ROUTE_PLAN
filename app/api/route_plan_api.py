@@ -61,15 +61,19 @@ def planSingleRoute():
         #1)先判断fileid是否为空
         routeNode=[]
         index=0
+        orderNumber=0 #订单总数
         if fileId is not None and fileId!='':
             #根据fileId查询文件信息，判断是聚类文件还网点文件
             fileInfo=aiBusModel.selectSiteFileStatus(fileId)
             if fileInfo and fileInfo["clusterStatus"]==1:
-                clusterPoints=aiBusModel.selectClusterCorePoints((1,fileId))
+                clusterPoints=aiBusModel.selectClusterResult((1,fileId))
+                siteInfo=aiBusModel.selectSiteFileStatus(fileInfo["siteFileId"])
+                orderNumber=siteInfo["siteCount"]
                 for point in clusterPoints:
                     routeNode.append({"index":index,"nodeName":point["clusterName"],"lng":format(point["longitude"],'.6f'),"lat":format(point["latitude"],'.6f'),"number":point["number"]})
                     index+=1
             else:
+                orderNumber=fileInfo["siteCount"]
                 sitePoints=aiBusModel.selectSiteInfoByFileId(fileId)
                 for point in sitePoints:
                     routeNode.append({"index":index,"nodeName":point["siteName"],"lng":format(point["longitude"],'.6f'),"lat":format(point["latitude"],'.6f'),"number":point["clientNumber"]})
@@ -81,8 +85,8 @@ def planSingleRoute():
             routeNode.append({"index":index,"nodeName":point["siteName"],"lng":format(point["lng"],'.6f'),"lat":format(point["lat"],'.6f'),"number":point["number"]})
             index+=1
         
-        #判断结点数量是否超过限制
-        if len(routeNode)>MAXNODE or len(routeNode)<MINNODE:
+        #判断结点数量是否超过限制len(routeNode)>MAXNODE or
+        if  len(routeNode)<MINNODE:
             res.update(code=ResponseCode.Fail,data=[],msg="路线规划结点数量超过最大限制{}或者小于最小限度{}！".format(MAXNODE,MINNODE))
             return res.data
 
@@ -145,7 +149,7 @@ def planSingleRoute():
         routeNodeList.append({"nodeIndex":nodeIndex,"nodeName":destination["siteName"],\
                 "lng":float(destination["lng"]),"lat":float(destination["lat"]),"number":0,"nextDist":0,"nextTime":0})
         
-        routeOccupancyRate=float(routeNumber)/passengers*100
+        routeOccupancyRate=float(routeNumber)/orderNumber*100
         if routeNumber>passengers:
             res.update(code=ResponseCode.Fail,data=[],msg="路线人数超过座位上限！")
             return res.data
@@ -168,7 +172,7 @@ def planSingleRoute():
         #查询路线结点及未规划的结点
         routeNodeResult1=aiBusModel.selectRouteDetail((routeUuid,2,0))
         routeList.append({"routeId":routeUuid,"routeDist":int(routeDist),\
-                     "routeTime":routeTime,"routeNumber":routeNumber,\
+                     "routeTime":routeTime,"routeNumber":routeNumber,"orderNumber":orderNumber,\
                     "routeOccupancyRate":routeOccupancyRate,"roundStatus":0,\
                     "routeNodeList":routeNodeResult1,"invalidNodeList":[]})
         
@@ -203,7 +207,7 @@ def planSingleRoute():
             #查询路线结点及未规划的结点
             routeNodeResult2=aiBusModel.selectRouteDetail((routeUuid,2,1))
             routeList.append({"routeId":routeUuid,"routeDist":int(roundRouteDist),\
-                     "routeTime":roundRouteTime,"routeNumber":routeNumber,\
+                     "routeTime":roundRouteTime,"routeNumber":routeNumber,"orderNumber":orderNumber,\
                     "routeOccupancyRate":routeOccupancyRate,"roundStatus":1,\
                     "routeNodeList":routeNodeResult2,"invalidNodeList":[]})
         
@@ -248,8 +252,15 @@ def reSortRouteNode():
             fromNode=routeNodeList[i]
             toNode=routeNodeList[i+1]
             row=aiBusModel.selectRouteParams((float(fromNode["lng"]),float(fromNode["lat"]),float(toNode["lng"]),float(toNode["lat"])))
-            routeDist+=row["dist"]
-            routeTime+=row["time"]
+            if row["dist"]<0.5:
+                startPoint=str(fromNode["lng"])+","+str(fromNode["lat"])
+                endPoint=str(toNode["lng"])+","+str(toNode["lat"])
+                distTime=get_route_distance_time(startPoint,endPoint)
+                routeDist+=distTime["dist"]
+                routeTime+=distTime["time"]
+            else:
+                routeDist+=row["dist"]
+                routeTime+=row["time"]
             routeNumber+=fromNode["number"]
             newRouteNodeList.append({"id":fromNode["id"],"nodeIndex":nodeIndex,"nodeName":fromNode["nodeName"],\
                 "lng":float(fromNode["lng"]),"lat":float(fromNode["lat"]),"number":fromNode["number"],\
@@ -263,9 +274,19 @@ def reSortRouteNode():
                 #aiBusModel.updateRouteDetail((nodeIndex,1,0,0,2,roundStatus,routeId,toNode["id"]))
                 routeNumber+=toNode["number"]
         
-        routeOccupancyRate=float(routeNumber)/passengers*100
+        #获取网点人数
+        orderNumber=0
+        fileInfo=aiBusModel.selectSiteFileStatus(fileId)
+        if fileInfo and fileInfo["clusterStatus"]==1:
+            siteInfo=aiBusModel.selectSiteFileStatus(fileInfo["siteFileId"])
+            orderNumber=siteInfo["siteCount"]
+        else:
+            orderNumber=fileInfo["siteCount"]
+            
+        #返回结果
+        routeOccupancyRate=float(routeNumber)/orderNumber*100
         result={"routeId":routeId,"routeDist":int(routeDist),\
-                    "routeTime":routeTime,"routeNumber":routeNumber,\
+                    "routeTime":routeTime,"routeNumber":routeNumber,"orderNumber":orderNumber,\
                     "routeOccupancyRate":routeOccupancyRate,"routeNodeList":newRouteNodeList,\
                     "invalidNodeList":newInvalidNodeList,"roundStatus":roundStatus}
 
