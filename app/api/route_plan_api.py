@@ -85,8 +85,11 @@ def planSingleRoute():
                 return res.data
         else:
             fileId=-1
+            orderNumber=0
         #添加途经点
         for point in waypoints:
+            if fileId==-1:
+                orderNumber+=point["number"]
             routeNode.append({"index":index,"nodeName":point["siteName"],"lng":format(point["lng"],'.6f'),"lat":format(point["lat"],'.6f'),"number":point["number"]})
             index+=1
         
