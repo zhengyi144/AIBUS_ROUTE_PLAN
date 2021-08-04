@@ -61,23 +61,28 @@ def planSingleRoute():
         #1)先判断fileid是否为空
         routeNode=[]
         index=0
-        orderNumber=0 #订单总数
+        orderNumber=-1 #订单总数
         if fileId is not None and fileId!='':
             #根据fileId查询文件信息，判断是聚类文件还网点文件
             fileInfo=aiBusModel.selectSiteFileStatus(fileId)
-            if fileInfo and fileInfo["clusterStatus"]==1:
-                clusterPoints=aiBusModel.selectClusterResult((1,fileId))
-                siteInfo=aiBusModel.selectSiteFileStatus(fileInfo["siteFileId"])
-                orderNumber=siteInfo["siteCount"]
-                for point in clusterPoints:
-                    routeNode.append({"index":index,"nodeName":point["clusterName"],"lng":format(point["longitude"],'.6f'),"lat":format(point["latitude"],'.6f'),"number":point["number"]})
-                    index+=1
+            if fileInfo:
+                if fileInfo["clusterStatus"]==1:
+                    clusterPoints=aiBusModel.selectClusterResult((1,fileId))
+                    siteInfo=aiBusModel.selectSiteFileStatus(fileInfo["siteFileId"])
+                    if siteInfo:
+                        orderNumber=siteInfo["siteCount"]
+                    for point in clusterPoints:
+                        routeNode.append({"index":index,"nodeName":point["clusterName"],"lng":format(point["longitude"],'.6f'),"lat":format(point["latitude"],'.6f'),"number":point["number"]})
+                        index+=1
+                else:
+                    orderNumber=fileInfo["siteCount"]
+                    sitePoints=aiBusModel.selectSiteInfoByFileId(fileId)
+                    for point in sitePoints:
+                        routeNode.append({"index":index,"nodeName":point["siteName"],"lng":format(point["longitude"],'.6f'),"lat":format(point["latitude"],'.6f'),"number":point["clientNumber"]})
+                        index+=1
             else:
-                orderNumber=fileInfo["siteCount"]
-                sitePoints=aiBusModel.selectSiteInfoByFileId(fileId)
-                for point in sitePoints:
-                    routeNode.append({"index":index,"nodeName":point["siteName"],"lng":format(point["longitude"],'.6f'),"lat":format(point["latitude"],'.6f'),"number":point["clientNumber"]})
-                    index+=1
+                res.update(code=ResponseCode.Fail,data=[],msg="找不到对应网点文件或者聚类文件！")
+                return res.data
         else:
             fileId=-1
         #添加途经点
@@ -275,13 +280,15 @@ def reSortRouteNode():
                 routeNumber+=toNode["number"]
         
         #获取网点人数
-        orderNumber=0
+        orderNumber=-1
         fileInfo=aiBusModel.selectSiteFileStatus(fileId)
-        if fileInfo and fileInfo["clusterStatus"]==1:
-            siteInfo=aiBusModel.selectSiteFileStatus(fileInfo["siteFileId"])
-            orderNumber=siteInfo["siteCount"]
-        else:
-            orderNumber=fileInfo["siteCount"]
+        if fileInfo:
+            if fileInfo["clusterStatus"]==1:
+                siteInfo=aiBusModel.selectSiteFileStatus(fileInfo["siteFileId"])
+                if siteInfo:
+                    orderNumber=siteInfo["siteCount"]
+            else:
+                orderNumber=fileInfo["siteCount"]
             
         #返回结果
         routeOccupancyRate=float(routeNumber)/orderNumber*100
@@ -411,6 +418,18 @@ def queryRouteInfo():
         del routeParams["wayPoints"]
 
         #2)查询路线规划信息
+        
+        #获取网点人数
+        orderNumber=-1
+        fileInfo=aiBusModel.selectSiteFileStatus(fileId)
+        if fileInfo:
+            if fileInfo["clusterStatus"]==1:
+                siteInfo=aiBusModel.selectSiteFileStatus(fileInfo["siteFileId"])
+                if siteInfo:
+                    orderNumber=siteInfo["siteCount"]
+            else:
+                orderNumber=fileInfo["siteCount"]
+
         routeList=[]
         #去程
         routeNodeResult=aiBusModel.selectRouteDetail((routeParams["routeId"],1,0))
@@ -423,10 +442,10 @@ def queryRouteInfo():
                 routeTime+=routeNode["nextTime"]
                 routeDist+=routeNode["nextDist"]
                 routeNumber+=routeNode["number"]
-            routeOccupancyRate=float(routeNumber)/routeParams["passengers"]*100
+            routeOccupancyRate=float(routeNumber)/orderNumber*100
     
             routeList.append({"routeId":routeParams["routeId"],"routeDist":int(routeDist),\
-                     "routeTime":routeTime,"routeNumber":routeNumber,\
+                     "routeTime":routeTime,"routeNumber":routeNumber,"orderNumber":orderNumber,\
                     "routeOccupancyRate":routeOccupancyRate,"roundStatus":0,\
                     "routeNodeList":routeNodeResult})
         #返程
@@ -440,10 +459,12 @@ def queryRouteInfo():
                 routeTime+=routeNode["nextTime"]
                 routeDist+=routeNode["nextDist"]
                 routeNumber+=routeNode["number"]
-            routeOccupancyRate=float(routeNumber)/routeParams["passengers"]*100
+
+            
+            routeOccupancyRate=float(routeNumber)/orderNumber*100
     
             routeList.append({"routeId":routeParams["routeId"],"routeDist":int(routeDist),\
-                     "routeTime":routeTime,"routeNumber":routeNumber,\
+                     "routeTime":routeTime,"routeNumber":routeNumber,"orderNumber":orderNumber,\
                     "routeOccupancyRate":routeOccupancyRate,"roundStatus":1,\
                     "routeNodeList":roundRouteNodeResult})
         
