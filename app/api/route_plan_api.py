@@ -3,6 +3,7 @@ import json
 import uuid
 import numpy as np
 import itertools
+import pandas as pd
 from flask import Blueprint, jsonify, session, request, current_app
 from app.utils.code import ResponseCode
 from app.utils.response import ResMsg
@@ -12,7 +13,7 @@ from app.utils.tools import *
 from app.utils.amapUtil import get_route_distance_time
 from app.utils.GPSConvertUtil import getGPSDistance
 from app.models.ai_bus_model import AiBusModel
-from app.algorithms.sa import tspSolution,singleRoutePlanSolution
+from app.algorithms.sa import tspSolution,singleRoutePlanSolution,singleRoutePlanByGreedyAlgorithm
 
 """
 线路规划模块api
@@ -60,6 +61,7 @@ def planSingleRoute():
 
         #1)先判断fileid是否为空
         routeNode=[]
+        indexList=[]
         index=0
         orderNumber=0 #订单总数
         if fileId is not None and fileId!='':
@@ -70,18 +72,22 @@ def planSingleRoute():
                 siteInfo=aiBusModel.selectSiteFileStatus(fileInfo["siteFileId"])
                 orderNumber=siteInfo["siteCount"]
                 for point in clusterPoints:
+                    indexList.append(str(index))
                     routeNode.append({"index":index,"nodeName":point["clusterName"],"lng":format(point["longitude"],'.6f'),"lat":format(point["latitude"],'.6f'),"number":point["number"]})
                     index+=1
             else:
                 orderNumber=fileInfo["siteCount"]
                 sitePoints=aiBusModel.selectSiteInfoByFileId(fileId)
                 for point in sitePoints:
+                    indexList.append(str(index))
                     routeNode.append({"index":index,"nodeName":point["siteName"],"lng":format(point["longitude"],'.6f'),"lat":format(point["latitude"],'.6f'),"number":point["clientNumber"]})
                     index+=1
         else:
             fileId=-1
+            orderNumber=passengers
         #添加途经点
         for point in waypoints:
+            indexList.append(str(index))
             routeNode.append({"index":index,"nodeName":point["siteName"],"lng":format(point["lng"],'.6f'),"lat":format(point["lat"],'.6f'),"number":point["number"]})
             index+=1
         
@@ -89,24 +95,42 @@ def planSingleRoute():
         if  len(routeNode)<MINNODE:
             res.update(code=ResponseCode.Fail,data=[],msg="路线规划结点数量超过最大限制{}或者小于最小限度{}！".format(MAXNODE,MINNODE))
             return res.data
-
+        
+        #判断参数是否冲突
+        if occupancyRate<=0 or occupancyRate>100:
+            res.update(code=ResponseCode.Fail,data=[],msg="路线规划上座率下限必须大于{}或者小于{}！".format(0,100))
+            return res.data
+            
+        if passengers<int(orderNumber*occupancyRate/100):
+            res.update(code=ResponseCode.Fail,data=[],msg="最低上座率人数超过座位上限！")
+            return res.data
 
         #将目标点一起添加至末尾
         routeNode.append({"index":"dest","nodeName":destination["siteName"],"lng":format(destination["lng"],'.6f'),"lat":format(destination["lat"],'.6f'),"number":0})
+        indexList.append("dest")
 
         #2)构建结点对，用于获取高德数据
         nodePairDict={}
+        pointNum=len(indexList)
+        nodeCostDF=pd.DataFrame(np.zeros([pointNum,pointNum]),columns=indexList,index=indexList)
+        
         routeNodePair=list(itertools.permutations(routeNode, 2))
         for nodePair in routeNodePair:
             key=str(nodePair[0]["index"])+"-"+str(nodePair[1]["index"])
             #先查找数据库是否已经存储好数据
             row=aiBusModel.selectRouteParams((float(nodePair[0]["lng"]),float(nodePair[0]["lat"]),float(nodePair[1]["lng"]),float(nodePair[1]["lat"])))
+            directDist=getGPSDistance(float(nodePair[0]["lng"]),float(nodePair[0]["lat"]),float(nodePair[1]["lng"]),float(nodePair[1]["lat"]))
             if not row or row["dist"]<0.5:
                 fromNode=str(nodePair[0]["lng"])+","+str(nodePair[0]["lat"])
                 toNode=str(nodePair[1]["lng"])+","+str(nodePair[1]["lat"])
                 distTime=get_route_distance_time(fromNode,toNode)
-                directDist=getGPSDistance(float(nodePair[0]["lng"]),float(nodePair[0]["lat"]),float(nodePair[1]["lng"]),float(nodePair[1]["lat"]))
                 nodePairDict[key]={"dist":distTime["dist"],"time":distTime["time"],"directDist":directDist}
+                #对df进行赋值
+                if routeFactor==0:
+                    nodeCostDF.loc[str(nodePair[0]["index"]),str(nodePair[1]["index"])]=distTime["time"]
+                else:
+                    nodeCostDF.loc[str(nodePair[0]["index"]),str(nodePair[1]["index"])]=distTime["dist"]
+                
                 #存储获取的数据
                 if not row:
                     startGeo = '{ "type": "Point", "coordinates": [%s, %s]}'%(float(nodePair[0]["lng"]),float(nodePair[0]["lat"]))
@@ -117,12 +141,25 @@ def planSingleRoute():
                     aiBusModel.updateRouteParams((distTime["dist"],distTime["time"],directDist,row["id"]))
 
             else:
-                nodePairDict[key]={"dist":float(row["dist"]),"time":row["time"]}
-
-        routeInfo={"nodePair":nodePairDict,"routeNode":routeNode,"routeFactor":routeFactor,"roundTrip":roundTrip}
+                nodePairDict[key]={"dist":float(row["dist"]),"time":row["time"],"directDist":directDist}
+                #对df进行赋值
+                if routeFactor==0:
+                    nodeCostDF.loc[str(nodePair[0]["index"]),str(nodePair[1]["index"])]=int(row["time"])
+                else:
+                    nodeCostDF.loc[str(nodePair[0]["index"]),str(nodePair[1]["index"])]=float(row["dist"])
+                
         #3)进行路线规划
-        solution=singleRoutePlanSolution(routeInfo)
-        
+        #routeInfo={"nodePair":nodePairDict,"routeNode":routeNode,"routeFactor":routeFactor,"roundTrip":roundTrip}
+        #solution=singleRoutePlanSolution(routeInfo)
+        solution=singleRoutePlanByGreedyAlgorithm(routeNode,nodePairDict,nodeCostDF,passengers,occupancyRate,orderNumber,odometerFactor)
+        if solution["routeNode"] is None:
+            if solution["routeNumber"]<orderNumber*occupancyRate/100:
+                res.update(code=ResponseCode.Fail,data=[], msg="未找到满足上座率的路线！")
+                return res.data
+            if float(solution["routeDist"]*1.0)/solution["routeDirectDist"]>odometerFactor:
+                res.update(code=ResponseCode.Fail,data=[], msg="未找到满足非直线系数的路线！")
+                return res.data
+
         #4)保存路线规划结果,获取最优路径的行程距离、行程时间、直线距离
         routeList=[]
         
@@ -149,16 +186,7 @@ def planSingleRoute():
         routeNodeList.append({"nodeIndex":nodeIndex,"nodeName":destination["siteName"],\
                 "lng":float(destination["lng"]),"lat":float(destination["lat"]),"number":0,"nextDist":0,"nextTime":0})
         
-        routeOccupancyRate=float(routeNumber)/orderNumber*100
-        if routeNumber>passengers:
-            res.update(code=ResponseCode.Fail,data=[],msg="路线人数超过座位上限！")
-            return res.data
-        if routeOccupancyRate<occupancyRate:
-            res.update(code=ResponseCode.Fail,data=[],msg="路线人数上座率未达到下限！")
-            return res.data
-        if float(routeDist)/directDist>odometerFactor:
-            res.update(code=ResponseCode.Fail,data=[],msg="超过非直线里程系数！")
-            return res.data
+        
         #存储路线结点
         routeUuid = uuid.uuid1().int
         aiBusModel.insertRouteInfo((fileId,routeUuid,destination["siteName"],\
@@ -170,6 +198,7 @@ def planSingleRoute():
                 node["lng"],node["lat"],node["number"],node["nextDist"],node["nextTime"],1))
         
         #查询路线结点及未规划的结点
+        routeOccupancyRate=int(routeNumber/orderNumber*100)
         routeNodeResult1=aiBusModel.selectRouteDetail((routeUuid,2,0))
         routeList.append({"routeId":routeUuid,"routeDist":int(routeDist),\
                      "routeTime":routeTime,"routeNumber":routeNumber,"orderNumber":orderNumber,\
