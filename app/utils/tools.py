@@ -2,6 +2,8 @@ import xlrd
 import yaml
 import xlwt
 import json
+import os
+from xlutils.copy import copy
 
 def readExcel(file,sheetIndex,mappingItem):
     """
@@ -122,21 +124,32 @@ def set_style(name,size,color,bold=False):
     style.font = font
     return style
 
-def writeExcel(filename,fields,resultdata,i):
+def writeExcel(filename,fields,resultdata,sheetName,removeLabel=True):
     """
     filename: 保存文件名称省市
     fields: 字段名称
     resultdata: 数据结果
     """
     # 定义输出excel文件名
-    workbook=xlwt.Workbook(filename + '.xls')
-    sheet=workbook.add_sheet(str(i),cell_overwrite_ok=True)
+    fileName=str(filename) + '.xls'
+    filePath='./report/'+ fileName
+    #先删除已经存在的文件
+    if os.path.exists(filePath) and removeLabel:
+        os.remove(filePath)
+
+    if not os.path.exists(filePath):
+        workbook=xlwt.Workbook(fileName)
+        sheet=workbook.add_sheet(sheetName,cell_overwrite_ok=True)
+    else:
+        rb =xlrd.open_workbook(filePath)
+        workbook = copy(rb)
+        sheet=workbook.add_sheet(sheetName,cell_overwrite_ok=True)
+    
     for field in range(0,len(fields)):
         sheet.write(0,field,fields[field],set_style('Times New Roman',11,0x0C,True))
     for row in range(1,len(resultdata)+1):
         for col in range(0,len(fields)):
             sheet.write(row,col,u'%s' % resultdata[row-1][col],set_style('Times New Roman',11,0x0C,True))
-    filePath='./report/'+ filename + '.xls'
     workbook.save(filePath)
     return filePath
 

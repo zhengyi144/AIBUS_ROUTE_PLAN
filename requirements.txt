@@ -12,3 +12,4 @@ xlrd==1.2.0
 xlwt==1.3.0
 requests==2.25.1
 concurrent-log-handler==0.9.19
+xlutils==2.0.0

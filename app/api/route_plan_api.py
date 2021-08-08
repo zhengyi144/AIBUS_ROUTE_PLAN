@@ -197,13 +197,27 @@ def planSingleRoute():
             aiBusModel.insertRouteDetail((fileId,routeUuid,0,node["nodeIndex"],node["nodeName"],2,\
                 node["lng"],node["lat"],node["number"],node["nextDist"],node["nextTime"],1))
         
+        for i,node in enumerate(solution["invalidRouteNode"]):
+            aiBusModel.insertRouteDetail((fileId,routeUuid,0,i,node["nodeName"],2,\
+                node["lng"],node["lat"],node["number"],0,0,0))
+
         #查询路线结点及未规划的结点
         routeOccupancyRate=int(routeNumber/orderNumber*100)
-        routeNodeResult1=aiBusModel.selectRouteDetail((routeUuid,2,0))
+        routeNodeResult1=aiBusModel.selectRouteDetail((routeUuid,2,0,1))
+        invalidRouteNodeResult=aiBusModel.selectRouteDetail((routeUuid,2,0,0))
+        invalidNodeList=[]
+        for routeNode in invalidRouteNodeResult:
+            invalidNodeList.append({"id": routeNode["id"],
+                "lat": routeNode["lat"],
+                "lng": routeNode["lng"],
+                "nodeIndex": routeNode["nodeIndex"],
+                "nodeName": routeNode["nodeName"],
+                "number": routeNode["number"]})
+
         routeList.append({"routeId":routeUuid,"routeDist":int(routeDist),\
                      "routeTime":routeTime,"routeNumber":routeNumber,"orderNumber":orderNumber,\
                     "routeOccupancyRate":routeOccupancyRate,"roundStatus":0,\
-                    "routeNodeList":routeNodeResult1,"invalidNodeList":[]})
+                    "routeNodeList":routeNodeResult1,"invalidNodeList":invalidNodeList})
         
         #############返程################
         if roundTrip==1:
@@ -232,13 +246,27 @@ def planSingleRoute():
             for node in roundRouteNodeList:
                 aiBusModel.insertRouteDetail((fileId,routeUuid,1,node["nodeIndex"],node["nodeName"],2,\
                     node["lng"],node["lat"],node["number"],node["nextDist"],node["nextTime"],1))
+            
+            for i,node in enumerate(solution["invalidRouteNode"]):
+                aiBusModel.insertRouteDetail((fileId,routeUuid,1,i,node["nodeName"],2,\
+                    node["lng"],node["lat"],node["number"],0,0,0))
 
             #查询路线结点及未规划的结点
-            routeNodeResult2=aiBusModel.selectRouteDetail((routeUuid,2,1))
+            routeNodeResult2=aiBusModel.selectRouteDetail((routeUuid,2,1,1))
+            invalidRouteNodeResult=aiBusModel.selectRouteDetail((routeUuid,2,1,0))
+            invalidNodeList=[]
+            for routeNode in invalidRouteNodeResult:
+                invalidNodeList.append({"id": routeNode["id"],
+                    "lat": routeNode["lat"],
+                    "lng": routeNode["lng"],
+                    "nodeIndex": routeNode["nodeIndex"],
+                    "nodeName": routeNode["nodeName"],
+                    "number": routeNode["number"]})
+
             routeList.append({"routeId":routeUuid,"routeDist":int(roundRouteDist),\
                      "routeTime":roundRouteTime,"routeNumber":routeNumber,"orderNumber":orderNumber,\
                     "routeOccupancyRate":routeOccupancyRate,"roundStatus":1,\
-                    "routeNodeList":routeNodeResult2,"invalidNodeList":[]})
+                    "routeNodeList":routeNodeResult2,"invalidNodeList":invalidNodeList})
         
         res.update(code=ResponseCode.Success,data={"destination":destination,"routeList":routeList})
         return res.data
@@ -350,7 +378,7 @@ def saveRouteNode():
         nodeIndex=0
         newInvalidNodeList=[]
         for node in invalidNodeList:
-            aiBusModel.updateRouteDetail((nodeIndex,0,0,0,1,2,routeId,node["id"]))
+            aiBusModel.updateRouteDetail((nodeIndex,0,0,0,1,roundStatus,routeId,node["id"]))
             newInvalidNodeList.append({"id":node["id"],"nodeIndex":nodeIndex,"nodeName":node["nodeName"],\
                 "lng":float(node["lng"]),"lat":float(node["lat"]),"number":node["number"]})
             nodeIndex+=1
@@ -379,13 +407,7 @@ def saveRouteNode():
                    "lng":float(toNode["lng"]),"lat":float(toNode["lat"]),"number":toNode["number"],"nextDist":0,"nextTime":0})
                 aiBusModel.updateRouteDetail((nodeIndex,1,0,0,1,roundStatus,routeId,toNode["id"]))
                 routeNumber+=toNode["number"]
-        
-        routeOccupancyRate=float(routeNumber)/passengers*100
-        result={"routeId":routeId,"routeDist":int(routeDist),\
-                    "routeTime":routeTime,"routeNumber":routeNumber,\
-                    "routeOccupancyRate":routeOccupancyRate,"routeNodeList":newRouteNodeList,\
-                    "invalidNodeList":newInvalidNodeList,"roundStatus":roundStatus}
-        
+                
         #更新routeInfo参数表,实现之前保存的参数，替换为当前的参数
         if fileId!=-1:
             aiBusModel.invalidRouteInfo((0,fileId))
@@ -456,7 +478,8 @@ def queryRouteInfo():
 
         routeList=[]
         #去程
-        routeNodeResult=aiBusModel.selectRouteDetail((routeParams["routeId"],1,0))
+        routeNodeResult=aiBusModel.selectRouteDetail((routeParams["routeId"],1,0,1))
+
         if routeNodeResult and len(routeNodeResult)>0:
             routeTime=0
             routeDist=0
@@ -467,13 +490,23 @@ def queryRouteInfo():
                 routeDist+=routeNode["nextDist"]
                 routeNumber+=routeNode["number"]
             routeOccupancyRate=float(routeNumber)/orderNumber*100
+
+            invalidRouteNodeResult=aiBusModel.selectRouteDetail((routeParams["routeId"],1,0,0))
+            invalidNodeList=[]
+            for routeNode in invalidRouteNodeResult:
+                invalidNodeList.append({"id": routeNode["id"],
+                    "lat": routeNode["lat"],
+                    "lng": routeNode["lng"],
+                    "nodeIndex": routeNode["nodeIndex"],
+                    "nodeName": routeNode["nodeName"],
+                    "number": routeNode["number"]})
     
             routeList.append({"routeId":routeParams["routeId"],"routeDist":int(routeDist),\
                      "routeTime":routeTime,"routeNumber":routeNumber,"orderNumber":orderNumber,\
                     "routeOccupancyRate":routeOccupancyRate,"roundStatus":0,\
-                    "routeNodeList":routeNodeResult})
+                    "routeNodeList":routeNodeResult,"invalidNodeList":invalidNodeList})
         #返程
-        roundRouteNodeResult=aiBusModel.selectRouteDetail((routeParams["routeId"],1,1))
+        roundRouteNodeResult=aiBusModel.selectRouteDetail((routeParams["routeId"],1,1,1))
         if roundRouteNodeResult and len(roundRouteNodeResult)>0:
             routeTime=0
             routeDist=0
@@ -483,17 +516,26 @@ def queryRouteInfo():
                 routeTime+=routeNode["nextTime"]
                 routeDist+=routeNode["nextDist"]
                 routeNumber+=routeNode["number"]
-
             
+            invalidRouteNodeResult=aiBusModel.selectRouteDetail((routeParams["routeId"],1,1,0))
+            invalidNodeList=[]
+            for routeNode in invalidRouteNodeResult:
+                invalidNodeList.append({"id": routeNode["id"],
+                    "lat": routeNode["lat"],
+                    "lng": routeNode["lng"],
+                    "nodeIndex": routeNode["nodeIndex"],
+                    "nodeName": routeNode["nodeName"],
+                    "number": routeNode["number"]})
+
             routeOccupancyRate=float(routeNumber)/orderNumber*100
     
             routeList.append({"routeId":routeParams["routeId"],"routeDist":int(routeDist),\
                      "routeTime":routeTime,"routeNumber":routeNumber,"orderNumber":orderNumber,\
                     "routeOccupancyRate":routeOccupancyRate,"roundStatus":1,\
-                    "routeNodeList":roundRouteNodeResult})
+                    "routeNodeList":roundRouteNodeResult,"invalidNodeList":invalidNodeList})
         
         #未规划的点
-        invalidRouteNodeResult=aiBusModel.selectRouteDetail((routeParams["routeId"],1,2))
+        invalidRouteNodeResult=aiBusModel.selectRouteDetail((routeParams["routeId"],1,2,0))
         invalidNodeList=[]
         for routeNode in invalidRouteNodeResult:
             invalidNodeList.append({"id": routeNode["id"],
@@ -504,7 +546,7 @@ def queryRouteInfo():
                 "number": routeNode["number"]})
 
         del routeParams["routeId"]
-        res.update(code=ResponseCode.Success,data={"routeParams":routeParams,"routeList":routeList,"invalidNodeList":invalidNodeList})
+        res.update(code=ResponseCode.Success,data={"routeParams":routeParams,"routeList":routeList})
         return res.data
     except Exception as e:
         res.update(code=ResponseCode.Fail, msg="查询路线规划信息报错！")

@@ -474,23 +474,19 @@ def to_json(obj):
     """
     return json.dumps(obj, ensure_ascii=False)
 
-@route(cluster,'/exportClusterResult',methods=["POST"])
-@login_required
+@cluster.route('/exportClusterResult',methods=["GET","POST"])
 def exportClusterResult():
     res = ResMsg()
     try:
         aiBusModel=AiBusModel()
-        userInfo = session.get("userInfo")
-        data=request.get_json()
-        fileId=data["fileId"]
+        fileId=request.args.get("fileId")
         clusterPoints=[]
         sitePoints=[]
         
         #1)先查询聚类参数
         siteParams=aiBusModel.selectClusterParams((fileId))##根据网点文件fileId的查询网点文件
         if not siteParams:
-            siteId = siteParams["id"]
-            siteResut=aiBusModel.exportCustomSiteInfo(siteId)
+            siteResut=aiBusModel.exportCustomSiteInfo(fileId)
             siteItems =["region", "longitude", "latitude","siteName","siteProperty","clientName","clientProperty","age","clientAddress","number","grade"]
             for item in siteResut:
                 if item["siteProperty"]==1:
@@ -502,12 +498,10 @@ def exportClusterResult():
             
                 row=[item["region"],item["longitude"],item["latitude"],item["siteName"],item["siteProperty"],item["clientName"],item["clientProperty"],item["age"],item["clientAddress"],item["number"],item["grade"]]
                 sitePoints.append(row)
-            writeExcel(fileId,siteItems,sitePoints,0)
+            writeExcel(fileId,siteItems,sitePoints,"网点文件")
             clusterParams=aiBusModel.selectClusterParamsBySiteFileId((fileId))##根据网点文件fileId查询聚类文件
             clusterId=clusterParams["id"]
-        else:
-            res.update(code=ResponseCode.Success, data={"clusterResult":clusterPoints})
-            return res.data
+        
         #2)查询聚类结果
         clusterResut=aiBusModel.exportClusterResult((1,clusterId))
         clusterItems =["region","longitude","latitude","clusterName","relativeProperty", "number"]
@@ -522,7 +516,7 @@ def exportClusterResult():
             
             clusterrow=[item["region"],item["longitude"],item["latitude"],item["clusterName"],item["relativeProperty"],item["number"]]
             clusterPoints.append(clusterrow)
-        file_path = writeExcel(fileId,clusterItems,clusterPoints,1) 
+        file_path = writeExcel(fileId,clusterItems,clusterPoints,"聚类文件",removeLabel=False) 
         if file_path is None:        
             return to_json({'success': 0, 'message': '请输入参数'})    
         else:

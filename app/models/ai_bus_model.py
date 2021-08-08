@@ -439,7 +439,7 @@ class AiBusModel:
         return row
     
     def updateRouteParams(self,row):
-        updateStr="update tbl_route_node set minDist=%s,minTime=%s,directDist%s where id=%s"
+        updateStr="update tbl_route_node set minDist=%s,minTime=%s,directDist=%s where id=%s"
         return self.mysqlPool.update(updateStr,row)
     
     def selectRouteParams(self,row):
@@ -466,7 +466,7 @@ class AiBusModel:
     
     def selectRouteDetail(self,row):
         selectStr="select id,nodeIndex,nodeName,nodeLng as lng,nodeLat as lat,number,nextDist,nextTime from tbl_route_detail\
-             where routeId=%s and nodeStatus=%s and roundStatus=%s order by nodeIndex"
+             where routeId=%s and nodeStatus=%s and roundStatus=%s and nodeProperty=%s order by nodeIndex"
         return self.mysqlPool.fetchAll(selectStr,row)
 
     def deleteNodesByRouteId(self,row):

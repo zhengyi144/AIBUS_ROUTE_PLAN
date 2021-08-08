@@ -339,7 +339,7 @@ def deleteSite():
             if number<0:
                 number=0
             aiBusModel.updateSiteFile((1,number,userInfo["userName"],fileId))
-        res.update(code=ResponseCode.Success, msg="删除网点{}条".format(row))
+        res.update(code=ResponseCode.Success, msg="删除网点成功！")
         return res.data
     except Exception as e:
         res.update(code=ResponseCode.Fail, msg="删除网点报错！")

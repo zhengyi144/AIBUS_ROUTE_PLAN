@@ -169,10 +169,10 @@ def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,oc
     #将routeNode转为dict
     nodeDict={}
     for node in routeNode:
-        nodeDict[node["index"]]=node
+        nodeDict[str(node["index"])]=node
 
     pointKeys=list(nodeCostDF.columns)
-    print(pointKeys)
+    #print(pointKeys)
     startKey="dest"
     pointKeys.remove(startKey)
     routeKeys=[]
@@ -197,12 +197,24 @@ def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,oc
         startKey=minKey
     
     if bestRouteKeys is None:
-        return {"routeNode":None,"routeNumber":routeNumber,"routeDist":routeDist,"routeDirectDist":routeDirectDist}
+        #未规划点
+        invalidRouteNode=[]
+        for key in list(nodeCostDF.columns):
+            invalidRouteNode.append(nodeDict[key])
+        return {"routeNode":None,"invalidRouteNode":invalidRouteNode,"routeNumber":routeNumber,"routeDist":routeDist,"routeDirectDist":routeDirectDist}
     else:
+        #路径点
         bestRouteNode=[]
-        for key in bestRouteKeys.tolist():
+        bestRouteKeys=bestRouteKeys.tolist()
+        for key in bestRouteKeys:
             bestRouteNode.append(nodeDict[key])
-        return {"routeNode":bestRouteNode,"routeNumber":routeNumber,"routeDist":routeDist,"routeDirectDist":routeDirectDist}
+        
+        #未规划点
+        invalidRouteNode=[]
+        for key in list(nodeCostDF.columns):
+            if key not in bestRouteKeys:
+                invalidRouteNode.append(nodeDict[key])
+        return {"routeNode":bestRouteNode,"invalidRouteNode":invalidRouteNode,"routeNumber":routeNumber,"routeDist":routeDist,"routeDirectDist":routeDirectDist}
         
 
 """
