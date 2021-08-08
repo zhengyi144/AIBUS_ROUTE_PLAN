@@ -333,12 +333,9 @@ def deleteSite():
         row=aiBusModel.invalidSiteBySiteName((3,userInfo["userName"],siteName,fileId,longitude,latitude))
         #失效网点后需要更新对应的网点文件siteCount
         if row>0:
-            client=aiBusModel.selectInvalidClientNumber((siteName,fileId,longitude,latitude))
-            fileInfo=aiBusModel.selectSiteFileStatus(fileId)
-            number=int(fileInfo["siteCount"])-client["clientNumber"]
-            if number<0:
-                number=0
-            aiBusModel.updateSiteFile((1,number,userInfo["userName"],fileId))
+            #更新网点文件sitecount
+            client=aiBusModel.selectSiteClientNumberByFileId(fileId)
+            aiBusModel.updateSiteFile((1,client["clientNumber"],userInfo["userName"],fileId))
         res.update(code=ResponseCode.Success, msg="删除网点成功！")
         return res.data
     except Exception as e:
