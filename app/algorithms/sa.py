@@ -1,8 +1,6 @@
 import numpy as np
 import math
 from copy import deepcopy
-
-from pandas.core import series
 from app.utils.GPSConvertUtil import getGPSDistance
 '''
 模拟退火算法
@@ -184,7 +182,7 @@ def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,oc
     while len(pointKeys)>0 and routeNumber<passengers:
         series=nodeCostDF.loc[pointKeys,startKey]
         minIndex=series.argmin()
-        minKey=series.index[minIndex]
+        minKey=series.index[int(minIndex)]
         routeKeys.insert(0,minKey)
         #获取minKey对应结点的信息
         routeNumber+=nodeDict[minKey]["number"]
