@@ -332,7 +332,7 @@ def reSortRouteNode():
                 routeNumber+=toNode["number"]
         
         #获取网点人数
-        orderNumber=-1
+        orderNumber=passengers
         fileInfo=aiBusModel.selectSiteFileStatus(fileId)
         if fileInfo:
             if fileInfo["clusterStatus"]==1:

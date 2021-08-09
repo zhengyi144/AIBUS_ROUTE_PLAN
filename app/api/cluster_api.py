@@ -487,7 +487,7 @@ def exportClusterResult():
         siteParams=aiBusModel.selectClusterParams((fileId))##根据网点文件fileId的查询网点文件
         if not siteParams:
             siteResut=aiBusModel.exportCustomSiteInfo(fileId)
-            siteItems =["region", "longitude", "latitude","siteName","siteProperty","clientName","clientProperty","age","clientAddress","number","grade"]
+            siteItems =["区域", "经度", "纬度","公交站","公交站属性","客户姓名","客户属性","年龄","客户地址","乘车人数","年级"]
             for item in siteResut:
                 if item["siteProperty"]==1:
                     item["siteProperty"]="固定"
@@ -504,7 +504,7 @@ def exportClusterResult():
         
         #2)查询聚类结果
         clusterResut=aiBusModel.exportClusterResult((1,clusterId))
-        clusterItems =["region","longitude","latitude","clusterName","relativeProperty", "number"]
+        clusterItems =["区域","经度","纬度","公交站","公交站属性", "乘车人数"]
         
         for item in clusterResut:
             if item["relativeProperty"]==1:
