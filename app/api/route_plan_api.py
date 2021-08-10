@@ -82,6 +82,9 @@ def planSingleRoute():
                     indexList.append(str(index))
                     routeNode.append({"index":index,"nodeName":point["siteName"],"lng":format(point["longitude"],'.6f'),"lat":format(point["latitude"],'.6f'),"number":point["clientNumber"]})
                     index+=1
+
+            if orderNumber<=0:
+                orderNumber=passengers
         else:
             fileId=-1
             orderNumber=passengers
@@ -149,8 +152,7 @@ def planSingleRoute():
                     nodeCostDF.loc[str(nodePair[0]["index"]),str(nodePair[1]["index"])]=float(row["dist"])
                 
         #3)进行路线规划
-        #routeInfo={"nodePair":nodePairDict,"routeNode":routeNode,"routeFactor":routeFactor,"roundTrip":roundTrip}
-        #solution=singleRoutePlanSolution(routeInfo)
+        
         solution=singleRoutePlanByGreedyAlgorithm(routeNode,nodePairDict,nodeCostDF,passengers,occupancyRate,orderNumber,odometerFactor)
         if solution["routeNode"] is None:
             if solution["routeNumber"]<orderNumber*occupancyRate/100:
@@ -159,6 +161,13 @@ def planSingleRoute():
             if float(solution["routeDist"]*1.0)/solution["routeDirectDist"]>odometerFactor:
                 res.update(code=ResponseCode.Fail,data=[], msg="未找到满足非直线系数的路线！")
                 return res.data
+        else:
+            #在贪婪算法的基础上，再用sa算法进行优化
+            routeInfo={"nodePair":nodePairDict,"routeNode":solution["routeNode"],"routeFactor":routeFactor}
+            reSolution=singleRoutePlanSolution(routeInfo)
+            #print("re bestCost:",reSolution["bestRouteCost"])
+            if solution["bestRouteCost"]>reSolution["bestRouteCost"]:
+                solution["routeNode"]=reSolution["routeNode"]
 
         #4)保存路线规划结果,获取最优路径的行程距离、行程时间、直线距离
         routeList=[]

@@ -140,16 +140,16 @@ def singleRoutePlanSolution(routeInfo):
         cost = 0
         for i in range(size - 1):
             key=str(routeNode[i]["index"])+"-"+str(routeNode[i+1]["index"])
-            if routeFactor==1:
-                cost+=nodePair[key]["dist"]
-            else:
+            if routeFactor==0:
                 cost+=nodePair[key]["time"]
+            else:
+                cost+=nodePair[key]["dist"]
         #print("cost",cost)
         return cost
 
     sa = SAOptimizer()
     xbest,ybest = sa.optimize(f, initFun=init, randFun=randf, stop=1e-3, t=1e4, alpha=0.98, l=10, iterPerT=1)
-    return {"routeNode":xbest["routeNode"].tolist(),"cost":ybest}
+    return {"routeNode":xbest["routeNode"].tolist(),"bestRouteCost":ybest}
 
 def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,occupancyRate,orderNumber,odometerFactor):
     """
@@ -175,14 +175,18 @@ def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,oc
     pointKeys.remove(startKey)
     routeKeys=[]
     bestRouteKeys=None
+    bestRouteCost=0
     routeKeys.insert(0,startKey)
     routeNumber=0
     routeDist=0
     routeDirectDist=0
+    routeCost=0
     while len(pointKeys)>0 and routeNumber<passengers:
         series=nodeCostDF.loc[pointKeys,startKey]
         minIndex=series.argmin()
+        #print("minIndex:{}".format(minIndex))
         minKey=series.index[int(minIndex)]
+        routeCost+=series[minIndex]
         routeKeys.insert(0,minKey)
         #获取minKey对应结点的信息
         routeNumber+=nodeDict[minKey]["number"]
@@ -191,6 +195,7 @@ def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,oc
         routeDirectDist+=nodePair[nodeKey]["directDist"]
         if routeNumber>orderNumber*occupancyRate/100 and float(routeDist*1.0)/routeDirectDist<=odometerFactor:
             bestRouteKeys=np.copy(np.array(routeKeys))
+            bestRouteCost=routeCost
         pointKeys.remove(minKey)
         startKey=minKey
     
@@ -199,7 +204,7 @@ def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,oc
         invalidRouteNode=[]
         for key in list(nodeCostDF.columns):
             invalidRouteNode.append(nodeDict[key])
-        return {"routeNode":None,"invalidRouteNode":invalidRouteNode,"routeNumber":routeNumber,"routeDist":routeDist,"routeDirectDist":routeDirectDist}
+        return {"routeNode":None,"invalidRouteNode":invalidRouteNode,"bestRouteCost":bestRouteCost,"routeNumber":routeNumber,"routeDist":routeDist,"routeDirectDist":routeDirectDist}
     else:
         #路径点
         bestRouteNode=[]
@@ -212,7 +217,7 @@ def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,oc
         for key in list(nodeCostDF.columns):
             if key not in bestRouteKeys:
                 invalidRouteNode.append(nodeDict[key])
-        return {"routeNode":bestRouteNode,"invalidRouteNode":invalidRouteNode,"routeNumber":routeNumber,"routeDist":routeDist,"routeDirectDist":routeDirectDist}
+        return {"routeNode":bestRouteNode,"invalidRouteNode":invalidRouteNode,"bestRouteCost":bestRouteCost,"routeNumber":routeNumber,"routeDist":routeDist,"routeDirectDist":routeDirectDist}
         
 
 """
