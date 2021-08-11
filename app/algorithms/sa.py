@@ -193,7 +193,7 @@ def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,oc
         nodeKey=minKey+"-"+startKey
         routeDist+=nodePair[nodeKey]["dist"]
         routeDirectDist+=nodePair[nodeKey]["directDist"]
-        if routeNumber>orderNumber*occupancyRate/100 and float(routeDist*1.0)/routeDirectDist<=odometerFactor:
+        if routeNumber>orderNumber*occupancyRate/100 and float(routeDist*1.0)/routeDirectDist<=odometerFactor and routeNumber<=passengers:
             bestRouteKeys=np.copy(np.array(routeKeys))
             bestRouteCost=routeCost
         pointKeys.remove(minKey)
