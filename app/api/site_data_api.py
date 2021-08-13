@@ -45,10 +45,10 @@ def uploadSiteExcel():
            return res.data
         
         #先判断目的地网点是否存在,存在则覆盖
-        siteFile=aiBusModel.selectSiteFileIdByFileName((destination),[1,2])
+        siteFile=aiBusModel.selectSiteFileIdByFileName((destination),[1,2],userInfo["userNames"])
         if siteFile is None or siteFile["id"] is None or siteFile["fileStatus"]==2 :
            aiBusModel.insertSiteFile((destination,0,0,0,destination,mapType,longitude,latitude,userInfo["citycode"],userInfo["userName"],userInfo["userName"]))
-           siteFile=aiBusModel.selectSiteFileIdByFileName((destination),[0])
+           siteFile=aiBusModel.selectSiteFileIdByFileName((destination),[0],userInfo["userNames"])
         elif siteFile["fileStatus"]==1:
             res.update(code=ResponseCode.Fail, msg="重复插入网点文件！")
             return res.data

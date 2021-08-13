@@ -64,7 +64,7 @@ class AiBusModel:
         """
         selectStr="select id,siteName,if(siteProperty=1,'固定','临时') as siteProperty,province,city,region,road,longitude,latitude \
                    from tbl_station where siteName like %s "
-        authStr="and createUser in (%s)"% ','.join("'%s'" % item for item in userNames) 
+        authStr="and createUser in (%s)"% ','.join("'%s'" % item for item in userNames)
         row=self.mysqlPool.fetchAll(selectStr+authStr,(('%'+queryText+'%')))
         return row
     
@@ -135,11 +135,13 @@ class AiBusModel:
                    values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
         row=self.mysqlPool.insert(insertStr,row)
     
-    def selectSiteFileIdByFileName(self,row,fileStatus):
+    def selectSiteFileIdByFileName(self,row,fileStatus,userNames):
         """
         根据文件名查找
         """
         selectStr="select id,fileStatus from tbl_site_files where fileName=%s"+"  and fileStatus in (%s)"% ','.join("%s" % item for item in fileStatus)
+        authStr=" and createUser in (%s)"% ','.join("'%s'" % item for item in userNames) 
+        selectStr+=selectStr+authStr
         selectStr+=" order by id desc"
         row=self.mysqlPool.fetchOne(selectStr,row)
         return row
