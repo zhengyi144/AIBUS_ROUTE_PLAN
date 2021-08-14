@@ -1,4 +1,3 @@
-import logging
 import json
 import uuid
 import numpy as np
@@ -10,6 +9,7 @@ from app.utils.response import ResMsg
 from app.utils.auth import login_required
 from app.utils.util import route
 from app.utils.tools import *
+from app.utils.logger import get_logger
 from app.utils.amapUtil import get_route_distance_time
 from app.utils.GPSConvertUtil import getGPSDistance
 from app.models.ai_bus_model import AiBusModel
@@ -19,7 +19,7 @@ from app.algorithms.sa import tspSolution,singleRoutePlanSolution,singleRoutePla
 线路规划模块api
 """
 routeplan = Blueprint("routeplan", __name__, url_prefix='/routeplan')
-logger = logging.getLogger(__name__)
+logger=get_logger(name="routeplan",log_file="logs/logger.log")
 
 @route(routeplan, '/sortWayPoints', methods=["POST"])
 def sortWayPoints():
@@ -43,6 +43,7 @@ def planSingleRoute():
     """
     res = ResMsg()
     try:
+        logger.info("begin planSingleRoute!")
         data=request.get_json()
         aiBusModel=AiBusModel()
         fileId=data["fileId"]
@@ -139,7 +140,7 @@ def planSingleRoute():
                     startGeo = '{ "type": "Point", "coordinates": [%s, %s]}'%(float(nodePair[0]["lng"]),float(nodePair[0]["lat"]))
                     endGeo = '{ "type": "Point", "coordinates": [%s, %s]}'%(float(nodePair[1]["lng"]),float(nodePair[1]["lat"]))
                     aiBusModel.inserRouteParams((float(nodePair[0]["lng"]),float(nodePair[0]["lat"]),startGeo,\
-                        float(nodePair[1]["lng"]),float(nodePair[1]["lat"]),endGeo,distTime["dist"],distTime["time"],directDist))
+                        float(nodePair[1]["lng"]),float(nodePair[1]["lat"]),endGeo,distTime["dist"],distTime["time"],directDist,0.0))
                 if row:
                     aiBusModel.updateRouteParams((distTime["dist"],distTime["time"],directDist,row["id"]))
 
@@ -280,6 +281,7 @@ def planSingleRoute():
         res.update(code=ResponseCode.Success,data={"destination":destination,"routeList":routeList})
         return res.data
     except Exception as e:
+        logger.error("planSingleRoute exception:{}".format(str(e)))
         res.update(code=ResponseCode.Fail, msg=str(e))
         return res.data
 
@@ -290,6 +292,7 @@ def reSortRouteNode():
     """
     res = ResMsg()
     try:
+        logger.info("begin reSortRouteNode!")
         aiBusModel=AiBusModel()
         data=request.get_json()
         fileId=data["fileId"]
@@ -361,6 +364,7 @@ def reSortRouteNode():
         res.update(code=ResponseCode.Success,data={"routeList":[result]})
         return res.data
     except Exception as e:
+        logger.error("reSortRouteNode exception:{}".format(str(e)))
         res.update(code=ResponseCode.Fail, msg="路线规划结点调整报错！")
         return res.data
 

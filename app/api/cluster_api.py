@@ -1,4 +1,3 @@
-import logging
 import os
 from urllib.parse import quote
 from flask import Blueprint, jsonify, session, request, current_app,Response
@@ -7,14 +6,18 @@ from app.utils.response import ResMsg
 from app.utils.auth import login_required
 from app.utils.util import route
 from app.utils.tools import *
+from app.utils.amapUtil import get_route_distance_time
 from app.models.ai_bus_model import AiBusModel
 from app.algorithms.dbscan import clusterByDbscan,clusterByAdaptiveDbscan
+from app.utils.logger import get_logger
+
+
 
 """
 聚类模块api
 """
 cluster = Blueprint("cluster", __name__, url_prefix='/cluster')
-logger = logging.getLogger(__name__)
+logger=get_logger(name="cluster",log_file="logs/logger.log")
 
 
 @route(cluster,'/generateClusterPointsOld',methods=["POST"])
@@ -111,6 +114,7 @@ def generateClusterPoints():
     """
     res = ResMsg()
     try:
+        logger.info("begin generateClusterPoints!")
         aiBusModel=AiBusModel()
         userInfo = session.get("userInfo")
         data=request.get_json()
@@ -162,10 +166,45 @@ def generateClusterPoints():
             #处理聚类核心点
             clusterNumber=0
             site=siteGeoDict[str(key)]
+            exceptClusterIds=[]
             for id in clusterSet:
-                clusterNumber+=siteGeoDict[str(id)]["number"]
-            clusterIdStr=",".join(map(str, clusterSet))
-            insertVals.append((fileId,"site_"+str(key),site["siteName"],site["siteProperty"],1,2,site["lng"],site["lat"],clusterNumber,clusterIdStr,userInfo["userName"],userInfo["userName"]))
+                sitePoint=siteGeoDict[str(id)]
+                #获取聚类点与中心点的步行距离
+                walkDist=0
+                if id!=key:
+                    row=aiBusModel.selectRouteParams((float(sitePoint["lng"]),float(sitePoint["lat"]),float(site["lng"]),float(site["lat"])))
+                    if row is None or row["walkDist"]<=0.5: 
+                        fromNode=str(sitePoint["lng"])+","+str(sitePoint["lat"])
+                        toNode=str(site["lng"])+","+str(site["lat"])
+                        distTime=get_route_distance_time(fromNode,toNode,routeType=0)
+                        walkDist=distTime["dist"]
+                        #缓存高德获取的步行数据
+                        if not row:
+                            startGeo = '{ "type": "Point", "coordinates": [%s, %s]}'%(float(sitePoint["lng"]),float(sitePoint["lat"]))
+                            endGeo = '{ "type": "Point", "coordinates": [%s, %s]}'%(float(site["lng"]),float(site["lat"]))
+                            aiBusModel.inserRouteParams((float(sitePoint["lng"]),float(sitePoint["lat"]),startGeo,\
+                                float(site["lng"]),float(site["lat"]),endGeo,0,0,0,distTime["dist"]))
+                        if row:
+                            aiBusModel.updateRouteWalkDist((distTime["dist"],row["id"]))
+                    else:
+                        walkDist=row["walkDist"]
+                if walkDist>epsRadius:
+                    clusterSet.remove(id)
+                    exceptClusterIds.append(id)
+                else:
+                    clusterNumber+=sitePoint["number"]
+            
+            #踢除异常点再重新判断是否是聚类点
+            if len(clusterSet)>=minSamples:
+                clusterIdStr=",".join(map(str, clusterSet))
+                insertVals.append((fileId,"site_"+str(key),site["siteName"],site["siteProperty"],1,2,site["lng"],site["lat"],clusterNumber,clusterIdStr,userInfo["userName"],userInfo["userName"]))
+            
+            #处理步行距离未满足要求的点(异常点)
+            for id in exceptClusterIds:
+                relativeId="site_"+str(id)
+                noiseSite=siteGeoDict[str(id)]
+                insertVals.append((fileId,relativeId,noiseSite["siteName"],noiseSite["siteProperty"],0,2,noiseSite["lng"],noiseSite["lat"],noiseSite["number"],str(id),userInfo["userName"],userInfo["userName"]))
+
             #clusterCorePoints.append({"id":"site_"+str(clusterId),"siteName":site["siteName"],"siteProperty":site["siteProperty"],"number":clusterNumber,"longitude":site["lng"],"latitude":site["lat"]})
         #处理边界点
         for id in clusterInfo["aroundList"]:
@@ -204,6 +243,7 @@ def generateClusterPoints():
         res.update(code=ResponseCode.Success, data={"clusterCorePoints":clusterCorePoints,"clusterAroundPoints":clusterAroundPoints,"clusterOutPoints":clusterOutPoints})
         return res.data
     except Exception as e:
+        logger.error("generateClusterPoints exception:{}".format(str(e)))
         res.update(code=ResponseCode.Fail,msg="生成聚类点报错！")
         return res.data
 
@@ -215,6 +255,7 @@ def saveClusterResult():
     """
     res = ResMsg()
     try:
+        logger.info("begin saveClusterResult!")
         aiBusModel=AiBusModel()
         userInfo = session.get("userInfo")
         data=request.get_json()
@@ -297,6 +338,7 @@ def saveClusterResult():
         res.update(code=ResponseCode.Success, msg="成功保存聚类结果！")
         return res.data
     except Exception as e:
+        logger.error("generateClusterPoints exception:{}".format(str(e)))
         res.update(code=ResponseCode.Fail,msg="保存聚类点保存！")
         return res.data
 
@@ -305,6 +347,7 @@ def saveClusterResult():
 def queryClusterResult():
     res = ResMsg()
     try:
+        logger.info("begin queryClusterResult!")
         aiBusModel=AiBusModel()
         userInfo = session.get("userInfo")
         data=request.get_json()
@@ -351,6 +394,7 @@ def queryClusterResult():
         res.update(code=ResponseCode.Success, data={"epsRadius":clusterParams["clusterRadius"],"minSamples":clusterParams["clusterMinSamples"],"clusterCorePoints":clusterCorePoints,"clusterAroundPoints":clusterAroundPoints,"clusterOutPoints":clusterOutPoints})
         return res.data
     except Exception as e:
+        logger.error("generateClusterPoints exception:{}".format(str(e)))
         res.update(code=ResponseCode.Fail,msg="查询聚类结果报错！")
         return res.data
 
@@ -362,6 +406,7 @@ def removeClusterResult():
     """
     res = ResMsg()
     try:
+        logger.info("begin removeClusterResult!")
         aiBusModel=AiBusModel()
         userInfo = session.get("userInfo")
         data=request.get_json()
@@ -377,6 +422,7 @@ def removeClusterResult():
         res.update(code=ResponseCode.Success, msg="成功删除网点聚类结果!")
         return res.data
     except Exception as e:
+        logger.error("removeClusterResult exception:{}".format(str(e)))
         res.update(code=ResponseCode.Fail,msg="删除网点聚类结果报错！")
         return res.data
 
@@ -418,6 +464,7 @@ def exportClusterPoints():
 def addNewClusterPoint():
     res = ResMsg()
     try:
+        logger.info("begin addNewClusterPoint!")
         aiBusModel=AiBusModel()
         userInfo = session.get("userInfo")
         data=request.get_json()
@@ -447,6 +494,7 @@ def addNewClusterPoint():
             "longitude":longitude,"latitude":latitude,"number":number,"siteProperty":siteProperty,"users":[]})
         return res.data
     except Exception as e:
+        logger.error("addNewClusterPoint exception:{}".format(str(e)))
         res.update(code=ResponseCode.Fail,msg="新增聚类点报错！")
         return res.data
 
@@ -465,7 +513,6 @@ def file_iterator(file_path, chunk_size=512):
                 yield chunk            
             else:
                 break                
-
 
 def to_json(obj):
     """

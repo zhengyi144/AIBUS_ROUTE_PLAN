@@ -1,4 +1,3 @@
-import logging
 from typing import Set
 from flask import Blueprint, jsonify, session, request, current_app
 from numpy import array
@@ -9,13 +8,15 @@ from app.utils.auth import login_required
 from app.utils.util import route
 from app.utils.tools import *
 from app.utils.GPSConvertUtil import *
+from app.utils.logger import get_logger
 from app.models.ai_bus_model import AiBusModel
+
 
 """
 网点数据规划api
 """
 sitedata = Blueprint("sitedata", __name__, url_prefix='/sitedata')
-logger = logging.getLogger(__name__)
+logger=get_logger(name="sitedata",log_file="logs/logger.log")
 
 
 @route(sitedata, '/uploadSiteExcel', methods=["POST"])
@@ -134,6 +135,7 @@ def uploadSiteExcel():
             res.update(code=ResponseCode.Success, data={"fileId":siteFile["id"], "fileName":destination,"siteCount":0})
             return res.data
     except Exception as e:
+        logger.error("uploadSiteExcel exception:{}".format(str(e)))
         res.update(code=ResponseCode.Fail, msg="网点插入报错！")
         return res.data
 

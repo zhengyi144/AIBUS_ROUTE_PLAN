@@ -3,16 +3,20 @@ from app.utils.logger import get_logger
 
 logger=get_logger(name="amapUtil",log_file="logs/logger.log")
 
-key = "36fdeffd608643f8dec6d43b2d9b8ec8"  # 你的KEY
+key = "36fdeffd608643f8dec6d43b2d9b8ec8" 
+#mykey="c499537db92f1234f8390eeec13cfbe5"
 # 驾车路径规划 36fdeffd608643f8dec6d43b2d9b8ec8 
-def get_route(origin,destination):
-    api=f'http://restapi.amap.com/v3/direction/driving?origin={origin}&destination={destination}&output=JSON&key={key}'
+def get_route(origin,destination,routeType=1):
+    if routeType==1:
+        api=f'http://restapi.amap.com/v3/direction/driving?origin={origin}&destination={destination}&output=JSON&key={key}'
+    elif routeType==0:
+        api=f'http://restapi.amap.com/v3/direction/walking?origin={origin}&destination={destination}&key={key}'
     r=requests.get(api)
     r=r.text
     jsonData=json.loads(r)
     return jsonData
 
-def get_route_distance_time(origin,destination): 
+def get_route_distance_time(origin,destination,routeType=1): 
     """
     # 该函数是调用高德API获取起始点到终点两个经纬度之间的距离以及时间（以米为单位）
     origin: 起始点经纬度
@@ -24,8 +28,8 @@ def get_route_distance_time(origin,destination):
     distance = 0
     duration = 0  
     #路线规划
-    info=get_route(origin,destination)
-    if info["info"]=='OK': 
+    info=get_route(origin,destination,routeType=routeType)
+    if info["status"]=='1': 
         #路线时间
         try:
             duration=int(info['route']['paths'][0]['duration'])

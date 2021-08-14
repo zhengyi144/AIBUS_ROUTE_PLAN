@@ -435,17 +435,21 @@ class AiBusModel:
 
     def inserRouteParams(self,row):
         insertStr="insert into tbl_route_node(startLng,startLat,startNode,endLng,endLat,\
-                                                endNode,minDist,minTime,directDist)  \
-                values(%s,%s,ST_GeomFromGeoJSON(%s,2,0),%s,%s,ST_GeomFromGeoJSON(%s,2,0),%s,%s,%s)"
+                                                endNode,minDist,minTime,directDist,walkDist)  \
+                values(%s,%s,ST_GeomFromGeoJSON(%s,2,0),%s,%s,ST_GeomFromGeoJSON(%s,2,0),%s,%s,%s,%s)"
         row=self.mysqlPool.insert(insertStr,row)
         return row
     
     def updateRouteParams(self,row):
         updateStr="update tbl_route_node set minDist=%s,minTime=%s,directDist=%s where id=%s"
         return self.mysqlPool.update(updateStr,row)
+
+    def updateRouteWalkDist(self,row):
+        updateStr="update tbl_route_node set walkDist=%s where id=%s"
+        return self.mysqlPool.update(updateStr,row)
     
     def selectRouteParams(self,row):
-        selectStr="select id, minDist as dist,minTime as time from tbl_route_node where ABS(startlng-%s)<=0.000001 and ABS(startlat-%s)<=0.000001 \
+        selectStr="select id, minDist as dist,minTime as time,directDist,walkDist from tbl_route_node where ABS(startlng-%s)<=0.000001 and ABS(startlat-%s)<=0.000001 \
                    and ABS(endLng-%s)<=0.000001 and ABS(endLat-%s)<=0.000001"
         row=self.mysqlPool.fetchOne(selectStr,row)
         return row
