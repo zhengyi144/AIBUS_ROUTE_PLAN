@@ -98,6 +98,15 @@ def getGPSDistance(lng1,lat1,lng2,lat2):
     #print(s)
     return s
 
+def getAngle(lng1,lat1,lng2,lat2):
+    y=math.sin(lng2-lng1)*math.cos(lat2)
+    x=math.cos(lat1)*math.sin(lat2)-math.sin(lat1)*math.cos(lat2)*math.cos(lng2-lng1)
+    rng=math.atan2(y,x)
+    rng=math.degrees(rng)
+    if rng<0:
+        rng=rng+360
+    return rng
+
 def outOfChina(lon,lat):
     if lon<72.004 or lon>173.8347:
         return True
@@ -113,3 +122,4 @@ if __name__=="__main__":
     print(lng1,lat1)
     print(lng2,lat2)
     print(getGPSDistance(119.287683,26.001150,lng2,lat2))
+    print(getAngle(116.404269,39.912943,116.344478,39.915156))
