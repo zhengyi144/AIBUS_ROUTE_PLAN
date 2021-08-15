@@ -153,15 +153,11 @@ def planSingleRoute():
                     nodeCostDF.loc[str(nodePair[0]["index"]),str(nodePair[1]["index"])]=float(row["dist"])
                 
         #3)进行路线规划
-        
         solution=singleRoutePlanByGreedyAlgorithm(routeNode,nodePairDict,nodeCostDF,passengers,occupancyRate,orderNumber,odometerFactor)
         if solution["routeNode"] is None:
-            if solution["routeNumber"]<orderNumber*occupancyRate/100:
-                res.update(code=ResponseCode.Fail,data=[], msg="未找到满足上座率的路线！")
-                return res.data
-            if float(solution["routeDist"]*1.0)/solution["routeDirectDist"]>odometerFactor:
-                res.update(code=ResponseCode.Fail,data=[], msg="未找到满足非直线系数的路线！")
-                return res.data
+            res.update(code=ResponseCode.Fail,data=[], msg="未找到满足条件的路线！")
+            return res.data
+           
         else:
             #在贪婪算法的基础上，再用sa算法进行优化
             routeInfo={"nodePair":nodePairDict,"routeNode":solution["routeNode"],"routeFactor":routeFactor}

@@ -71,7 +71,6 @@ class SAOptimizer:
                 return 1
             else: return 0
 
-
 def tspSolution(destination,wayPoints):
     """
     利用模拟退火算法解决tsp问题
@@ -171,8 +170,81 @@ def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,oc
 
     pointKeys=list(nodeCostDF.columns)
     #print(pointKeys)
-    startKey="dest"
-    pointKeys.remove(startKey)
+    endKey="dest"
+    pointKeys.remove(endKey)
+
+    routeList=[]
+    #将每个结点作为起始点,找出符合条件的所有路线
+    for pointKey in pointKeys:
+        startKey=pointKey
+        tempKeys=deepcopy(pointKeys)
+        tempKeys.remove(startKey)
+        startToEnd=startKey+"-"+endKey
+        #初始化路线参数
+        routeNumber=nodeDict[startKey]["number"]
+        routeDist=nodePair[startToEnd]["dist"]
+        routeDirectDist=nodePair[startToEnd]["directDist"]
+        routeCost=nodeCostDF.loc[startKey,endKey]
+        routeKeys=[]
+        routeKeys.append(startKey)
+        while len(tempKeys)>0 and routeDist<routeDirectDist*odometerFactor and routeNumber<passengers:
+            #找出startkey距离最近的下一结点
+            series=nodeCostDF.loc[startKey,tempKeys]
+            minIndex=series.argmin()
+            minKey=series.index[int(minIndex)]
+            routeKeys.append(minKey)
+            #重新计算起始结点至终点的实际距离和路线人数
+            routeDist=0
+            for i in range(0,len(routeKeys)-1):
+                nodeKey=routeKeys[i]+"-"+routeKeys[i+1]
+                routeDist+=nodePair[nodeKey]["dist"]
+            nodeKey=routeKeys[len(routeKeys)-1]+"-"+endKey
+            routeDist+=nodePair[nodeKey]["dist"]
+            routeNumber+=nodeDict[minKey]["number"]
+            #对比直线系数是否满足要求和人数是否满足要求
+            if routeDist<=routeDirectDist*odometerFactor and routeNumber<=passengers:
+                routeCost+=series[minIndex]
+                startKey=minKey
+                tempKeys.remove(minKey)
+            else:
+                routeKeys.remove(minKey)
+                routeNumber-=nodeDict[minKey]["number"]
+        #将符合条件的路线都加入routeList
+        if len(routeKeys)>1 and routeNumber>orderNumber*occupancyRate/100:
+            routeList.append({"startKey":pointKey,"routeNumber":routeNumber,\
+                    "routeKeys":routeKeys,"routeCost":routeCost,"routeDist":routeDist,\
+                    "routeDirectDist":routeDirectDist})
+
+    #按照结点数量、人数、routeCost进行排序
+    routeList.sort(key=lambda x: (len(x["routeKeys"]),x["routeNumber"],x["routeCost"]),reverse=True)
+
+    #取出第一条作为最优路线
+    if len(routeList)<=0:
+        #未规划点
+        invalidRouteNode=[]
+        for key in list(nodeCostDF.columns):
+            invalidRouteNode.append(nodeDict[key])
+        return {"routeNode":None,"invalidRouteNode":invalidRouteNode,\
+            "bestRouteCost":0,"routeNumber":0,\
+            "routeDist":0,"routeDirectDist":0}
+    else:
+        #路径点
+        bestRouteNode=[]
+        bestRouteKeys=routeList[0]["routeKeys"]
+        for key in bestRouteKeys:
+            bestRouteNode.append(nodeDict[key])
+        bestRouteNode.append(nodeDict[endKey])
+        
+        #未规划点
+        invalidRouteNode=[]
+        for key in list(nodeCostDF.columns):
+            if key not in bestRouteKeys:
+                invalidRouteNode.append(nodeDict[key])
+        return {"routeNode":bestRouteNode,"invalidRouteNode":invalidRouteNode,\
+            "bestRouteCost":routeList[0]["routeCost"],"routeNumber":routeList[0]["routeNumber"],\
+            "routeDist":routeList[0]["routeDist"],"routeDirectDist":routeList[0]["routeDirectDist"]}
+
+    """
     routeKeys=[]
     bestRouteKeys=None
     bestRouteCost=0
@@ -220,6 +292,8 @@ def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,oc
         return {"routeNode":bestRouteNode,"invalidRouteNode":invalidRouteNode,"bestRouteCost":bestRouteCost,"routeNumber":routeNumber,"routeDist":routeDist,"routeDirectDist":routeDirectDist}
         
 
+    """
+    
 """
 if __name__=="__main__":
     destination={"lng":7,"lat":1}
