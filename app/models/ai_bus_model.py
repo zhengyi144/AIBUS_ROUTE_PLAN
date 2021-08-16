@@ -141,7 +141,7 @@ class AiBusModel:
         """
         selectStr="select id,fileStatus from tbl_site_files where fileName=%s"+"  and fileStatus in (%s)"% ','.join("%s" % item for item in fileStatus)
         authStr=" and createUser in (%s)"% ','.join("'%s'" % item for item in userNames) 
-        selectStr+=selectStr+authStr
+        selectStr+=authStr
         selectStr+=" order by id desc"
         row=self.mysqlPool.fetchOne(selectStr,row)
         return row
