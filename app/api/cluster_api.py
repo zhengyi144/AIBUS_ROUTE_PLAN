@@ -167,36 +167,39 @@ def generateClusterPoints():
             clusterNumber=0
             site=siteGeoDict[str(key)]
             exceptClusterIds=[]
+            clusterIds=[]
             for id in clusterSet:
                 sitePoint=siteGeoDict[str(id)]
                 #获取聚类点与中心点的步行距离
                 walkDist=0
                 if id!=key:
                     row=aiBusModel.selectRouteParams((float(sitePoint["lng"]),float(sitePoint["lat"]),float(site["lng"]),float(site["lat"])))
-                    if row is None or row["walkDist"]<=0.5: 
-                        fromNode=str(sitePoint["lng"])+","+str(sitePoint["lat"])
-                        toNode=str(site["lng"])+","+str(site["lat"])
-                        distTime=get_route_distance_time(fromNode,toNode,routeType=0)
-                        walkDist=distTime["dist"]
-                        #缓存高德获取的步行数据
-                        if not row:
-                            startGeo = '{ "type": "Point", "coordinates": [%s, %s]}'%(float(sitePoint["lng"]),float(sitePoint["lat"]))
-                            endGeo = '{ "type": "Point", "coordinates": [%s, %s]}'%(float(site["lng"]),float(site["lat"]))
-                            aiBusModel.inserRouteParams((float(sitePoint["lng"]),float(sitePoint["lat"]),startGeo,\
-                                float(site["lng"]),float(site["lat"]),endGeo,0,0,0,distTime["dist"]))
-                        if row:
-                            aiBusModel.updateRouteWalkDist((distTime["dist"],row["id"]))
+                    if row is None or row["walkDist"]<=1: 
+                        fromNode=str(round(sitePoint["lng"],6))+","+str(round(sitePoint["lat"],6))
+                        toNode=str(round(site["lng"],6))+","+str(round(site["lat"],6))
+                        if fromNode!=toNode:
+                            distTime=get_route_distance_time(fromNode,toNode,routeType=0)
+                            walkDist=distTime["dist"]
+                            #缓存高德获取的步行数据
+                            if not row:
+                                startGeo = '{ "type": "Point", "coordinates": [%s, %s]}'%(float(sitePoint["lng"]),float(sitePoint["lat"]))
+                                endGeo = '{ "type": "Point", "coordinates": [%s, %s]}'%(float(site["lng"]),float(site["lat"]))
+                                aiBusModel.inserRouteParams((float(sitePoint["lng"]),float(sitePoint["lat"]),startGeo,\
+                                    float(site["lng"]),float(site["lat"]),endGeo,0,0,0,distTime["dist"]))
+                            if row:
+                                aiBusModel.updateRouteWalkDist((distTime["dist"],row["id"]))
                     else:
                         walkDist=row["walkDist"]
                 if walkDist>epsRadius:
-                    clusterSet.remove(id)
+                    #clusterSet.remove(id)
                     exceptClusterIds.append(id)
                 else:
-                    clusterNumber+=sitePoint["number"]
+                    clusterIds.append(id)
+                    clusterNumber+=int(sitePoint["number"])
             
             #踢除异常点再重新判断是否是聚类点
-            if len(clusterSet)>=minSamples:
-                clusterIdStr=",".join(map(str, clusterSet))
+            if len(clusterIds)>=minSamples:
+                clusterIdStr=",".join(map(str, clusterIds))
                 insertVals.append((fileId,"site_"+str(key),site["siteName"],site["siteProperty"],1,2,site["lng"],site["lat"],clusterNumber,clusterIdStr,userInfo["userName"],userInfo["userName"]))
             
             #处理步行距离未满足要求的点(异常点)
@@ -458,7 +461,6 @@ def exportClusterPoints():
         res.update(code=ResponseCode.Fail)
         return res.data
 
-
 @route(cluster,'/addNewClusterPoint',methods=["POST"])
 @login_required
 def addNewClusterPoint():
@@ -496,6 +498,25 @@ def addNewClusterPoint():
     except Exception as e:
         logger.error("addNewClusterPoint exception:{}".format(str(e)))
         res.update(code=ResponseCode.Fail,msg="新增聚类点报错！")
+        return res.data
+
+@route(cluster,'/queryClusterPointInfo',methods=["POST"])
+@login_required
+def queryClusterPointInfo():
+    """
+    根据聚类点id查询聚类点信息
+    """
+    res = ResMsg()
+    try:
+        logger.info("begin queryClusterPointInfo!")
+        aiBusModel=AiBusModel()
+        userInfo = session.get("userInfo")
+        data=request.get_json()
+        clusterId=data["id"]
+        clusterPoint=aiBusModel.selectClusterPointById(clusterId)
+    except Exception as e:
+        logger.error("queryClusterPointInfo exception:{}".format(str(e)))
+        res.update(code=ResponseCode.Fail,msg="查询聚类点信息报错！")
         return res.data
 
 ####################--------前端网页下载excel表格--------###########################

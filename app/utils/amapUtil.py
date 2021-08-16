@@ -31,17 +31,11 @@ def get_route_distance_time(origin,destination,routeType=1):
     info=get_route(origin,destination,routeType=routeType)
     if info["status"]=='1': 
         #路线时间
-        try:
-            duration=int(info['route']['paths'][0]['duration'])
-        except:
-            duration= 0
+        duration=int(info['route']['paths'][0]['duration'])
         
         #路线距离
-        try:
-            
-            distance=int(info['route']['paths'][0]['distance'])
-        except:
-            distance= 0
+        distance=int(info['route']['paths'][0]['distance'])
+        
         logger.info("get amap dist:{},time:{}".format(distance,duration))
     else:
         logger.info("get amap fail!")

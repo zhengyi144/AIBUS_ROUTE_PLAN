@@ -388,6 +388,10 @@ class AiBusModel:
                   latitude,number,siteSet from tbl_cluster_result where clusterStatus=%s and fileId=%s and clusterProperty=1"
         row=self.mysqlPool.fetchAll(selectStr,row)
         return row
+    
+    def selectClusterPointById(self,id):
+        selectStr="select fileId,clusterName,clusterProperty,siteSet from tbl_cluster_result where id=%s"
+        return self.mysqlPool.fetchOne(selectStr,(id))
 
     def exportClusterResult(self,row):
         selectStr="select region,longitude,latitude,clusterName,relativeProperty,\
