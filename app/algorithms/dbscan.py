@@ -10,6 +10,7 @@ from scipy.spatial.distance import pdist, squareform
 from math import *
 #from utils.GPSConvertUtil import getGPSDistance
 from app.utils.GPSConvertUtil import getGPSDistance
+from app.utils.amapUtil import get_route_distance_time
 
 def haversine(lonlat1, lonlat2):
     """
@@ -103,7 +104,7 @@ def clusterByDbscan(dataList,epsRadius,minSamples):
 
     return clusterInfo
 
-def clusterByAdaptiveDbscan(siteList,epsRadius,minSamples):
+def clusterByAdaptiveDbscan(siteList,epsRadius,minSamples,distType=1):
     """
     DBSCAN算法是将密度相连点的最大集合作为簇，但是由于簇内点会辐射出去的原因会使簇内一些点距离聚类中心点超过实际限定距离epsRadius，
     因此对DBSCAN算法进行改造，只取满足限定距离的最大集合，满足条件的集合但中心点已经被纳入其他集合，被抛弃的点作为边界点，
@@ -119,8 +120,16 @@ def clusterByAdaptiveDbscan(siteList,epsRadius,minSamples):
         sitePairInfo={}
         sitePairs=list(itertools.permutations(siteList, 2))
         for sitePair in sitePairs:
+            dist=0
             key=str(sitePair[0]["id"])+"-"+str(sitePair[1]["id"])
-            dist=getGPSDistance(float(sitePair[0]["lng"]),float(sitePair[0]["lat"]),float(sitePair[1]["lng"]),float(sitePair[1]["lat"]))
+            if distType==1:
+                dist=getGPSDistance(float(sitePair[0]["lng"]),float(sitePair[0]["lat"]),float(sitePair[1]["lng"]),float(sitePair[1]["lat"]))
+            else:
+                fromNode=str(round(sitePair[0]["lng"],6))+","+str(round(sitePair[0]["lat"],6))
+                toNode=str(round(sitePair[1]["lng"],6))+","+str(round(sitePair[1]["lat"],6))
+                if fromNode!=toNode:
+                    distTime=get_route_distance_time(fromNode,toNode,routeType=0)
+                    dist=distTime["dist"]
             sitePairInfo[key]=dist
           
         #2)以每个点为中心找出限定范围内的点集

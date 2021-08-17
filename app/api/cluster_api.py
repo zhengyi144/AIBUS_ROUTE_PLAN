@@ -141,7 +141,6 @@ def generateClusterPoints():
             res.update(code=ResponseCode.Fail,msg="网点为空！")
             return res.data
 
-
         #{"noiseList":[ids],"aroundList":[ids],"clusterDict":{"id":[ids],"id":[ids]}}
         clusterInfo=clusterByAdaptiveDbscan(siteGeoList,epsRadius,minSamples)
         #将聚类结果保存至表中
@@ -166,6 +165,7 @@ def generateClusterPoints():
             #处理聚类核心点
             clusterNumber=0
             site=siteGeoDict[str(key)]
+            exceptClusterPoints=[]
             exceptClusterIds=[]
             clusterIds=[]
             for id in clusterSet:
@@ -174,7 +174,7 @@ def generateClusterPoints():
                 walkDist=0
                 if id!=key:
                     row=aiBusModel.selectRouteParams((float(sitePoint["lng"]),float(sitePoint["lat"]),float(site["lng"]),float(site["lat"])))
-                    if row is None or row["walkDist"]<=1: 
+                    if row is None or row["walkDist"]<1: 
                         fromNode=str(round(sitePoint["lng"],6))+","+str(round(sitePoint["lat"],6))
                         toNode=str(round(site["lng"],6))+","+str(round(site["lat"],6))
                         if fromNode!=toNode:
@@ -193,6 +193,7 @@ def generateClusterPoints():
                 if walkDist>epsRadius:
                     #clusterSet.remove(id)
                     exceptClusterIds.append(id)
+                    exceptClusterPoints.append(sitePoint)
                 else:
                     clusterIds.append(id)
                     clusterNumber+=int(sitePoint["number"])
@@ -202,19 +203,40 @@ def generateClusterPoints():
                 clusterIdStr=",".join(map(str, clusterIds))
                 insertVals.append((fileId,"site_"+str(key),site["siteName"],site["siteProperty"],1,2,site["lng"],site["lat"],clusterNumber,clusterIdStr,userInfo["userName"],userInfo["userName"]))
             
-            #处理步行距离未满足要求的点(异常点)
-            for id in exceptClusterIds:
-                relativeId="site_"+str(id)
-                noiseSite=siteGeoDict[str(id)]
-                insertVals.append((fileId,relativeId,noiseSite["siteName"],noiseSite["siteProperty"],0,2,noiseSite["lng"],noiseSite["lat"],noiseSite["number"],str(id),userInfo["userName"],userInfo["userName"]))
+            #再判断exceptClusterPoints是否能聚类
+            if len(exceptClusterPoints)>=minSamples:
+                #{"noiseList":[ids],"aroundList":[ids],"clusterDict":{"id":[ids],"id":[ids]}}
+                exClusterInfo=clusterByAdaptiveDbscan(exceptClusterPoints,epsRadius,minSamples,distType=0)
+                for key in exClusterInfo["clusterDict"].keys():
+                    site=siteGeoDict[str(key)]
+                    exClusterSet=exClusterInfo["clusterDict"][key]
+                    exClusterNumber=0
+                    for id in exClusterSet:
+                        exSitePoint=siteGeoDict[str(id)]
+                        exClusterNumber+=int(exSitePoint["number"])
+                    exClusterIdStr=",".join(map(str, exClusterSet))
+                    insertVals.append((fileId,"site_"+str(key),site["siteName"],site["siteProperty"],1,2,site["lng"],site["lat"],exClusterNumber,exClusterIdStr,userInfo["userName"],userInfo["userName"]))
 
-            #clusterCorePoints.append({"id":"site_"+str(clusterId),"siteName":site["siteName"],"siteProperty":site["siteProperty"],"number":clusterNumber,"longitude":site["lng"],"latitude":site["lat"]})
+                for id in exClusterInfo["noiseList"]:
+                    relativeId="site_"+str(id)
+                    site=siteGeoDict[str(id)]
+                    insertVals.append((fileId,relativeId,site["siteName"],site["siteProperty"],0,2,site["lng"],site["lat"],site["number"],str(id),userInfo["userName"],userInfo["userName"]))
+                
+                for id in exClusterInfo["aroundList"]:
+                    relativeId="site_"+str(id)
+                    aroundSite=siteGeoDict[str(id)]
+                    insertVals.append((fileId,relativeId,aroundSite["siteName"],aroundSite["siteProperty"],2,2,aroundSite["lng"],aroundSite["lat"],aroundSite["number"],str(id),userInfo["userName"],userInfo["userName"]))
+            else:
+                for id in exceptClusterIds:
+                    relativeId="site_"+str(id)
+                    site=siteGeoDict[str(id)]
+                    insertVals.append((fileId,relativeId,site["siteName"],site["siteProperty"],0,2,site["lng"],site["lat"],site["number"],str(id),userInfo["userName"],userInfo["userName"]))
+        
         #处理边界点
         for id in clusterInfo["aroundList"]:
             relativeId="site_"+str(id)
             aroundSite=siteGeoDict[str(id)]
             insertVals.append((fileId,relativeId,aroundSite["siteName"],aroundSite["siteProperty"],2,2,aroundSite["lng"],aroundSite["lat"],aroundSite["number"],str(id),userInfo["userName"],userInfo["userName"]))
-                #clusterAroundPoints.append({"id":relativeId,"siteName":aroundSite["siteName"],"siteProperty":site["siteProperty"],"number":aroundSite["number"],"longitude":aroundSite["lng"],"latitude":aroundSite["lat"]})
         #3)插入聚类点并返回
         aiBusModel.batchClusterSites(insertVals)
 
