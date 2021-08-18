@@ -1,4 +1,5 @@
 import os
+import itertools
 from urllib.parse import quote
 from flask import Blueprint, jsonify, session, request, current_app,Response
 from app.utils.code import ResponseCode
@@ -6,11 +7,10 @@ from app.utils.response import ResMsg
 from app.utils.auth import login_required
 from app.utils.util import route
 from app.utils.tools import *
-from app.utils.amapUtil import get_route_distance_time
+from app.utils.amapUtil import *
 from app.models.ai_bus_model import AiBusModel
 from app.algorithms.dbscan import clusterByDbscan,clusterByAdaptiveDbscan
 from app.utils.logger import get_logger
-
 
 
 """
@@ -630,6 +630,37 @@ def exportClusterResult():
     except Exception as e:
         res.update(code=ResponseCode.Fail,msg="导出报错！")
         return res.data
+
+
+@route(cluster,'/multiThreadGetAmapInfo',methods=["POST"])
+def multiThreadGetAmapInfo():
+    res = ResMsg()
+    try:
+        logger.info("begin multiThreadGetAmapInfo!")
+        aiBusModel=AiBusModel()
+        data=request.get_json()
+        fileId=data["fileId"]
+        
+        siteList=aiBusModel.selectSiteGeoListByFileId(fileId)
+        if not siteList:
+            res.update(code=ResponseCode.Fail,msg="网点为空！")
+            return res.data
+
+        routeNodeList=[]
+        sitePairs=list(itertools.permutations(siteList, 2))
+        for sitePair in sitePairs:
+            key=str(sitePair[0]["id"])+"-"+str(sitePair[1]["id"])
+            fromNode=str(round(sitePair[0]["lng"],6))+","+str(round(sitePair[0]["lat"],6))
+            toNode=str(round(sitePair[1]["lng"],6))+","+str(round(sitePair[1]["lat"],6))
+            routeNodeList.append({"key":key,"origin":fromNode,"destination":toNode,"routeType":1})           
+        result=build_process(routeNodeList)
+        res.update(code=ResponseCode.Success,data={"srcSize":len(sitePairs),"destSize":len(result.keys()),"result":result})
+        return res.data
+    except Exception as e:
+        logger.error("multiThreadGetAmapInfo exception:{}".format(str(e)))
+        res.update(code=ResponseCode.Fail,msg="生成聚类点报错！")
+        return res.data
+
 
 """
 @route(cluster,'/mergeClusterPoints',methods=["POST"])

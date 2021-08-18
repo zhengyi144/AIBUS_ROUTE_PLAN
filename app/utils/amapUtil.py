@@ -1,4 +1,5 @@
 import requests,json
+from concurrent import futures
 from app.utils.logger import get_logger
 
 logger=get_logger(name="amapUtil",log_file="logs/logger.log")
@@ -40,6 +41,28 @@ def get_route_distance_time(origin,destination,routeType=1):
     else:
         logger.info("get amap fail!")
     return {"dist":distance,"time":duration}
+
+def get_thread_info(routeNode):
+    """
+    routeNode={"key","origin","destination","routeType"}
+    return: {"key","dist","time"}
+    """
+    res=get_route_distance_time(routeNode["origin"],routeNode["destination"],routeNode["routeType"])
+    return {"key":routeNode["key"],"dist":res["dist"],"time":res["time"]}
+
+def build_process(routeNodeList):
+    """
+    input:
+        routeNodeList=[{"key","origin","destination","routeType"}]
+    output:
+        result={"key1":{"dist","time"},"key2":{"dist","time"},...}
+    """
+    result={}
+    with futures.ThreadPoolExecutor(max_workers=20) as executor:
+        for item in executor.map(get_thread_info,routeNodeList):
+            result[item["key"]]={"dist":item["dist"],"time":item["time"]}
+    return result
+
 
 """
 if __name__ == '__main__':
