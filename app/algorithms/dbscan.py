@@ -10,7 +10,7 @@ from scipy.spatial.distance import pdist, squareform
 from math import *
 #from utils.GPSConvertUtil import getGPSDistance
 from app.utils.GPSConvertUtil import getGPSDistance
-from app.utils.amapUtil import get_route_distance_time
+from app.utils.amapUtil import *
 
 def haversine(lonlat1, lonlat2):
     """
@@ -119,19 +119,23 @@ def clusterByAdaptiveDbscan(siteList,epsRadius,minSamples,distType=1):
         #1)先构造集合对，计算两两之间的距离
         sitePairInfo={}
         sitePairs=list(itertools.permutations(siteList, 2))
+        routeNodeList=[]
         for sitePair in sitePairs:
-            dist=0
             key=str(sitePair[0]["id"])+"-"+str(sitePair[1]["id"])
-            if distType==1:
-                dist=getGPSDistance(float(sitePair[0]["lng"]),float(sitePair[0]["lat"]),float(sitePair[1]["lng"]),float(sitePair[1]["lat"]))
-            else:
+            dist=getGPSDistance(float(sitePair[0]["lng"]),float(sitePair[0]["lat"]),float(sitePair[1]["lng"]),float(sitePair[1]["lat"]))
+            if dist<=epsRadius:
                 fromNode=str(round(sitePair[0]["lng"],6))+","+str(round(sitePair[0]["lat"],6))
                 toNode=str(round(sitePair[1]["lng"],6))+","+str(round(sitePair[1]["lat"],6))
-                if fromNode!=toNode:
-                    distTime=get_route_distance_time(fromNode,toNode,routeType=0)
-                    dist=distTime["dist"]
-            sitePairInfo[key]=dist
-          
+                routeNodeList.append({"key":key,"origin":fromNode,"destination":toNode,"routeType":0})
+            else:
+                sitePairInfo[key]=dist
+        
+        #获取高德数据
+        if len(routeNodeList)>0:
+            nodeInfo=build_process(routeNodeList)
+            for key, value in nodeInfo.items():
+                sitePairInfo[key]=value["dist"]
+         
         #2)以每个点为中心找出限定范围内的点集
         neighborPointsList=[]
         clusterResult={}
