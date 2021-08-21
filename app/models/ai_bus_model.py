@@ -236,7 +236,7 @@ class AiBusModel:
         return self.mysqlPool.fetchAll(selectStr,row)
     
     def selectClientNameByIds(self,siteIds):
-        selectStr="select clientName from tbl_site where "+" id in (%s)"% ','.join("%s" % item for item in siteIds)
+        selectStr="select siteName,clientName,longitude,latitude,number AS clientNumber from tbl_site where "+" id in (%s)"% ','.join("%s" % item for item in siteIds)
         return self.mysqlPool.fetchAll(selectStr,())
 
     

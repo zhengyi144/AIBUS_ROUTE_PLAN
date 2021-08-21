@@ -465,7 +465,7 @@ def addNewClusterPoint():
 @login_required
 def queryClusterPointInfo():
     """
-    根据聚类点id查询聚类点信息
+    根据聚类点id查询聚类点信息：id、客户名称、人数、站点名称、经纬度
     """
     res = ResMsg()
     try:
@@ -475,6 +475,10 @@ def queryClusterPointInfo():
         data=request.get_json()
         clusterId=data["id"]
         clusterPoint=aiBusModel.selectClusterPointById(clusterId)
+        siteIdList=clusterPoint["siteSet"].split(",")
+        siteInfo=aiBusModel.selectClientNameByIds(siteIdList)
+        res.update(code=ResponseCode.Success,data=siteInfo)
+        return res.data
     except Exception as e:
         logger.error("queryClusterPointInfo exception:{}".format(str(e)))
         res.update(code=ResponseCode.Fail,msg="查询聚类点信息报错！")

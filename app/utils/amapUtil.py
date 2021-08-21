@@ -28,6 +28,8 @@ def get_route_distance_time(origin,destination,routeType=1):
     """ 
     distance = 0
     duration = 0  
+    if origin==destination:
+        return {"dist":distance,"time":duration}
     #路线规划
     info=get_route(origin,destination,routeType=routeType)
     if info["status"]=='1': 
