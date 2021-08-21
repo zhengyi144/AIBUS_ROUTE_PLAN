@@ -40,9 +40,11 @@ def get_route_distance_time(origin,destination,routeType=1):
         distance=int(info['route']['paths'][0]['distance'])
         
         logger.info("get amap dist:{},time:{}".format(distance,duration))
+        return {"dist":distance,"time":duration}
     else:
         logger.info("get amap fail!")
-    return {"dist":distance,"time":duration}
+        return None
+    
 
 def get_thread_info(routeNode):
     """
