@@ -133,6 +133,7 @@ def clusterByAdaptiveDbscan(siteList,epsRadius,minSamples,distType=1):
         #获取高德数据
         if len(routeNodeList)>0:
             nodeInfo=build_process(routeNodeList)
+            #print(nodeInfo)
             for key, value in nodeInfo.items():
                 sitePairInfo[key]=value["dist"]
          
@@ -154,7 +155,7 @@ def clusterByAdaptiveDbscan(siteList,epsRadius,minSamples,distType=1):
                 neighborPointsList.append({"id":site["id"],"neighborPoints":neighborPoints,"size":len(neighborPoints)})
         
         #3)对上面点集进行按照点集大小排序，然后筛选出聚类集合
-        neighborPointsList.sort(key=lambda x: x["size"],reverse=True)
+        neighborPointsList.sort(key=lambda x: (x["size"],x["id"]),reverse=True)
         clusterDict={}
         for item in neighborPointsList:
             #先判断id是否已经被划分
