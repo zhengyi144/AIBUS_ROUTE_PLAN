@@ -11,6 +11,9 @@ from math import *
 #from utils.GPSConvertUtil import getGPSDistance
 from app.utils.GPSConvertUtil import getGPSDistance
 from app.utils.amapUtil import *
+from app.utils.logger import get_logger
+
+logger=get_logger(name="dbscan",log_file="logs/logger.log")
 
 def haversine(lonlat1, lonlat2):
     """
@@ -133,7 +136,7 @@ def clusterByAdaptiveDbscan(siteList,epsRadius,minSamples,distType=1):
         #获取高德数据
         if len(routeNodeList)>0:
             nodeInfo=build_process(routeNodeList)
-            #print(nodeInfo)
+            logger.info("nodeInfo result:%s",nodeInfo)
             for key, value in nodeInfo.items():
                 sitePairInfo[key]=value["dist"]
          
@@ -156,6 +159,7 @@ def clusterByAdaptiveDbscan(siteList,epsRadius,minSamples,distType=1):
         
         #3)对上面点集进行按照点集大小排序，然后筛选出聚类集合
         neighborPointsList.sort(key=lambda x: (x["size"],x["id"]),reverse=True)
+        logger.info("neightbor point sort result:%s",neighborPointsList)
         clusterDict={}
         for item in neighborPointsList:
             #先判断id是否已经被划分
