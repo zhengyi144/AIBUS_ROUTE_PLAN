@@ -208,7 +208,7 @@ def generateClusterPoints():
         return res.data
     except Exception as e:
         logger.error("generateClusterPoints exception:{}".format(str(e)))
-        res.update(code=ResponseCode.Fail,msg="生成聚类点报错！")
+        res.update(code=ResponseCode.Fail,msg=str(e))
         return res.data
 
 @route(cluster,'/saveClusterResult',methods=["POST"])

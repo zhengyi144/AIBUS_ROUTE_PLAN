@@ -453,8 +453,9 @@ class AiBusModel:
         return self.mysqlPool.update(updateStr,row)
     
     def selectRouteParams(self,row):
-        selectStr="select id, minDist as dist,minTime as time,directDist,walkDist from tbl_route_node where ABS(startlng-%s)<=0.000001 and ABS(startlat-%s)<=0.000001 \
-                   and ABS(endLng-%s)<=0.000001 and ABS(endLat-%s)<=0.000001"
+        selectStr="select id, minDist as dist,minTime as time,directDist,walkDist from tbl_route_node \
+                  where startlng=%s and startlat=%s \
+                   and endLng=%s and endLat=%s"
         row=self.mysqlPool.fetchOne(selectStr,row)
         return row
     
