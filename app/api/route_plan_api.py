@@ -168,7 +168,10 @@ def planSingleRoute():
             res.update(code=ResponseCode.Fail,data=[], msg="未找到满足条件的路线！")
             return res.data
         else:
-            #在贪婪算法的基础上，再用sa算法进行优化
+            #在贪婪算法算法基础上，查找最后一段路的顺路结点
+            
+
+            #用sa算法进行优化
             routeInfo={"nodePair":nodePairDict,"routeNode":solution["routeNode"],"routeFactor":routeFactor}
             reSolution=singleRoutePlanSolution(routeInfo)
             #print("re bestCost:",reSolution["bestRouteCost"])

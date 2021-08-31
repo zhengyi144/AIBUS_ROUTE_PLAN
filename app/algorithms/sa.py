@@ -238,7 +238,7 @@ def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,oc
         #未规划点
         invalidRouteNode=[]
         for key in list(nodeCostDF.columns):
-            if key not in bestRouteKeys:
+            if key not in bestRouteKeys and key !=endKey:
                 invalidRouteNode.append(nodeDict[key])
         return {"routeNode":bestRouteNode,"invalidRouteNode":invalidRouteNode,\
             "bestRouteCost":routeList[0]["routeCost"],"routeNumber":routeList[0]["routeNumber"],\
