@@ -466,17 +466,21 @@ class AiBusModel:
         return row
     
     def insertRouteDetail(self,row):
-        insertStr="insert into tbl_route_detail(fileId,routeId,roundStatus,nodeIndex,nodeName,nodeStatus,nodeLng,nodeLat,number,nextDist,nextTime,nodeProperty)\
-            values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        insertStr="insert into tbl_route_detail(fileId,routeId,roundStatus,nodeIndex,nodeName,nodeStatus,nodeLng,nodeLat,number,nextDist,nextTime,nodeProperty,nodeType)\
+            values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
         row=self.mysqlPool.insert(insertStr,row)
         return row
     
     def updateRouteDetail(self,row):
         updateStr="update tbl_route_detail set nodeIndex=%s,nodeProperty=%s,nextDist=%s,nextTime=%s,nodeStatus=%s,roundStatus=%s where  routeId=%s and id=%s"
         return self.mysqlPool.update(updateStr,row)
+
+    def invalidWayPoints(self,row):
+        updateStr="update tbl_route_detail set nodeStatus=0 where  routeId=%s and nodeType=0"
+        return self.mysqlPool.update(updateStr,row)
     
     def selectRouteDetail(self,row):
-        selectStr="select id,nodeIndex,nodeName,nodeLng as lng,nodeLat as lat,number,nextDist,nextTime from tbl_route_detail\
+        selectStr="select id,nodeIndex,nodeName,nodeLng as lng,nodeLat as lat,number,nextDist,nextTime, nodeType from tbl_route_detail\
              where routeId=%s and nodeStatus=%s and roundStatus=%s and nodeProperty=%s order by nodeIndex"
         return self.mysqlPool.fetchAll(selectStr,row)
 

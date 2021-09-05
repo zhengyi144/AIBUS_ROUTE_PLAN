@@ -68,13 +68,13 @@ def build_process(routeNodeList):
     return result
 
 
-"""
+
 if __name__ == '__main__':
     city = "北京市"    # 你的城市
     origin ='116.481028,39.989643'
     destination ='116.434446,39.90816'
     print(get_route_distance_time(origin,destination))
-"""
+
 
     
 

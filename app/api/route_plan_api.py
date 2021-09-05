@@ -1,4 +1,5 @@
 import json
+from time import time
 import uuid
 import numpy as np
 import itertools
@@ -211,11 +212,11 @@ def planSingleRoute():
 
         for node in routeNodeList:
             aiBusModel.insertRouteDetail((fileId,routeUuid,0,node["nodeIndex"],node["nodeName"],2,\
-                node["lng"],node["lat"],node["number"],node["nextDist"],node["nextTime"],1))
+                node["lng"],node["lat"],node["number"],node["nextDist"],node["nextTime"],1,1))
         
         for i,node in enumerate(solution["invalidRouteNode"]):
             aiBusModel.insertRouteDetail((fileId,routeUuid,0,i,node["nodeName"],2,\
-                node["lng"],node["lat"],node["number"],0,0,0))
+                node["lng"],node["lat"],node["number"],0,0,0,1))
 
         #查询路线结点及未规划的结点
         routeOccupancyRate=int(routeNumber/orderNumber*100)
@@ -261,11 +262,11 @@ def planSingleRoute():
             #存储结点
             for node in roundRouteNodeList:
                 aiBusModel.insertRouteDetail((fileId,routeUuid,1,node["nodeIndex"],node["nodeName"],2,\
-                    node["lng"],node["lat"],node["number"],node["nextDist"],node["nextTime"],1))
+                    node["lng"],node["lat"],node["number"],node["nextDist"],node["nextTime"],1,1))
             
             for i,node in enumerate(solution["invalidRouteNode"]):
                 aiBusModel.insertRouteDetail((fileId,routeUuid,1,i,node["nodeName"],2,\
-                    node["lng"],node["lat"],node["number"],0,0,0))
+                    node["lng"],node["lat"],node["number"],0,0,0,1))
 
             #查询路线结点及未规划的结点
             routeNodeResult2=aiBusModel.selectRouteDetail((routeUuid,2,1,1))
@@ -323,29 +324,43 @@ def reSortRouteNode():
         routeNumber=0
         newRouteNodeList=[]
         length=len(routeNodeList)
+        dist=0
+        time=0
         for i in range(length-1):
             fromNode=routeNodeList[i]
             toNode=routeNodeList[i+1]
             row=aiBusModel.selectRouteParams((float(fromNode["lng"]),float(fromNode["lat"]),float(toNode["lng"]),float(toNode["lat"])))
-            if row["dist"]<0.5:
+            if row is None or row["dist"]<0.5:
                 startPoint=str(fromNode["lng"])+","+str(fromNode["lat"])
                 endPoint=str(toNode["lng"])+","+str(toNode["lat"])
                 distTime=get_route_distance_time(startPoint,endPoint)
+                dist+=distTime["dist"]
+                time+=distTime["time"]
                 routeDist+=distTime["dist"]
                 routeTime+=distTime["time"]
             else:
+                dist+=row["dist"]
+                time+=row["time"]
                 routeDist+=row["dist"]
                 routeTime+=row["time"]
-            routeNumber+=fromNode["number"]
-            newRouteNodeList.append({"id":fromNode["id"],"nodeIndex":nodeIndex,"nodeName":fromNode["nodeName"],\
-                "lng":float(fromNode["lng"]),"lat":float(fromNode["lat"]),"number":fromNode["number"],\
-                "nextDist":row["dist"],"nextTime":row["time"]})
+            #判断结点中type
+            if  fromNode["nodeType"]==0:
+                newRouteNodeList.append({"nodeIndex":nodeIndex,"nodeName":fromNode["nodeName"],\
+                    "lng":float(fromNode["lng"]),"lat":float(fromNode["lat"]),"number":fromNode["number"],\
+                    "nextDist":dist,"nextTime":time,"nodeType":fromNode["nodeType"]})
+            else:
+                routeNumber+=fromNode["number"]
+                newRouteNodeList.append({"id":fromNode["id"],"nodeIndex":nodeIndex,"nodeName":fromNode["nodeName"],\
+                    "lng":float(fromNode["lng"]),"lat":float(fromNode["lat"]),"number":fromNode["number"],\
+                    "nextDist":dist,"nextTime":time,"nodeType":fromNode["nodeType"]})
+                dist=0
+                time=0
 
             #aiBusModel.updateRouteDetail((nodeIndex,1,row["dist"],row["time"],2,roundStatus,routeId,fromNode["id"]))
             nodeIndex+=1
             if i+1==length-1:
                 newRouteNodeList.append({"id":toNode["id"],"nodeIndex":nodeIndex,"nodeName":toNode["nodeName"],\
-                   "lng":float(toNode["lng"]),"lat":float(toNode["lat"]),"number":toNode["number"],"nextDist":0,"nextTime":0})
+                   "lng":float(toNode["lng"]),"lat":float(toNode["lat"]),"number":toNode["number"],"nextDist":0,"nextTime":0,"nodeType":fromNode["nodeType"]})
                 #aiBusModel.updateRouteDetail((nodeIndex,1,0,0,2,roundStatus,routeId,toNode["id"]))
                 routeNumber+=toNode["number"]
         
@@ -381,6 +396,7 @@ def saveRouteNode():
     """
     res = ResMsg()
     try:
+        logger.info("begin saveRouteNode!")
         aiBusModel=AiBusModel()
         data=request.get_json()
         fileId=data["fileId"]
@@ -395,37 +411,51 @@ def saveRouteNode():
         
         #根据结点顺序获取对应信息
         nodeIndex=0
-        newInvalidNodeList=[]
         for node in invalidNodeList:
             aiBusModel.updateRouteDetail((nodeIndex,0,0,0,1,roundStatus,routeId,node["id"]))
-            newInvalidNodeList.append({"id":node["id"],"nodeIndex":nodeIndex,"nodeName":node["nodeName"],\
-                "lng":float(node["lng"]),"lat":float(node["lat"]),"number":node["number"]})
+            #newInvalidNodeList.append({"id":node["id"],"nodeIndex":nodeIndex,"nodeName":node["nodeName"],\
+            #    "lng":float(node["lng"]),"lat":float(node["lat"]),"number":node["number"]})
             nodeIndex+=1
         
+        #失效所有的途经点
+        aiBusModel.invalidWayPoints((routeId))
         nodeIndex=0
-        routeDist=0
-        routeTime=0
-        routeNumber=0
-        newRouteNodeList=[]
+        dist=0
+        time=0
         length=len(routeNodeList)
         for i in range(length-1):
             fromNode=routeNodeList[i]
             toNode=routeNodeList[i+1]
+            
             row=aiBusModel.selectRouteParams((float(fromNode["lng"]),float(fromNode["lat"]),float(toNode["lng"]),float(toNode["lat"])))
-            routeDist+=row["dist"]
-            routeTime+=row["time"]
-            routeNumber+=fromNode["number"]
-            newRouteNodeList.append({"id":fromNode["id"],"nodeIndex":nodeIndex,"nodeName":fromNode["nodeName"],\
-                "lng":float(fromNode["lng"]),"lat":float(fromNode["lat"]),"number":fromNode["number"],\
-                "nextDist":row["dist"],"nextTime":row["time"]})
-
-            aiBusModel.updateRouteDetail((nodeIndex,1,row["dist"],row["time"],1,roundStatus,routeId,fromNode["id"]))
+            if row is None or row["dist"]<0.5:
+                startPoint=str(fromNode["lng"])+","+str(fromNode["lat"])
+                endPoint=str(toNode["lng"])+","+str(toNode["lat"])
+                distTime=get_route_distance_time(startPoint,endPoint)
+                dist+=distTime["dist"]
+                time+=distTime["time"]
+            else:
+                dist+=row["dist"]
+                time+=row["time"]
+            
+            if  fromNode["nodeType"]==0:
+                #fileId,routeId,roundStatus,nodeIndex,nodeName,nodeStatus,nodeLng,nodeLat,number,nextDist,nextTime,nodeProperty,nodeType
+                aiBusModel.insertRouteDetail((fileId,routeId,roundStatus,nodeIndex,fromNode["nodeName"],\
+                                            1,fromNode["lng"],fromNode["lat"],0,dist,time,1,0))
+            else:
+                #routeNumber+=fromNode["number"]
+                #newRouteNodeList.append({"id":fromNode["id"],"nodeIndex":nodeIndex,"nodeName":fromNode["nodeName"],\
+                #    "lng":float(fromNode["lng"]),"lat":float(fromNode["lat"]),"number":fromNode["number"],\
+                #    "nextDist":row["dist"],"nextTime":row["time"]})
+                aiBusModel.updateRouteDetail((nodeIndex,1,dist,time,1,roundStatus,routeId,fromNode["id"]))
+                dist=0
+                time=0
             nodeIndex+=1
             if i+1==length-1:
-                newRouteNodeList.append({"id":toNode["id"],"nodeIndex":nodeIndex,"nodeName":toNode["nodeName"],\
-                   "lng":float(toNode["lng"]),"lat":float(toNode["lat"]),"number":toNode["number"],"nextDist":0,"nextTime":0})
+                #newRouteNodeList.append({"id":toNode["id"],"nodeIndex":nodeIndex,"nodeName":toNode["nodeName"],\
+                #   "lng":float(toNode["lng"]),"lat":float(toNode["lat"]),"number":toNode["number"],"nextDist":0,"nextTime":0})
                 aiBusModel.updateRouteDetail((nodeIndex,1,0,0,1,roundStatus,routeId,toNode["id"]))
-                routeNumber+=toNode["number"]
+                #routeNumber+=toNode["number"]
                 
         #更新routeInfo参数表,实现之前保存的参数，替换为当前的参数
         if fileId!=-1:
@@ -435,6 +465,7 @@ def saveRouteNode():
         res.update(code=ResponseCode.Success,msg="路线保存成功！")
         return res.data
     except Exception as e:
+        logger.error("saveRouteNode exception:{}".format(str(e)))
         res.update(code=ResponseCode.Fail, msg="路线规划结点保存报错！")
         return res.data
 

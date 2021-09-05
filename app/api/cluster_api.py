@@ -484,6 +484,28 @@ def queryClusterPointInfo():
         res.update(code=ResponseCode.Fail,msg="查询聚类点信息报错！")
         return res.data
 
+
+@route(cluster,'/removeClusterPoints',methods=["POST"])
+@login_required
+def removeClusterPoints():
+    """
+    批量失效聚类点
+    """
+    res = ResMsg()
+    try:
+        logger.info("begin removeClusterPoints!")
+        aiBusModel=AiBusModel()
+        userInfo = session.get("userInfo")
+        data=request.get_json()
+        ids=data["ids"]
+        row=aiBusModel.invalidClusterSitesById((userInfo["userName"]),ids)
+        res.update(code=ResponseCode.Success, msg="成功删除{}条记录！".format(row))
+        return res.data
+    except Exception as e:
+        logger.error("removeClusterPoints exception:{}".format(str(e)))
+        res.update(code=ResponseCode.Fail)
+        return res.data
+
 ####################--------前端网页下载excel表格--------###########################
 def file_iterator(file_path, chunk_size=512):
     """        
@@ -628,22 +650,6 @@ def mergeClusterPoints():
         res.update(code=ResponseCode.Fail)
         return res.data
 
-
-@route(cluster,'/removeClusterPoint',methods=["POST"])
-@login_required
-def removeClusterPoint():
-    res = ResMsg()
-    try:
-        aiBusModel=AiBusModel()
-        userInfo = session.get("userInfo")
-        data=request.get_json()
-        id=data["id"]
-        row=aiBusModel.invalidClusterSitesById((userInfo["userName"],id))
-        res.update(code=ResponseCode.Success, data="成功删除{}条记录！".format(row))
-        return res.data
-    except Exception as e:
-        res.update(code=ResponseCode.Fail)
-        return res.data
 
 @route(cluster,'/addNewClusterPoint',methods=["POST"])
 @login_required
