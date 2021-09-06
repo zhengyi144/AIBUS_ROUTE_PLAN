@@ -329,15 +329,17 @@ def deleteSite():
         userInfo = session.get("userInfo")
         data=request.get_json()
         fileId=data["fileId"]
-        siteName=data["siteName"]
-        latitude=float(data["latitude"])
-        longitude=float(data["longitude"])
-        row=aiBusModel.invalidSiteBySiteName((3,userInfo["userName"],siteName,fileId,longitude,latitude))
-        #失效网点后需要更新对应的网点文件siteCount
-        if row>0:
-            #更新网点文件sitecount
-            client=aiBusModel.selectSiteClientNumberByFileId(fileId)
-            aiBusModel.updateSiteFile((1,client["clientNumber"],userInfo["userName"],fileId))
+        siteList=data["siteList"]
+        for item in siteList:
+            siteName=item["siteName"]
+            latitude=float(item["latitude"])
+            longitude=float(item["longitude"])
+            row=aiBusModel.invalidSiteBySiteName((3,userInfo["userName"],siteName,fileId,longitude,latitude))
+            #失效网点后需要更新对应的网点文件siteCount
+            if row>0:
+                #更新网点文件sitecount
+                client=aiBusModel.selectSiteClientNumberByFileId(fileId)
+                aiBusModel.updateSiteFile((1,client["clientNumber"],userInfo["userName"],fileId))
         res.update(code=ResponseCode.Success, msg="删除网点成功！")
         return res.data
     except Exception as e:
