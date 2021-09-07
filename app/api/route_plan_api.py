@@ -360,7 +360,7 @@ def reSortRouteNode():
             nodeIndex+=1
             if i+1==length-1:
                 newRouteNodeList.append({"id":toNode["id"],"nodeIndex":nodeIndex,"nodeName":toNode["nodeName"],\
-                   "lng":float(toNode["lng"]),"lat":float(toNode["lat"]),"number":toNode["number"],"nextDist":0,"nextTime":0,"nodeType":fromNode["nodeType"]})
+                   "lng":float(toNode["lng"]),"lat":float(toNode["lat"]),"number":toNode["number"],"nextDist":0,"nextTime":0,"nodeType":toNode["nodeType"]})
                 #aiBusModel.updateRouteDetail((nodeIndex,1,0,0,2,roundStatus,routeId,toNode["id"]))
                 routeNumber+=toNode["number"]
         
