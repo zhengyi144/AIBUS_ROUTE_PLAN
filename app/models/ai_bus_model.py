@@ -230,7 +230,7 @@ class AiBusModel:
         """
         根据fileId查找聚类结果，与上面方法的字段相同
         """
-        selectStr="select clusterName as siteName,longitude,latitude,number,\
+        selectStr="select id,clusterName as siteName,longitude,latitude,number,\
                  (case when clusterProperty=1 then '聚类点' when clusterProperty=2 then '边界点' else '异常点' end) as clusterProperty\
                   from tbl_cluster_result where fileId=%s and clusterStatus=1"
         return self.mysqlPool.fetchAll(selectStr,row)
