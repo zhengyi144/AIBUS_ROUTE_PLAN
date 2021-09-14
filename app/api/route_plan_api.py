@@ -495,6 +495,7 @@ def queryRouteInfo():
     """
     res = ResMsg()
     try:
+        logger.info("begin queryRouteInfo!")
         data=request.get_json()
         aiBusModel=AiBusModel()
         fileId=data["fileId"]
@@ -599,6 +600,7 @@ def queryRouteInfo():
         res.update(code=ResponseCode.Success,data={"routeParams":routeParams,"routeList":routeList})
         return res.data
     except Exception as e:
+        logger.error("queryRouteInfo exception:{}".format(str(e)))
         res.update(code=ResponseCode.Fail, msg="查询路线规划信息报错！")
         return res.data
     

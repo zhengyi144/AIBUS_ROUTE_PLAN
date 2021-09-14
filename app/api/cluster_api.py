@@ -379,7 +379,7 @@ def removeClusterResult():
         aiBusModel.updateSiteStatusByfieldId((0,userInfo["userName"],fileId,1))
         aiBusModel.updateClusterResultByFileId((0,userInfo["userName"],fileId),[1,2])
         #失效fileId对应的聚类文件
-        siteParams=aiBusModel.selectClusterParams((fileId))##根据网点文件fileId的查询网点文件
+        siteParams=aiBusModel.selectClusterParamsBySiteFileId((fileId))##根据网点文件fileId的查询网点文件
         if siteParams:
             aiBusModel.updateClusterResultByFileId((0,userInfo["userName"],siteParams["id"]),[1,2])
             aiBusModel.updateSiteFile((0,0,userInfo["userName"],siteParams["id"]))
