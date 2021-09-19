@@ -1,4 +1,4 @@
-import requests,json
+import requests,json,time
 from concurrent import futures
 from app.utils.logger import get_logger
 
@@ -52,6 +52,7 @@ def get_thread_info(routeNode):
     return: {"key","dist","time"}
     """
     res=get_route_distance_time(routeNode["origin"],routeNode["destination"],routeNode["routeType"])
+    #time.sleep(0.005)
     return {"key":routeNode["key"],"dist":res["dist"],"time":res["time"]}
 
 def build_process(routeNodeList):

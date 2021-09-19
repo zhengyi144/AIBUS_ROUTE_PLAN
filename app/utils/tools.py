@@ -3,6 +3,7 @@ import yaml
 import xlwt
 import json
 import os
+import hashlib
 from xlutils.copy import copy
 
 def readExcel(file,sheetIndex,mappingItem):
@@ -152,6 +153,16 @@ def writeExcel(filename,fields,resultdata,sheetName,removeLabel=True):
             sheet.write(row,col,u'%s' % resultdata[row-1][col],set_style('Times New Roman',11,0x0C,True))
     workbook.save(filePath)
     return filePath
+
+def generate_md5_key(item):
+    """
+    生成md5
+    """
+    md5_machine=hashlib.md5()
+    md5_machine.update(item.encode('utf-8'))
+    return md5_machine.hexdigest()
+
+
 
 """
 if __name__ == '__main__':

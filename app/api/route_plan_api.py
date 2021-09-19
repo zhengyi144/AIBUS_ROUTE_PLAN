@@ -120,26 +120,40 @@ def planSingleRoute():
         pointNum=len(indexList)
         nodeCostDF=pd.DataFrame(np.zeros([pointNum,pointNum]),columns=indexList,index=indexList)
         routeNodePair=list(itertools.permutations(routeNode, 2))
+        paramIds=[]
+        for nodePair in routeNodePair:
+            fromNode=str(round(nodePair[0]["lng"],6))+","+str(round(nodePair[0]["lat"],6))
+            toNode=str(round(nodePair[1]["lng"],6))+","+str(round(nodePair[1]["lat"],6))
+            #手动生成id,批量查询
+            paramId=generate_md5_key(fromNode+toNode)
+            paramIds.append(paramId)
+        
+        #根据paramIds查询缓存的距离nodePairDistList
+        nodePairParamsList=aiBusModel.selectRouteParams(paramIds)
+        nodePairParamsDict={}
+        for item in nodePairParamsList:
+            nodePairParamsDict[item["id"]]=item
+        
+        #获取nodePair的距离
         for nodePair in routeNodePair:
             key=str(nodePair[0]["index"])+"-"+str(nodePair[1]["index"])
-            #先查找数据库是否已经存储好数据
-            row=aiBusModel.selectRouteParams((float(nodePair[0]["lng"]),float(nodePair[0]["lat"]),float(nodePair[1]["lng"]),float(nodePair[1]["lat"])))
-            if not row or row["dist"]<0.5:
-                fromNode=str(nodePair[0]["lng"])+","+str(nodePair[0]["lat"])
-                toNode=str(nodePair[1]["lng"])+","+str(nodePair[1]["lat"])
-                paramId=-1
-                if row:
-                    paramId=row["id"]
-                nodePairList.append({"key":key,"origin":fromNode,"destination":toNode,"routeType":1,"fromNode":nodePair[0],"toNode":nodePair[1],"paramId":paramId})
-            else:
+            fromNode=str(round(nodePair[0]["lng"],6))+","+str(round(nodePair[0]["lat"],6))
+            toNode=str(round(nodePair[1]["lng"],6))+","+str(round(nodePair[1]["lat"],6))
+            paramId=generate_md5_key(fromNode+toNode)
+            #先判断是否已经存在库中
+            if paramId in nodePairParamsDict.keys():
+                item=nodePairParamsDict[paramId]
                 directDist=getGPSDistance(float(nodePair[0]["lng"]),float(nodePair[0]["lat"]),float(nodePair[1]["lng"]),float(nodePair[1]["lat"]))
-                nodePairDict[key]={"dist":float(row["dist"]),"time":row["time"],"directDist":directDist}
+                nodePairDict[key]={"dist":float(item["dist"]),"time":item["time"],"directDist":directDist}
                 #对df进行赋值
                 if routeFactor==0:
-                    nodeCostDF.loc[str(nodePair[0]["index"]),str(nodePair[1]["index"])]=int(row["time"])
+                    nodeCostDF.loc[str(nodePair[0]["index"]),str(nodePair[1]["index"])]=int(item["time"])
                 else:
-                    nodeCostDF.loc[str(nodePair[0]["index"]),str(nodePair[1]["index"])]=float(row["dist"])
-            
+                    nodeCostDF.loc[str(nodePair[0]["index"]),str(nodePair[1]["index"])]=float(item["dist"])
+            else:
+                nodePairList.append({"key":key,"origin":fromNode,"destination":toNode,"routeType":1,"fromNode":nodePair[0],"toNode":nodePair[1],"paramId":paramId})
+
+                
         #从高德获取路径数据
         if len(nodePairList)>0:
             nodePairResult=build_process(nodePairList)
@@ -155,14 +169,14 @@ def planSingleRoute():
                     nodeCostDF.loc[str(item["fromNode"]["index"]),str(item["toNode"]["index"])]=nodeItem["dist"]
                 
                 #存储获取的数据
-                if item["paramId"]==-1:
+                if item["paramId"] not in nodePairParamsDict.keys():
                     startGeo = '{ "type": "Point", "coordinates": [%s, %s]}'%(float(item["fromNode"]["lng"]),float(item["fromNode"]["lat"]))
                     endGeo = '{ "type": "Point", "coordinates": [%s, %s]}'%(float(item["toNode"]["lng"]),float(item["toNode"]["lat"]))
-                    aiBusModel.inserRouteParams((float(item["fromNode"]["lng"]),float(item["fromNode"]["lat"]),startGeo,\
+                    aiBusModel.inserRouteParams(item["paramId"],(float(item["fromNode"]["lng"]),float(item["fromNode"]["lat"]),startGeo,\
                         float(item["toNode"]["lng"]),float(item["toNode"]["lat"]),endGeo,nodeItem["dist"],nodeItem["time"],directDist,0.0))
                 else:
                     aiBusModel.updateRouteParams((nodeItem["dist"],nodeItem["time"],directDist,item["paramId"]))
-
+    
         #3)进行路线规划
         solution=singleRoutePlanByGreedyAlgorithm(routeNode,nodePairDict,nodeCostDF,passengers,occupancyRate,orderNumber,odometerFactor)
         if solution["routeNode"] is None:
@@ -170,8 +184,7 @@ def planSingleRoute():
             return res.data
         else:
             #在贪婪算法算法基础上，查找最后一段路的顺路结点
-            
-
+    
             #用sa算法进行优化
             routeInfo={"nodePair":nodePairDict,"routeNode":solution["routeNode"],"routeFactor":routeFactor}
             reSolution=singleRoutePlanSolution(routeInfo)

@@ -438,9 +438,9 @@ class AiBusModel:
         return row
 
     def inserRouteParams(self,row):
-        insertStr="insert into tbl_route_node(startLng,startLat,startNode,endLng,endLat,\
+        insertStr="insert into tbl_route_node(id,startLng,startLat,startNode,endLng,endLat,\
                                                 endNode,minDist,minTime,directDist,walkDist)  \
-                values(%s,%s,ST_GeomFromGeoJSON(%s,2,0),%s,%s,ST_GeomFromGeoJSON(%s,2,0),%s,%s,%s,%s)"
+                values(%s,%s,%s,ST_GeomFromGeoJSON(%s,2,0),%s,%s,ST_GeomFromGeoJSON(%s,2,0),%s,%s,%s,%s)"
         row=self.mysqlPool.insert(insertStr,row)
         return row
     
@@ -452,11 +452,10 @@ class AiBusModel:
         updateStr="update tbl_route_node set walkDist=%s where id=%s"
         return self.mysqlPool.update(updateStr,row)
     
-    def selectRouteParams(self,row):
+    def selectRouteParams(self,ids):
         selectStr="select id, minDist as dist,minTime as time,directDist,walkDist from tbl_route_node \
-                  where startlng=%s and startlat=%s \
-                   and endLng=%s and endLat=%s"
-        row=self.mysqlPool.fetchOne(selectStr,row)
+                  where id in (%s)"% ','.join("%s" % item for item in ids)
+        row=self.mysqlPool.fetchAll(selectStr,())
         return row
     
     def insertRouteInfo(self,row):
