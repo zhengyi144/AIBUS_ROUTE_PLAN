@@ -205,10 +205,11 @@ def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,oc
             if routeDist<=routeDirectDist*odometerFactor and routeNumber<=passengers:
                 routeCost+=series[minIndex]
                 startKey=minKey
-                tempKeys.remove(minKey)
             else:
                 routeKeys.remove(minKey)
                 routeNumber-=nodeDict[minKey]["number"]
+            tempKeys.remove(minKey)
+            
         #将符合条件的路线都加入routeList
         if len(routeKeys)>1 and routeNumber>orderNumber*occupancyRate/100:
             routeList.append({"startKey":pointKey,"routeNumber":routeNumber,\
