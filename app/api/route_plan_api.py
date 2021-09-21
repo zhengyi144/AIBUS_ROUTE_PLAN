@@ -85,7 +85,7 @@ def planSingleRoute():
                     routeNode.append({"index":index,"nodeName":point["siteName"],"lng":format(point["longitude"],'.6f'),"lat":format(point["latitude"],'.6f'),"number":point["clientNumber"]})
                     index+=1
 
-            if orderNumber<=0:
+            if orderNumber is None or orderNumber<=0:
                 orderNumber=passengers
         else:
             fileId=-1
