@@ -382,7 +382,7 @@ def reSortRouteNode():
                 routeNumber+=toNode["number"]
         
         #获取网点人数
-        orderNumber=passengers
+        orderNumber=-1
         fileInfo=aiBusModel.selectSiteFileStatus(fileId)
         if fileInfo:
             if fileInfo["clusterStatus"]==1:
@@ -391,7 +391,9 @@ def reSortRouteNode():
                     orderNumber=siteInfo["siteCount"]
             else:
                 orderNumber=fileInfo["siteCount"]
-            
+        
+        if orderNumber is None or orderNumber<=0:
+            orderNumber=passengers
         #返回结果
         routeOccupancyRate=float(routeNumber)/orderNumber*100
         result={"routeId":routeId,"routeDist":int(routeDist),\
@@ -546,6 +548,8 @@ def queryRouteInfo():
                     orderNumber=siteInfo["siteCount"]
             else:
                 orderNumber=fileInfo["siteCount"]
+        if orderNumber is None or orderNumber<=0:
+            orderNumber=routeParams["passengers"]
 
         routeList=[]
         #去程
