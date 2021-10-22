@@ -42,8 +42,8 @@ DEVELOPMENT: &development
   DEBUG: True
   SSH_ADDRESS: 218.104.232.61
   SSH_PORT: 33254
-  SSH_USERNAME: root
-  SSH_PASSWORD: I84Kcb*ldxlgh*20210223
+  SSH_USERNAME: admin
+  SSH_PASSWORD: Ldxlghxt.admin.254
 
 STAGING: &staging
   <<: *common

@@ -28,7 +28,7 @@ def create_app(config_name, config_path=None):
                 ssh_address_or_host=(app.config["SSH_ADDRESS"], app.config["SSH_PORT"]),
                 ssh_username=app.config["SSH_USERNAME"], 
                 ssh_password=app.config["SSH_PASSWORD"], # 跳转机的密码
-                remote_bind_address=("localhost", 3306)) 
+                remote_bind_address=("127.0.0.1", 3306)) 
         server.start()
         app.config["MYSQL_PORT"]=server.local_bind_port
     
