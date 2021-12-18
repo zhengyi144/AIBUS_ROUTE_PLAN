@@ -150,7 +150,7 @@ def singleRoutePlanSolution(routeInfo):
     xbest,ybest = sa.optimize(f, initFun=init, randFun=randf, stop=1e-3, t=1e4, alpha=0.98, l=10, iterPerT=1)
     return {"routeNode":xbest["routeNode"].tolist(),"bestRouteCost":ybest}
 
-def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,occupancyRate,orderNumber,odometerFactor):
+def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,occupancyRate,orderNumber,odometerFactor,maxDistance,maxDuration):
     """
     nodePair:{key:{dist,time,directDist},...}  结点对
     routeNode:[{index,nodeName,lng,lat,number},...]  结点信息
@@ -159,8 +159,10 @@ def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,oc
     occupancyRate:上座率
     orderNumber:订单数
     odometerFactor:非直线率
+    maxDistance:最大行程距离
+    maxDuration:最大行程时间
 
-    贪婪算法从目的地开始找距离最近的结点，判断是否满足passengers/occupancyRate/odometerFactor,
+    贪婪算法从目的地开始找距离最近的结点，判断是否满足passengers/occupancyRate/odometerFactor/maxDistance/maxDuration,
     如果超出限制条件后还未查找到符合的路线则返回
     """
     #将routeNode转为dict
@@ -183,11 +185,13 @@ def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,oc
         #初始化路线参数
         routeNumber=nodeDict[startKey]["number"]
         routeDist=nodePair[startToEnd]["dist"]
+        routeTime=nodePair[startToEnd]["time"]
         routeDirectDist=nodePair[startToEnd]["directDist"]
         routeCost=nodeCostDF.loc[startKey,endKey]
         routeKeys=[]
         routeKeys.append(startKey)
-        while len(tempKeys)>0 and routeDist<routeDirectDist*odometerFactor and routeNumber<passengers:
+        while len(tempKeys)>0 and routeDist<routeDirectDist*odometerFactor and routeNumber<passengers\
+            and routeDist<maxDistance and routeTime<maxDuration:
             #找出startkey距离最近的下一结点
             series=nodeCostDF.loc[startKey,tempKeys]
             minIndex=series.argmin()
@@ -195,14 +199,18 @@ def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,oc
             routeKeys.append(minKey)
             #重新计算起始结点至终点的实际距离和路线人数
             routeDist=0
+            routeTime=0
             for i in range(0,len(routeKeys)-1):
                 nodeKey=routeKeys[i]+"-"+routeKeys[i+1]
                 routeDist+=nodePair[nodeKey]["dist"]
+                routeTime+=nodePair[nodeKey]["time"]
             nodeKey=routeKeys[len(routeKeys)-1]+"-"+endKey
             routeDist+=nodePair[nodeKey]["dist"]
+            routeTime+=nodePair[nodeKey]["time"]
             routeNumber+=nodeDict[minKey]["number"]
             #对比直线系数是否满足要求和人数是否满足要求
-            if routeDist<=routeDirectDist*odometerFactor and routeNumber<=passengers:
+            if routeDist<=routeDirectDist*odometerFactor and routeNumber<=passengers\
+               and routeDist<maxDistance and routeTime<maxDuration:
                 routeCost+=series[minIndex]
                 startKey=minKey
             else:

@@ -52,9 +52,19 @@ def planSingleRoute():
         waypoints=data["waypoints"]          
         passengers=data["passengers"]         #座位上限
         occupancyRate=float(data["occupancyRate"])    #上座率
-        odometerFactor=data["odometerFactor"]   #非直线系数
+        #初始化相关系数
+        odometerFactor=100.0  
+        maxDistance=1000.0*1000  #m
+        maxDuration=24*3600  #分钟
+        if "odometerFactor" in data and data["odometerFactor"]!="":
+            odometerFactor=float(data["odometerFactor"])   #非直线系数(非必选)
+        if "maxDistance" in data and data["maxDistance"]!="":
+            maxDistance=float(data["maxDistance"])*1000         #最大行程距离,data["maxDistance"](km)
+        if "maxDuration" in data and data["maxDuration"]!="":
+            maxDuration=float(data["maxDuration"])         #最大行程耗时
         roundTrip=data["roundTrip"]   #是否往返0,
         routeFactor=data["routeFactor"]   #路线方案，0时间最短，1距离最短
+        vehicleType=int(data["vehicleType"])   #车辆类型0为小车方案，1为货车方案
         MAXNODE=20
         MINNODE=2
         if not destination:
@@ -129,7 +139,7 @@ def planSingleRoute():
             paramIds.append(paramId)
         
         #根据paramIds查询缓存的距离nodePairDistList
-        nodePairParamsList=aiBusModel.selectRouteParams(paramIds)
+        nodePairParamsList=aiBusModel.selectRouteParams(vehicleType,paramIds)
         nodePairParamsDict={}
         if nodePairParamsList:
             for item in nodePairParamsList:
@@ -152,7 +162,7 @@ def planSingleRoute():
                 else:
                     nodeCostDF.loc[str(nodePair[0]["index"]),str(nodePair[1]["index"])]=float(item["dist"])
             else:
-                nodePairList.append({"key":key,"origin":fromNode,"destination":toNode,"routeType":1,"fromNode":nodePair[0],"toNode":nodePair[1],"paramId":paramId})
+                nodePairList.append({"key":key,"origin":fromNode,"destination":toNode,"routeType":vehicleType,"fromNode":nodePair[0],"toNode":nodePair[1],"paramId":paramId})
                 
         #从高德获取路径数据
         if len(nodePairList)>0:
@@ -170,16 +180,16 @@ def planSingleRoute():
                 
                 #存储获取的数据
                 if item["paramId"] not in nodePairParamsDict.keys():
-                    startGeo = '{ "type": "Point", "coordinates": [%s, %s]}'%(float(item["fromNode"]["lng"]),float(item["fromNode"]["lat"]))
-                    endGeo = '{ "type": "Point", "coordinates": [%s, %s]}'%(float(item["toNode"]["lng"]),float(item["toNode"]["lat"]))
-                    aiBusModel.inserRouteParams((item["paramId"],float(item["fromNode"]["lng"]),float(item["fromNode"]["lat"]),startGeo,\
-                        float(item["toNode"]["lng"]),float(item["toNode"]["lat"]),endGeo,nodeItem["dist"],nodeItem["time"],directDist,0.0))
+                    #startGeo = '{ "type": "Point", "coordinates": [%s, %s]}'%(float(item["fromNode"]["lng"]),float(item["fromNode"]["lat"]))
+                    #endGeo = '{ "type": "Point", "coordinates": [%s, %s]}'%(float(item["toNode"]["lng"]),float(item["toNode"]["lat"]))
+                    aiBusModel.inserRouteParams((item["paramId"],float(item["fromNode"]["lng"]),float(item["fromNode"]["lat"]),\
+                        float(item["toNode"]["lng"]),float(item["toNode"]["lat"]),nodeItem["dist"],nodeItem["time"],directDist,0.0))
                 else:
                     aiBusModel.updateRouteParams((nodeItem["dist"],nodeItem["time"],directDist,item["paramId"]))
     
         #3)进行路线规划
         logger.info("start single route plan!")
-        solution=singleRoutePlanByGreedyAlgorithm(routeNode,nodePairDict,nodeCostDF,passengers,occupancyRate,orderNumber,odometerFactor)
+        solution=singleRoutePlanByGreedyAlgorithm(routeNode,nodePairDict,nodeCostDF,passengers,occupancyRate,orderNumber,odometerFactor,maxDistance,maxDuration)
         if solution["routeNode"] is None:
             res.update(code=ResponseCode.Fail,data=[], msg="未找到满足条件的路线！")
             return res.data
@@ -321,6 +331,7 @@ def reSortRouteNode():
         routeId=data["routeId"]
         roundStatus=data["roundStatus"]
         passengers=data["passengers"]
+        vehicleType=data["vehicleType"]
         routeNodeList=data["routeNodeList"]
         invalidNodeList=data["invalidNodeList"]
         
@@ -348,7 +359,7 @@ def reSortRouteNode():
             toLngLat=str(round(float(toNode["lng"]),6))+","+str(round(float(toNode["lat"]),6))
             #手动生成id,批量查询
             paramId=generate_md5_key(fromLngLat+","+toLngLat)
-            row=aiBusModel.selectRouteParams([paramId])
+            row=aiBusModel.selectRouteParams(vehicleType,[paramId])
             if row is None or len(row)<1 or row[0]["dist"]:
                 startPoint=str(fromNode["lng"])+","+str(fromNode["lat"])
                 endPoint=str(toNode["lng"])+","+str(toNode["lat"])
@@ -422,6 +433,7 @@ def saveRouteNode():
         routeId=data["routeId"]
         roundStatus=data["roundStatus"]
         passengers=data["passengers"]
+        vehicleType=int(data["vehicleType"])
         routeNodeList=data["routeNodeList"]
         invalidNodeList=data["invalidNodeList"]
         if fileId is None or fileId=="":
@@ -449,7 +461,7 @@ def saveRouteNode():
             toLngLat=str(round(float(toNode["lng"]),6))+","+str(round(float(toNode["lat"]),6))
             #手动生成id,批量查询
             paramId=generate_md5_key(fromLngLat+","+toLngLat)
-            row=aiBusModel.selectRouteParams([paramId])
+            row=aiBusModel.selectRouteParams(vehicleType,[paramId])
             if row is None or len(row)<1 or row[0]["dist"]<0.5:
                 startPoint=str(fromNode["lng"])+","+str(fromNode["lat"])
                 endPoint=str(toNode["lng"])+","+str(toNode["lat"])

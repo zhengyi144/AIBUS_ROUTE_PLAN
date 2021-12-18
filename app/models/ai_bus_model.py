@@ -453,10 +453,11 @@ class AiBusModel:
         updateStr="update tbl_route_node set walkDist=%s where id=%s"
         return self.mysqlPool.update(updateStr,row)
     
-    def selectRouteParams(self,ids):
+    def selectRouteParams(self,vehicleType,ids):
         selectStr="select id, minDist as dist,minTime as time,directDist,walkDist from tbl_route_node \
-                  where id in (%s)"% ','.join("'%s'" % item for item in ids)
-        row=self.mysqlPool.fetchAll(selectStr,())
+                  where vehicleType=%s"
+        conditionStr=" and id in (%s)"% ','.join("'%s'" % item for item in ids)
+        row=self.mysqlPool.fetchAll(selectStr+conditionStr,(vehicleType))
         return row
     
     def insertRouteInfo(self,row):

@@ -129,7 +129,7 @@ def clusterByAdaptiveDbscan(siteList,epsRadius,minSamples,distType=1):
             if dist<=epsRadius:
                 fromNode=str(round(sitePair[0]["lng"],6))+","+str(round(sitePair[0]["lat"],6))
                 toNode=str(round(sitePair[1]["lng"],6))+","+str(round(sitePair[1]["lat"],6))
-                routeNodeList.append({"key":key,"origin":fromNode,"destination":toNode,"routeType":0})
+                routeNodeList.append({"key":key,"origin":fromNode,"destination":toNode,"routeType":2})
             else:
                 sitePairInfo[key]=dist
         

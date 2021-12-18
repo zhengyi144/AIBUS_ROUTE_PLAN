@@ -7,10 +7,12 @@ logger=get_logger(name="amapUtil",log_file="logs/logger.log")
 key = "36fdeffd608643f8dec6d43b2d9b8ec8" 
 #mykey="c499537db92f1234f8390eeec13cfbe5"
 # 驾车路径规划 36fdeffd608643f8dec6d43b2d9b8ec8 
-def get_route(origin,destination,routeType=1):
-    if routeType==1:
+def get_route(origin,destination,routeType=0):
+    if routeType==0:
         api=f'http://restapi.amap.com/v3/direction/driving?origin={origin}&destination={destination}&output=JSON&key={key}'
-    elif routeType==0:
+    elif routeType==1:
+        api=f'https://restapi.amap.com/v4/direction/truck?origin={origin}&destination={destination}&size=3&key={key}'
+    elif routeType==2:
         api=f'http://restapi.amap.com/v3/direction/walking?origin={origin}&destination={destination}&key={key}'
     r=requests.get(api)
     r=r.text
