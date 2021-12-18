@@ -37,9 +37,9 @@ def uploadStationExcel():
         else:
             siteProperty=1 if item["siteProperty"]=="固定" else 0
             #geojson = { "type": "Point", "coordinates": [float(item["longitude"]),float(item["latitude"])]}
-            geojson = '{ "type": "Point", "coordinates": [%s, %s]}'%(float(item["longitude"]),float(item["latitude"]))
+            #geojson = '{ "type": "Point", "coordinates": [%s, %s]}'%(float(item["longitude"]),float(item["latitude"]))
             insertVals.append((item["province"],item["city"],item["region"],item["siteName"],siteProperty,item["direction"],\
-                float(item["longitude"]),float(item["latitude"]),item["road"],userInfo["citycode"],userInfo["userName"],userInfo["userName"],geojson))
+                float(item["longitude"]),float(item["latitude"]),item["road"],userInfo["citycode"],userInfo["userName"],userInfo["userName"]))
     row=aiBusModel.batchStation(tuple(insertVals))
     if row>0:
         res.update(code=ResponseCode.Success, msg="成功插入{}条记录！".format(row))
@@ -138,20 +138,20 @@ def upInsertStation():
         else:
             unilateral=0
         
-        geojson = '{ "type": "Point", "coordinates": [%s, %s]}'% (longitude,latitude)
+        #geojson = '{ "type": "Point", "coordinates": [%s, %s]}'% (longitude,latitude)
         if upInsertType=="I":
             #根据站点名称和地理方位保持唯一性
             row=aiBusModel.selectStationByNameDirection((siteName,direction))
             if row["num"]>0:
                 res.update(code=ResponseCode.Fail,msg="该站点+地理方位己存在!")
                 return res.data
-            aiBusModel.insertStation((province,city,region,siteName,siteProperty,siteStatus,direction,longitude,latitude,road,unilateral,userInfo["citycode"],userInfo["userName"],userInfo["userName"]),geojson)
+            aiBusModel.insertStation((province,city,region,siteName,siteProperty,siteStatus,direction,longitude,latitude,road,unilateral,userInfo["citycode"],userInfo["userName"],userInfo["userName"]))
         else:
             id=data['id']
             if id is None or id=="":
                 res.update(code=ResponseCode.Fail,msg="更新站点id不能为null")
                 return res.data
-            row=aiBusModel.updateStation((province,city,region,siteName,siteProperty,siteStatus,direction,longitude,latitude,road,unilateral,userInfo["citycode"],userInfo["userName"],id),geojson)
+            row=aiBusModel.updateStation((province,city,region,siteName,siteProperty,siteStatus,direction,longitude,latitude,road,unilateral,userInfo["citycode"],userInfo["userName"],id))
         res.update(code=ResponseCode.Success, msg="保存成功！")
         return res.data
     except Exception as e:

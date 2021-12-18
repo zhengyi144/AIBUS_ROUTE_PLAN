@@ -27,23 +27,24 @@ class AiBusModel:
         return self.mysqlPool.fetchAll(queryStr,(userName,citycode))
         
     
-    def insertStation(self,row,geojson):
+    def insertStation(self,row):
         """
         插入tbl_station
         """
 
-        insertStr="insert into tbl_station(province,city,region,siteName,siteProperty,siteStatus,direction,longitude,latitude,road,unilateral,userCitycode,createUser,updateUser,location)  \
-                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,ST_GeomFromGeoJSON( '"+geojson +"',2,0))"
+        insertStr="insert into tbl_station(province,city,region,siteName,siteProperty,siteStatus,direction,longitude,latitude,road,unilateral,userCitycode,createUser,updateUser)  \
+                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
         row=self.mysqlPool.insert(insertStr,row)
         return row
     
-    def updateStation(self,row,geojson):
+    def updateStation(self,row):
         """
         更新tbl_station
+        location=ST_GeomFromGeoJSON( '"+geojson +"',2,0),
         """
         updateStr="update tbl_station \
                   set province=%s,city=%s,region=%s,siteName=%s,siteProperty=%s,\
-                  siteStatus=%s,direction=%s,longitude=%s,latitude=%s,location=ST_GeomFromGeoJSON( '"+geojson +"',2,0),\
+                  siteStatus=%s,direction=%s,longitude=%s,latitude=%s,\
                   road=%s,unilateral=%s,userCitycode=%s,updateUser=%s  \
                   where id=%s "
         row=self.mysqlPool.insert(updateStr,row)
@@ -53,8 +54,8 @@ class AiBusModel:
         """
         插入tbl_station
         """
-        batchStr="insert into tbl_station(province,city,region,siteName,siteProperty,direction,longitude,latitude,road,userCitycode,createUser,updateUser,location)  \
-                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,ST_GeomFromGeoJSON(%s,2,0))"
+        batchStr="insert into tbl_station(province,city,region,siteName,siteProperty,direction,longitude,latitude,road,userCitycode,createUser,updateUser)  \
+                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
         row=self.mysqlPool.batch(batchStr,rows)
         return row
     
@@ -190,8 +191,8 @@ class AiBusModel:
         插入tbl_site
         """
         batchStr="insert into tbl_site(fileId,region,siteName,siteProperty,siteStatus,longitude,latitude,clientName,\
-                 clientProperty,clientAddress,age,grade,number,others,createUser,updateUser,location,srcLongitude,srcLatitude)  \
-                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,ST_GeomFromGeoJSON(%s,2,0),%s,%s)"
+                 clientProperty,clientAddress,age,grade,number,others,createUser,updateUser,srcLongitude,srcLatitude)  \
+                   values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
         row=self.mysqlPool.batch(batchStr,rows)
         return row
     
@@ -438,9 +439,9 @@ class AiBusModel:
         return row
 
     def inserRouteParams(self,row):
-        insertStr="insert into tbl_route_node(id,startLng,startLat,startNode,endLng,endLat,\
-                                                endNode,minDist,minTime,directDist,walkDist)  \
-                values(%s,%s,%s,ST_GeomFromGeoJSON(%s,2,0),%s,%s,ST_GeomFromGeoJSON(%s,2,0),%s,%s,%s,%s)"
+        insertStr="insert into tbl_route_node(id,startLng,startLat,endLng,endLat,\
+                                                minDist,minTime,directDist,walkDist)  \
+                values(%s,%s,%s,%s,%s,%s,%s,%s,%s)"
         row=self.mysqlPool.insert(insertStr,row)
         return row
     

@@ -80,7 +80,7 @@ def uploadSiteExcel():
                     lat=float(item["latitude"])
 
                 #geojson = { "type": "Point", "coordinates": [float(item["longitude"]),float(item["latitude"])]}
-                geojson = '{ "type": "Point", "coordinates": [%s, %s]}'%(lng,lat)
+                #geojson = '{ "type": "Point", "coordinates": [%s, %s]}'%(lng,lat)
 
                 if "region" in item:
                     region=item["region"]
@@ -119,7 +119,7 @@ def uploadSiteExcel():
 
                 insertVals.append((siteFile["id"],region,item["siteName"],siteProperty,2,\
                     lng,lat,clientName,clientProperty,clientAddress,age,grade,number,others,\
-                    userInfo["userName"],userInfo["userName"],geojson,float(item["longitude"]),float(item["latitude"])))
+                    userInfo["userName"],userInfo["userName"],float(item["longitude"]),float(item["latitude"])))
         if len(insertVals)>0:
             #此时tbl_site中siteStatus还是临时站点
             row=aiBusModel.batchSites(tuple(insertVals))
