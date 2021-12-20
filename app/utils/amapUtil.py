@@ -19,7 +19,7 @@ def get_route(origin,destination,routeType=0):
     jsonData=json.loads(r)
     return jsonData
 
-def get_route_distance_time(origin,destination,routeType=1): 
+def get_route_distance_time(origin,destination,routeType=0): 
     """
     # 该函数是调用高德API获取起始点到终点两个经纬度之间的距离以及时间（以米为单位）
     origin: 起始点经纬度

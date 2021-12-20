@@ -461,8 +461,9 @@ class AiBusModel:
         return row
     
     def insertRouteInfo(self,row):
-        insertStr="insert into tbl_route_info(fileId,routeId,destName,destLng,destLat,passengers,occupancyRate,odometerFactor,routeFactor,roundTrip,wayPoints,routeStatus)\
-            values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        insertStr="insert into tbl_route_info(fileId,routeId,destName,destLng,destLat,passengers,occupancyRate,odometerFactor,routeFactor,\
+            roundTrip,wayPoints,maxDistance,maxDuration,vehicleType,routeStatus)  \
+            values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
         row=self.mysqlPool.insert(insertStr,row)
         return row
     
@@ -505,8 +506,8 @@ class AiBusModel:
         """
         根据fileid查询路线规划参数
         """
-        selectStr="select routeId,destName,destLng,destLat,passengers,occupancyRate,odometerFactor,routeFactor,roundTrip,wayPoints \
-                from tbl_route_info where fileId=%s and routeStatus=1"
+        selectStr="select routeId,destName,destLng,destLat,passengers,occupancyRate,odometerFactor,routeFactor,roundTrip,wayPoints, \
+                maxDistance,maxDuration,vehicleType from tbl_route_info where fileId=%s and routeStatus=1"
         return self.mysqlPool.fetchOne(selectStr,row)
     
     def invalidRouteInfo(self,row):

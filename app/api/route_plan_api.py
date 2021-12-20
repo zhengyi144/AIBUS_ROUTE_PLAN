@@ -233,7 +233,7 @@ def planSingleRoute():
         routeUuid = uuid.uuid1().int
         aiBusModel.insertRouteInfo((fileId,routeUuid,destination["siteName"],\
             destination["lng"],destination["lat"],passengers,occupancyRate,odometerFactor,\
-            routeFactor,roundTrip,json.dumps(waypoints),2))
+            routeFactor,roundTrip,json.dumps(waypoints),maxDistance,maxDuration,vehicleType,2))
 
         for node in routeNodeList:
             aiBusModel.insertRouteDetail((fileId,routeUuid,0,node["nodeIndex"],node["nodeName"],2,\
@@ -331,7 +331,7 @@ def reSortRouteNode():
         routeId=data["routeId"]
         roundStatus=data["roundStatus"]
         passengers=data["passengers"]
-        vehicleType=data["vehicleType"]
+        vehicleType=int(data["vehicleType"])
         routeNodeList=data["routeNodeList"]
         invalidNodeList=data["invalidNodeList"]
         
@@ -363,7 +363,7 @@ def reSortRouteNode():
             if row is None or len(row)<1 or row[0]["dist"]:
                 startPoint=str(fromNode["lng"])+","+str(fromNode["lat"])
                 endPoint=str(toNode["lng"])+","+str(toNode["lat"])
-                distTime=get_route_distance_time(startPoint,endPoint)
+                distTime=get_route_distance_time(startPoint,endPoint,routeType=vehicleType)
                 dist+=distTime["dist"]
                 time+=distTime["time"]
                 routeDist+=distTime["dist"]
@@ -536,20 +536,26 @@ def queryRouteInfo():
         if fileId is None or fileId=='':
             res.update(code=ResponseCode.Fail,msg="fileId不能为空！")
             return res.data
-        #1)查询routeInfo
+        #1)查询routeInfo,处理返回路径的基本信息
         routeParams=aiBusModel.selectRouteInfo((fileId))
         if not routeParams:
             res.update(code=ResponseCode.Success)
             return res.data
         routeParams["destination"]={"siteName":routeParams["destName"], "lng":routeParams["destLng"],"lat": routeParams["destLat"]}
         routeParams["waypoints"]=json.loads(routeParams["wayPoints"])
+        if routeParams["maxDistance"]!="" and routeParams["maxDistance"]>=1000000.0:
+            routeParams["maxDistance"]=""
+        elif routeParams["maxDistance"]<1000000.0:
+            routeParams["maxDistance"]=routeParams["maxDistance"]/1000
+        if routeParams["maxDuration"]!="" and routeParams["maxDuration"]>=24*3600:
+            routeParams["maxDuration"]=""
+
         del routeParams["destName"]
         del routeParams["destLng"]
         del routeParams["destLat"]
         del routeParams["wayPoints"]
 
         #2)查询路线规划信息
-        
         #获取网点人数
         orderNumber=-1
         fileInfo=aiBusModel.selectSiteFileStatus(fileId)
