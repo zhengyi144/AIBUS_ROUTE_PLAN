@@ -6,6 +6,7 @@ from app.utils.code import ResponseCode
 from app.utils.response import ResMsg
 from app.utils.auth import Auth, login_required
 from app.utils.util import route
+from app.utils.amapUtil import search_around_place
 import os
 from urllib.parse import quote
 import json
@@ -35,6 +36,13 @@ def login():
     auth = Auth()
     return auth.authenticate(userName,password,citycode)
 
+#----------------------调用高德周边搜索api------------------------------#
+@route(common,'/searchAroundPlace',methods=["POST"])
+def searchAroundPlace():
+    data=request.get_json()
+    location=data["location"]
+    del data["location"]
+    return search_around_place(location,data)
 
 ####################--------前端网页下载excel表格--------###########################
 def file_iterator(file_path, chunk_size=512):
