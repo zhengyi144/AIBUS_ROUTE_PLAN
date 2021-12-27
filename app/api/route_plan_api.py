@@ -443,7 +443,7 @@ def saveRouteNode():
         #根据结点顺序获取对应信息
         nodeIndex=0
         for node in invalidNodeList:
-            aiBusModel.updateRouteDetail((nodeIndex,0,0,0,1,roundStatus,routeId,node["id"]))
+            aiBusModel.updateRouteDetail((nodeIndex,0,0,0,1,roundStatus,node["nodeName"],node["lng"],node["lat"],routeId,node["id"]))
             #newInvalidNodeList.append({"id":node["id"],"nodeIndex":nodeIndex,"nodeName":node["nodeName"],\
             #    "lng":float(node["lng"]),"lat":float(node["lat"]),"number":node["number"]})
             nodeIndex+=1
@@ -481,14 +481,14 @@ def saveRouteNode():
                 #newRouteNodeList.append({"id":fromNode["id"],"nodeIndex":nodeIndex,"nodeName":fromNode["nodeName"],\
                 #    "lng":float(fromNode["lng"]),"lat":float(fromNode["lat"]),"number":fromNode["number"],\
                 #    "nextDist":row["dist"],"nextTime":row["time"]})
-                aiBusModel.updateRouteDetail((nodeIndex,1,dist,time,1,roundStatus,routeId,fromNode["id"]))
+                aiBusModel.updateRouteDetail((nodeIndex,1,dist,time,1,roundStatus,fromNode["nodeName"],fromNode["lng"],fromNode["lat"],routeId,fromNode["id"]))
                 dist=0
                 time=0
             nodeIndex+=1
             if i+1==length-1:
                 #newRouteNodeList.append({"id":toNode["id"],"nodeIndex":nodeIndex,"nodeName":toNode["nodeName"],\
                 #   "lng":float(toNode["lng"]),"lat":float(toNode["lat"]),"number":toNode["number"],"nextDist":0,"nextTime":0})
-                aiBusModel.updateRouteDetail((nodeIndex,1,0,0,1,roundStatus,routeId,toNode["id"]))
+                aiBusModel.updateRouteDetail((nodeIndex,1,0,0,1,roundStatus,toNode["nodeName"],toNode["lng"],toNode["lat"],routeId,toNode["id"]))
                 #routeNumber+=toNode["number"]
                 
         #更新routeInfo参数表,实现之前保存的参数，替换为当前的参数

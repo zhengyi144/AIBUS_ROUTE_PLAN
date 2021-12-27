@@ -474,7 +474,8 @@ class AiBusModel:
         return row
     
     def updateRouteDetail(self,row):
-        updateStr="update tbl_route_detail set nodeIndex=%s,nodeProperty=%s,nextDist=%s,nextTime=%s,nodeStatus=%s,roundStatus=%s where  routeId=%s and id=%s"
+        updateStr="update tbl_route_detail set nodeIndex=%s,nodeProperty=%s,nextDist=%s,nextTime=%s,nodeStatus=%s,roundStatus=%s, \
+                   nodeName=%s,nodeLng=%s,nodeLat=%s where  routeId=%s and id=%s"
         return self.mysqlPool.update(updateStr,row)
 
     def invalidWayPoints(self,row):
