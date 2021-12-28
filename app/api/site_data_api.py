@@ -369,3 +369,34 @@ def exportSitePoints():
     except Exception as e:
         res.update(code=ResponseCode.Fail)
         return res.data
+
+#-----------------------设置站点样式------------------------------------#
+@route(sitedata,'/saveStationStyle',methods=["POST"])
+def saveStationStyle():
+    res = ResMsg()
+    try:
+        aiBusModel=AiBusModel()
+        data=request.get_json()
+        style=data["style"]
+        
+        #先删除再插入
+        aiBusModel.deleteStationStyle()
+        aiBusModel.insertStationStyle((json.dumps(style)))
+        res.update(code=ResponseCode.Success, msg="保存样式成功！")
+        return res.data
+    except Exception as e:
+        res.update(code=ResponseCode.Fail)
+        return res.data
+
+@route(sitedata,'/getStationStyle',methods=["POST"])
+def getStationStyle():
+    res = ResMsg()
+    try:
+        aiBusModel=AiBusModel()
+        row=aiBusModel.selectStationStyle()
+        res.update(code=ResponseCode.Success,data=row)
+        return res.data
+    except Exception as e:
+        res.update(code=ResponseCode.Fail)
+        return res.data
+    

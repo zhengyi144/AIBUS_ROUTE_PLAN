@@ -519,4 +519,15 @@ class AiBusModel:
         updateStr="update tbl_route_info set routeStatus=%s where fileId=%s and routeId=%s"
         return self.mysqlPool.update(updateStr,row)
 
+    def deleteStationStyle(self):
+        deleteStr="delete from tbl_station_style"
+        return self.mysqlPool.delete(deleteStr,())
+    
+    def insertStationStyle(self,row):
+        insertStr="insert into tbl_station_style(style) values(%s)"
+        return self.mysqlPool.insert(insertStr,row)
+
+    def selectStationStyle(self):
+        selectStr="select style from tbl_station_style"
+        return self.mysqlPool.fetchOne(selectStr,())
     

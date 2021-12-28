@@ -2,6 +2,7 @@ import requests,json,time
 from concurrent import futures
 #from logger import get_logger
 from app.utils.logger import get_logger
+from app.utils.util import route
 
 logger=get_logger(name="amapUtil",log_file="logs/logger.log")
 
@@ -62,7 +63,8 @@ def get_thread_info(routeNode):
     return: {"key","dist","time"}
     """
     res=get_route_distance_time(routeNode["origin"],routeNode["destination"],routeNode["routeType"])
-    #time.sleep(0.005)
+    if routeNode["routeType"]==1:
+        time.sleep(1)
     #再循环一次
     if res is None:
         logger.info("retry get_route_distance_time!")
@@ -77,7 +79,7 @@ def build_process(routeNodeList):
         result={"key1":{"dist","time"},"key2":{"dist","time"},...}
     """
     result={}
-    with futures.ThreadPoolExecutor(max_workers=3) as executor:
+    with futures.ThreadPoolExecutor(max_workers=1) as executor:
         for item in executor.map(get_thread_info,routeNodeList):
             result[item["key"]]={"dist":item["dist"],"time":item["time"]}
     return result
