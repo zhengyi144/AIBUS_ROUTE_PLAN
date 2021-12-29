@@ -79,7 +79,12 @@ def build_process(routeNodeList):
         result={"key1":{"dist","time"},"key2":{"dist","time"},...}
     """
     result={}
-    with futures.ThreadPoolExecutor(max_workers=1) as executor:
+    routeType=routeNodeList[0]["routeType"]
+    max_workers=5
+    if routeType==1:
+        max_workers=1
+    logger.info("routeType:{},thread num:{}".format(routeType,max_workers))
+    with futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         for item in executor.map(get_thread_info,routeNodeList):
             result[item["key"]]={"dist":item["dist"],"time":item["time"]}
     return result

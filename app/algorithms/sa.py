@@ -147,7 +147,7 @@ def singleRoutePlanSolution(routeInfo):
         return cost
 
     sa = SAOptimizer()
-    xbest,ybest = sa.optimize(f, initFun=init, randFun=randf, stop=1e-3, t=1e4, alpha=0.98, l=10, iterPerT=1)
+    xbest,ybest = sa.optimize(f, initFun=init, randFun=randf, stop=5e-3, t=1e5, alpha=0.98, l=10, iterPerT=1)
     return {"routeNode":xbest["routeNode"].tolist(),"bestRouteCost":ybest}
 
 def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,occupancyRate,orderNumber,odometerFactor,maxDistance,maxDuration):
