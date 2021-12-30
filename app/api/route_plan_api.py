@@ -61,7 +61,7 @@ def planSingleRoute():
         if "maxDistance" in data and data["maxDistance"]!="":
             maxDistance=float(data["maxDistance"])*1000         #最大行程距离,data["maxDistance"](km)
         if "maxDuration" in data and data["maxDuration"]!="":
-            maxDuration=float(data["maxDuration"])         #最大行程耗时
+            maxDuration=float(data["maxDuration"])*60         #最大行程耗时
         roundTrip=data["roundTrip"]   #是否往返0,
         routeFactor=data["routeFactor"]   #路线方案，0时间最短，1距离最短
         vehicleType=int(data["vehicleType"])   #车辆类型0为小车方案，1为货车方案
