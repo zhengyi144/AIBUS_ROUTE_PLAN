@@ -209,12 +209,13 @@ def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,oc
                 routeDist+=nodePair[nodeKey]["dist"]
                 routeTime+=nodePair[nodeKey]["time"]
             nodeKey=routeKeys[len(routeKeys)-1]+"-"+endKey
+            lastRouteDirectDist=nodePair[nodeKey]["directDist"]
             routeDist+=nodePair[nodeKey]["dist"]
             routeTime+=nodePair[nodeKey]["time"]
             routeNumber+=nodeDict[minKey]["number"]
             #对比直线系数是否满足要求和人数是否满足要求
             if routeDist<=routeDirectDist*odometerFactor and routeNumber<=passengers\
-               and routeDist<maxDistance and routeTime<maxDuration:
+               and routeDist<maxDistance and routeTime<maxDuration and lastRouteDirectDist<routeDirectDist:
                 routeCost+=series[minIndex]
                 startKey=minKey
             else:
