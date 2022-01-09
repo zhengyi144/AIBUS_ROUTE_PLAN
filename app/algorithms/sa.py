@@ -173,11 +173,13 @@ def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,oc
     pointKeys=list(nodeCostDF.columns)
     #print(pointKeys)
     endKey="dest"
-    pointKeys.remove(endKey)
+    #pointKeys.remove(endKey)
 
     routeList=[]
     #将每个结点作为起始点,找出符合条件的所有路线
     for pointKey in pointKeys:
+        if pointKey=="dest":
+            continue
         startKey=pointKey
         tempKeys=deepcopy(pointKeys)
         tempKeys.remove(startKey)
@@ -196,6 +198,8 @@ def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,oc
             series=nodeCostDF.loc[startKey,tempKeys]
             minIndex=series.argmin()
             minKey=series.index[int(minIndex)]
+            if minKey=="dest":
+                break
             routeKeys.append(minKey)
             #重新计算起始结点至终点的实际距离和路线人数
             routeDist=0
@@ -225,8 +229,8 @@ def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,oc
                     "routeDirectDist":routeDirectDist})
 
     #按照结点数量、人数、routeCost进行排序
-    routeList.sort(key=lambda x: (len(x["routeKeys"]),x["routeNumber"],x["routeCost"]),reverse=True)
-
+    routeList.sort(key=lambda x: (len(x["routeKeys"]),x["routeNumber"]),reverse=True)
+    
     #取出第一条作为最优路线
     if len(routeList)<=0:
         #未规划点
@@ -237,9 +241,16 @@ def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,oc
             "bestRouteCost":0,"routeNumber":0,\
             "routeDist":0,"routeDirectDist":0}
     else:
+        #取出最大routeKeys数量的路径集合，按照routeCost从小到大排序
+        maxRouteNumber=len(routeList[0]["routeKeys"])
+        topRouteList=[]
+        for tmpRoute in routeList:
+            if len(tmpRoute["routeKeys"])==maxRouteNumber:
+                topRouteList.append(tmpRoute)
+        topRouteList.sort(key=lambda x: x["routeCost"])
         #路径点
         bestRouteNode=[]
-        bestRouteKeys=routeList[0]["routeKeys"]
+        bestRouteKeys=topRouteList[0]["routeKeys"]
         for key in bestRouteKeys:
             bestRouteNode.append(nodeDict[key])
         bestRouteNode.append(nodeDict[endKey])
