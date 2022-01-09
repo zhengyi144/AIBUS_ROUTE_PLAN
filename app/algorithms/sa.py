@@ -242,10 +242,10 @@ def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,oc
             "routeDist":0,"routeDirectDist":0}
     else:
         #取出最大routeKeys数量的路径集合，按照routeCost从小到大排序
-        maxRouteNumber=len(routeList[0]["routeNumber"])
+        maxRouteNumber=routeList[0]["routeNumber"]
         topRouteList=[]
         for tmpRoute in routeList:
-            if len(tmpRoute["routeNumber"])==maxRouteNumber:
+            if tmpRoute["routeNumber"]==maxRouteNumber:
                 topRouteList.append(tmpRoute)
         topRouteList.sort(key=lambda x: x["routeCost"])
         #路径点
