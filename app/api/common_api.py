@@ -39,9 +39,12 @@ def login():
 #----------------------调用高德周边搜索api------------------------------#
 @route(common,'/searchAroundPlace',methods=["GET","POST"])
 def searchAroundPlace():
-    #if request.method=="POST":
-    data=request.get_json()
+    if request.method=="POST":
+        data=request.get_json()
+    else:
+        data=json.loads(json.dumps(request.args))
     location=data["location"]
+    #print(location)
     del data["location"]
     return search_around_place(location,data)
 
