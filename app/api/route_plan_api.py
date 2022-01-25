@@ -51,7 +51,7 @@ def planSingleRoute():
         destination=data["destination"]
         waypoints=data["waypoints"]          
         passengers=data["passengers"]         #座位上限
-        occupancyRate=float(data["occupancyRate"])    #上座率
+        occupancyRate=int(data["occupancyRate"])    #改为上座下限
         #初始化相关系数
         odometerFactor=100.0  
         maxDistance=1000.0*1000  #m
@@ -112,6 +112,10 @@ def planSingleRoute():
             return res.data
         
         #判断参数是否冲突
+        if occupancyRate>passengers:
+            res.update(code=ResponseCode.Fail,data=[],msg="路线规划上座下限必须小于座位上限！")
+            return res.data
+        """
         if occupancyRate<=0 or occupancyRate>100:
             res.update(code=ResponseCode.Fail,data=[],msg="路线规划上座率下限必须大于{}或者小于{}！".format(0,100))
             return res.data
@@ -119,6 +123,7 @@ def planSingleRoute():
         if passengers<int(orderNumber*occupancyRate/100):
             res.update(code=ResponseCode.Fail,data=[],msg="最低上座率人数超过座位上限！")
             return res.data
+        """
 
         #将目标点一起添加至末尾
         routeNode.append({"index":"dest","nodeName":destination["siteName"],"lng":format(destination["lng"],'.6f'),"lat":format(destination["lat"],'.6f'),"number":0})

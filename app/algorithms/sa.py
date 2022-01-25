@@ -156,7 +156,7 @@ def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,oc
     routeNode:[{index,nodeName,lng,lat,number},...]  结点信息
     nodeCostDF:时间或者距离dataframe
     passengers:座位上限
-    occupancyRate:上座率
+    occupancyRate:上座下限
     orderNumber:订单数
     odometerFactor:非直线率
     maxDistance:最大行程距离
@@ -226,7 +226,7 @@ def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,oc
             tempKeys.remove(minKey)
             
         #将符合条件的路线都加入routeList
-        if len(routeKeys)>1 and routeNumber>orderNumber*occupancyRate/100:
+        if len(routeKeys)>1 and routeNumber>=occupancyRate:
             routeList.append({"startKey":pointKey,"routeNumber":routeNumber,\
                     "routeKeys":routeKeys,"routeCost":routeCost,"routeDist":routeDist,\
                     "routeDirectDist":routeDirectDist})

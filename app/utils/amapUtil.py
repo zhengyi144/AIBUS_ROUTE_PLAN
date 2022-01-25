@@ -1,8 +1,8 @@
 import requests,json,time
 from concurrent import futures
-#from logger import get_logger
-from app.utils.logger import get_logger
-from app.utils.util import route
+from logger import get_logger
+#from app.utils.logger import get_logger
+#from app.utils.util import route
 
 logger=get_logger(name="amapUtil",log_file="logs/logger.log")
 
@@ -101,10 +101,17 @@ def search_around_place(location,kwargs):
 
 
 if __name__ == '__main__':
-    city = "北京市"    # 你的城市
-    origin ='116.481028,39.989643'
-    destination ='116.434446,39.90816'
-    print(get_route_distance_time(origin,destination,routeType=1))
+    city = "福州市"    # 你的城市
+    origin ='119.324455,26.119701'
+    destination ='119.26216500,26.088172'
+    waypoints="119.290322,26.106594;119.281202,26.102822"
+    api=f'http://restapi.amap.com/v4/direction/truck?origin={origin}&destination={destination}&size=3&nosteps=1&waypoints={waypoints}&key={key}'
+    print(api)
+    r=requests.get(api,verify=False)
+    r=r.text
+    jsonData=json.loads(r)
+    print(jsonData)
+    #print(get_route_distance_time(origin,destination,routeType=1))
 
 
     
