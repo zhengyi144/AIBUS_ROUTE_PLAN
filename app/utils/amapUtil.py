@@ -99,11 +99,30 @@ def search_around_place(location,kwargs):
     jsonData=json.loads(r)
     return jsonData
 
+def get_driving_polyline(origin,destination,routeType=0):
+    """
+    获取起止点的道路坐标
+    """
+    info=get_route(origin,destination,routeType=routeType)
+    polylines=[]
+    if "status" in info.keys() and info["status"]=='1': 
+        #路线
+        steps=info['route']['paths'][0]['steps']
+        #print(steps)
+        for step in steps:
+            polyline=step["polyline"]
+            #将'polyline': '119.32447,26.119731;119.324284,26.119809;119.323802,26.120017;119.323607,26.1201;119.323216,26.12026'
+            points=polyline.split(";")
+            for point in points:
+                coord=point.split(",")
+                polylines.append({"lng":float(coord[0]),"lat":float(coord[1])})
+    return polylines
 
 if __name__ == '__main__':
     city = "福州市"    # 你的城市
     origin ='119.324455,26.119701'
     destination ='119.26216500,26.088172'
+    """
     waypoints="119.290322,26.106594;119.281202,26.102822"
     api=f'http://restapi.amap.com/v4/direction/truck?origin={origin}&destination={destination}&size=3&nosteps=1&waypoints={waypoints}&key={key}'
     print(api)
@@ -111,6 +130,8 @@ if __name__ == '__main__':
     r=r.text
     jsonData=json.loads(r)
     print(jsonData)
+    """
+    print(get_driving_polyline(origin,destination,routeType=0))
     #print(get_route_distance_time(origin,destination,routeType=1))
 
 
