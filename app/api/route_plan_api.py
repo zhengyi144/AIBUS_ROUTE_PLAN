@@ -215,6 +215,10 @@ def planSingleRoute():
             polyline=get_driving_polyline(fromNode,toNode)
             solution=findOnwayRouteNode(solution,polyline)
 
+            if solution["routeNumber"]<occupancyRate:
+                res.update(code=ResponseCode.Fail,data=[], msg="未找到满足条件的路线！")
+                return res.data
+                
         logger.info("end single route plan!")
 
         #4)保存路线规划结果,获取最优路径的行程距离、行程时间、直线距离

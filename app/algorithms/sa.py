@@ -194,6 +194,7 @@ def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,oc
         routeCost=nodeCostDF.loc[startKey,endKey]
         routeKeys=[]
         routeKeys.append(startKey)
+  
         while len(tempKeys)>0 and routeDist<routeDirectDist*odometerFactor and routeNumber<passengers\
             and routeDist<maxDistance and routeTime<maxDuration:
             #找出startkey距离最近的下一结点
@@ -215,7 +216,7 @@ def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,oc
             routeDist+=nodePair[nodeKey]["dist"]
             routeTime+=nodePair[nodeKey]["time"]
             routeNumber+=nodeDict[minKey]["number"]
-            #对比直线系数是否满足要求和人数是否满足要求
+            #对比直线系数是否满足要求和人数是否满足要求#
             if routeDist<=routeDirectDist*odometerFactor and routeNumber<=passengers\
                and routeDist<maxDistance and routeTime<maxDuration and nextDirectDist<lastDirectDist*1.5:
                 routeCost+=series[minIndex]
@@ -226,8 +227,8 @@ def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,oc
                 routeNumber-=nodeDict[minKey]["number"]
             tempKeys.remove(minKey)
             
-        #将符合条件的路线都加入routeList
-        if len(routeKeys)>1 and routeNumber>=occupancyRate:
+        #将符合条件的路线都加入routeList  and routeNumber>=occupancyRate
+        if len(routeKeys)>1 :
             routeList.append({"startKey":pointKey,"routeNumber":routeNumber,\
                     "routeKeys":routeKeys,"routeCost":routeCost,"routeDist":routeDist,\
                     "routeDirectDist":routeDirectDist})
@@ -332,7 +333,7 @@ def findOnwayRouteNode(solution,polyline):
     for point in polyline:
         for node in solution["invalidRouteNode"]:
             #0.0003约为33.33米
-            if float(node["lng"])<float(point["lng"])+0.0005 and float(node["lng"])>float(point["lng"])-0.0005 \
+            if float(node["lng"])<float(point["lng"])+0.0003 and float(node["lng"])>float(point["lng"])-0.0003 \
                 and float(node["lat"])<float(point["lat"])+0.0005 and float(node["lat"])>float(point["lat"])-0.0005\
                 and node["index"] not in onwayNodeDict.keys():
                 onwayNodeDict[node["index"]]=node
