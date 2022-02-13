@@ -1,8 +1,8 @@
 import requests,json,time
 from concurrent import futures
-from logger import get_logger
-#from app.utils.logger import get_logger
-#from app.utils.util import route
+#from logger import get_logger
+from app.utils.logger import get_logger
+from app.utils.util import route
 
 logger=get_logger(name="amapUtil",log_file="logs/logger.log")
 

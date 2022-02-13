@@ -2,6 +2,7 @@ import numpy as np
 import math
 from copy import deepcopy
 from app.utils.GPSConvertUtil import getGPSDistance
+from app.utils.util import route
 '''
 模拟退火算法
 '''
@@ -316,7 +317,53 @@ def singleRoutePlanByGreedyAlgorithm(routeNode,nodePair,nodeCostDF,passengers,oc
         
 
     """
+
+def findOnwayRouteNode(solution,polyline):
+    """
+    solution:{"routeNode","invalidRouteNode","bestRouteCost","routeNumber",\
+            "routeDist","routeDirectDist"}
+    polyline:[{"lng","lat"},{"lng","lat"}]
+
+    通过计算invalidRouteNode结点与路线点距离来判断是否顺路
+    """
+    onwayRouteNode=[]
+    onwayNodeDict={}
+    routeNumber=solution["routeNumber"]
+    for point in polyline:
+        for node in solution["invalidRouteNode"]:
+            #0.0003约为33.33米
+            if float(node["lng"])<float(point["lng"])+0.0005 and float(node["lng"])>float(point["lng"])-0.0005 \
+                and float(node["lat"])<float(point["lat"])+0.0005 and float(node["lat"])>float(point["lat"])-0.0005\
+                and node["index"] not in onwayNodeDict.keys():
+                onwayNodeDict[node["index"]]=node
+                onwayRouteNode.append(node)
+                routeNumber+=node["number"]
     
+    if len(onwayRouteNode)==0:
+        return solution
+    
+    #将invalidRouteNode转为dict
+    nodeDict={}
+    for node in onwayRouteNode:
+        nodeDict[str(node["index"])]=node
+    
+    invalidRouteNode=[]
+    #踢除顺路结点
+    for node in solution["invalidRouteNode"]:
+        if node["index"] not in nodeDict.keys():
+            invalidRouteNode.append(node)
+    
+    routeNode=solution["routeNode"]
+    destNode=routeNode[-1]
+    routeNode.remove(destNode)
+    routeNode.extend(onwayRouteNode)
+    routeNode.append(destNode)
+    solution["routeNode"]=routeNode
+    solution["routeNumber"]=routeNumber
+    solution["invalidRouteNode"]=invalidRouteNode
+    return solution
+
+
 """
 if __name__=="__main__":
     destination={"lng":7,"lat":1}

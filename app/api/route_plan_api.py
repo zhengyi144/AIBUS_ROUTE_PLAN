@@ -199,14 +199,22 @@ def planSingleRoute():
             res.update(code=ResponseCode.Fail,data=[], msg="未找到满足条件的路线！")
             return res.data
         else:
-            #在贪婪算法算法基础上，查找最后一段路的顺路结点
-    
             #用sa算法进行优化
             routeInfo={"nodePair":nodePairDict,"routeNode":solution["routeNode"],"routeFactor":routeFactor}
             reSolution=singleRoutePlanSolution(routeInfo)
             #print("re bestCost:",reSolution["bestRouteCost"])
             if solution["bestRouteCost"]>reSolution["bestRouteCost"]:
                 solution["routeNode"]=reSolution["routeNode"]
+            
+        #找出最后一段顺路点
+        if len(solution["routeNode"])>1:
+            lastNode=solution["routeNode"][len(solution["routeNode"])-2]
+            fromNode=str(round(float(lastNode["lng"]),6))+","+str(round(float(lastNode["lat"]),6))
+            toNode=str(round(float(destination["lng"]),6))+","+str(round(float(destination["lat"]),6))
+
+            polyline=get_driving_polyline(fromNode,toNode)
+            solution=findOnwayRouteNode(solution,polyline)
+
         logger.info("end single route plan!")
 
         #4)保存路线规划结果,获取最优路径的行程距离、行程时间、直线距离
