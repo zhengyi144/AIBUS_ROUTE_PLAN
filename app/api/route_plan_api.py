@@ -560,11 +560,18 @@ def queryRouteInfo():
             return res.data
         routeParams["destination"]={"siteName":routeParams["destName"], "lng":routeParams["destLng"],"lat": routeParams["destLat"]}
         routeParams["waypoints"]=json.loads(routeParams["wayPoints"])
-        if routeParams["maxDistance"]!="" and routeParams["maxDistance"]>=1000000.0:
+        if routeParams["maxDistance"]:
+            if routeParams["maxDistance"]!="" and routeParams["maxDistance"]>=1000000.0:
+                routeParams["maxDistance"]=""
+            elif routeParams["maxDistance"]<1000000.0:
+                routeParams["maxDistance"]=routeParams["maxDistance"]/1000
+        else:
             routeParams["maxDistance"]=""
-        elif routeParams["maxDistance"]<1000000.0:
-            routeParams["maxDistance"]=routeParams["maxDistance"]/1000
-        if routeParams["maxDuration"]!="" and routeParams["maxDuration"]>=24*3600:
+
+        if routeParams["maxDuration"]:
+            if routeParams["maxDuration"]!="" and routeParams["maxDuration"]>=24*3600:
+                routeParams["maxDuration"]=""
+        else:
             routeParams["maxDuration"]=""
 
         del routeParams["destName"]
