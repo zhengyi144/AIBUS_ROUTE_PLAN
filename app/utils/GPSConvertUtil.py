@@ -10,6 +10,7 @@ import math
 """
 
 pi = 3.1415926535897932384626
+x_pi=pi*3000.0/180.0
 a = 6378245.0
 ee = 0.00669342162296594323
 
@@ -58,8 +59,8 @@ def convert_BD09_to_WGS84(blng,blat):
 def convert_BD09_to_GCJ02(blng,blat):
     x = blng - 0.0065
     y = blat - 0.006
-    z = math.sqrt(x * x + y * y) - 0.00002 * math.sin(y * pi)
-    theta = math.atan2(y, x) - 0.000003 * math.cos(x * pi)
+    z = math.sqrt(x * x + y * y) - 0.00002 * math.sin(y * x_pi)
+    theta = math.atan2(y, x) - 0.000003 * math.cos(x * x_pi)
     glng = z * math.cos(theta)
     glat = z * math.sin(theta)
     return glng,glat
@@ -116,7 +117,7 @@ def outOfChina(lon,lat):
 
 if __name__=="__main__":
     #119.298314,26.000763
-    lng2,lat2=convert_BD09_to_WGS84(119.298314,26.000763)
+    lng2,lat2=convert_BD09_to_GCJ02(116.481499,39.990475)
     lng1,lat1=convert_WGS84_to_BD09(119.287683,26.001150)
     #lng2,lat2=convert_WGS84_to_GCJ02(119.286000,26.024917)
     print(lng1,lat1)
