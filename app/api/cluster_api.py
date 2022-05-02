@@ -553,25 +553,25 @@ def exportClusterResult():
             
                 row=[item["region"],item["longitude"],item["latitude"],item["siteName"],item["siteProperty"],item["clientName"],item["clientProperty"],item["age"],item["clientAddress"],item["number"],item["grade"]]
                 sitePoints.append(row)
-            writeExcel(fileId,siteItems,sitePoints,"网点文件")
+            file_path=writeExcel(fileId,siteItems,sitePoints,"网点文件")
             clusterParams=aiBusModel.selectClusterParamsBySiteFileId((fileId))##根据网点文件fileId查询聚类文件
-            clusterId=clusterParams["id"]
-        
-        #2)查询聚类结果
-        clusterResut=aiBusModel.exportClusterResult((1,clusterId))
-        clusterItems =["区域","经度","纬度","公交站","公交站属性", "乘车人数"]
-        
-        for item in clusterResut:
-            if item["relativeProperty"]==1:
-                item["relativeProperty"]="固定"
-            elif item["relativeProperty"]==0:
-                item["relativeProperty"]="临时"
-            else:
-                item["relativeProperty"]="自定义"
-            
-            clusterrow=[item["region"],item["longitude"],item["latitude"],item["clusterName"],item["relativeProperty"],item["number"]]
-            clusterPoints.append(clusterrow)
-        file_path = writeExcel(fileId,clusterItems,clusterPoints,"聚类文件",removeLabel=False) 
+            if clusterParams:
+                clusterId=clusterParams["id"]
+                #2)查询聚类结果
+                clusterResut=aiBusModel.exportClusterResult((1,clusterId))
+                clusterItems =["区域","经度","纬度","公交站","公交站属性", "乘车人数"]
+                
+                for item in clusterResut:
+                    if item["relativeProperty"]==1:
+                        item["relativeProperty"]="固定"
+                    elif item["relativeProperty"]==0:
+                        item["relativeProperty"]="临时"
+                    else:
+                        item["relativeProperty"]="自定义"
+                    
+                    clusterrow=[item["region"],item["longitude"],item["latitude"],item["clusterName"],item["relativeProperty"],item["number"]]
+                    clusterPoints.append(clusterrow)
+                file_path = writeExcel(fileId,clusterItems,clusterPoints,"聚类文件",removeLabel=False) 
         if file_path is None:        
             return to_json({'success': 0, 'message': '请输入参数'})    
         else:
