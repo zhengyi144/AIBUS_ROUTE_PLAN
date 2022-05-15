@@ -112,7 +112,7 @@ def clusterByAdaptiveDbscan(siteList,epsRadius,minSamples,distType=1):
     DBSCAN算法是将密度相连点的最大集合作为簇，但是由于簇内点会辐射出去的原因会使簇内一些点距离聚类中心点超过实际限定距离epsRadius，
     因此对DBSCAN算法进行改造，只取满足限定距离的最大集合，满足条件的集合但中心点已经被纳入其他集合，被抛弃的点作为边界点，
     不满足minSamples作为异常点
-    siteList:[{"id","lat","lng",""},{"id","lat","lng",""}],必需包括id,lat,lng字段
+    siteList:[{"id","lat","lng","number",""},{"id","lat","lng","number",""}],必需包括id,lat,lng,number字段
     epsRadius: 聚内直线距离(km)
     minSamples：最少点数目
     """
@@ -145,6 +145,7 @@ def clusterByAdaptiveDbscan(siteList,epsRadius,minSamples,distType=1):
         clusterResult={}
         for site in siteList:
             neighborPoints=[]
+            neighborNumber=site["number"] 
             neighborPoints.append(site["id"])
             clusterResult[site["id"]]=UNASSIGNED
             for point in siteList:
@@ -155,10 +156,10 @@ def clusterByAdaptiveDbscan(siteList,epsRadius,minSamples,distType=1):
             if len(neighborPoints)<minSamples:
                 clusterResult[site["id"]]=NOISE
             else:
-                neighborPointsList.append({"id":site["id"],"neighborPoints":neighborPoints,"size":len(neighborPoints)})
+                neighborPointsList.append({"id":site["id"],"neighborPoints":neighborPoints,"size":len(neighborPoints),"number":neighborNumber})
         
         #3)对上面点集进行按照点集大小排序，然后筛选出聚类集合
-        neighborPointsList.sort(key=lambda x: (x["size"],x["id"]),reverse=True)
+        neighborPointsList.sort(key=lambda x: (x["size"],x["number"],x["id"]),reverse=True)
         logger.info("neightbor point sort result:%s",neighborPointsList)
         clusterDict={}
         for item in neighborPointsList:
