@@ -118,9 +118,22 @@ def get_driving_polyline(origin,destination,routeType=0):
                 polylines.append({"lng":float(coord[0]),"lat":float(coord[1])})
     return polylines
 
+def convert_coord_to_GCJ02(origin,coordSys="baidu"):
+    url=f'http://restapi.amap.com/v3/assistant/coordinate/convert?locations={origin}&coordsys={coordSys}&key={key}'
+    r=requests.get(url,verify=False)
+    r=r.text
+    jsonData=json.loads(r)
+    coords=[]
+    if "locations" in jsonData.keys() and jsonData["locations"]:
+        locations=jsonData["locations"].split(";")
+        for location in locations:
+            coord=location.split(",")
+            coords.append([float(coord[0]),float(coord[1])])
+    return coords
+
 if __name__ == '__main__':
     city = "福州市"    # 你的城市
-    origin ='119.324455,26.119701'
+    origin ='116.481499,39.990475'
     destination ='119.26216500,26.088172'
     """
     waypoints="119.290322,26.106594;119.281202,26.102822"
@@ -131,8 +144,9 @@ if __name__ == '__main__':
     jsonData=json.loads(r)
     print(jsonData)
     """
-    print(get_driving_polyline(origin,destination,routeType=0))
+    #print(get_driving_polyline(origin,destination,routeType=0))
     #print(get_route_distance_time(origin,destination,routeType=1))
+    print(convert_coord_to_GCJ02(origin))
 
 
     

@@ -8,6 +8,7 @@ from app.utils.auth import login_required
 from app.utils.util import route
 from app.utils.tools import *
 from app.utils.GPSConvertUtil import *
+from app.utils.amapUtil import convert_coord_to_GCJ02
 from app.utils.logger import get_logger
 from app.models.ai_bus_model import AiBusModel
 
@@ -74,7 +75,12 @@ def uploadSiteExcel():
                 #根据mapType进行坐标转换
                 if int(mapType)==2:
                     #百度地图
-                    lng,lat=convert_BD09_to_GCJ02(float(item["longitude"]),float(item["latitude"]))
+                    try:
+                        coords=convert_coord_to_GCJ02(str(item["longitude"])+","+str(item["latitude"]))
+                        lng=coords[0][0]
+                        lat=coords[0][1]
+                    except Exception as e:
+                        lng,lat=convert_BD09_to_GCJ02(float(item["longitude"]),float(item["latitude"]))
                 else:
                     lng=float(item["longitude"])
                     lat=float(item["latitude"])
