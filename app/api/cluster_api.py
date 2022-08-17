@@ -593,6 +593,7 @@ def exportClusterResult():
                     #print(response)
                     return response
     except Exception as e:
+        logger.error("导出文件报错:{}".format(e))
         res.update(code=ResponseCode.Fail,msg="导出报错！")
         return res.data
 

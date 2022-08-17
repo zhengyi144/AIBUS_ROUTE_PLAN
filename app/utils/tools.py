@@ -146,11 +146,12 @@ def writeExcel(filename,fields,resultdata,sheetName,removeLabel=True):
         workbook = copy(rb)
         sheet=workbook.add_sheet(sheetName,cell_overwrite_ok=True)
     
+    style=set_style('Times New Roman',11,0x0C,True)
     for field in range(0,len(fields)):
-        sheet.write(0,field,fields[field],set_style('Times New Roman',11,0x0C,True))
+        sheet.write(0,field,fields[field],style)
     for row in range(1,len(resultdata)+1):
         for col in range(0,len(fields)):
-            sheet.write(row,col,u'%s' % resultdata[row-1][col],set_style('Times New Roman',11,0x0C,True))
+            sheet.write(row,col,u'%s' % resultdata[row-1][col],style)
     workbook.save(filePath)
     return filePath
 
